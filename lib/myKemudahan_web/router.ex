@@ -23,6 +23,7 @@ defmodule MyKemudahanWeb.Router do
     live "/welcome", Welcome
     live "/about", About
     live "/contact", Contact
+    live "/usermenu", Usermenu
   end
 
   # Other scopes may use custom stacks.

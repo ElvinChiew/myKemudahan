@@ -32,7 +32,7 @@ defmodule MyKemudahanWeb.About do
 
           <!-- Image -->
           <div class="w-full h-[650px] overflow-hidden relative lg:w-1/2">
-            <img src={~p"/images/about-image.jpg"} alt="about image"
+            <img src={~p"/images/about-image-webp.webp"} alt="about image"
                  class="absolute bottom-[-150px] shadow-lg ml-auto blur-sm w-full h-auto" />
 
             <!-- Glass Cards Container -->
@@ -89,7 +89,7 @@ defmodule MyKemudahanWeb.About do
       </section>
 
       <!-- Footer -->
-      <footer class="bg-[#0B132B] text-[#FFF5F5] w-full mt-10 p-4 text-center">
+      <footer class="bg-[#0B132B] text-[#FFF5F5] w-full p-4 text-center">
         <p>&copy; 2025 MyWebsite. All rights reserved.</p>
         <nav>
           <a href="/privacy-policy">Privacy Policy</a> |

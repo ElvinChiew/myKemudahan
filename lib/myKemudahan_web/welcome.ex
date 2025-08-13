@@ -38,7 +38,7 @@ defmodule MyKemudahanWeb.Welcome do
 
             <!-- Image -->
             <div class="w-full lg:w-1/2">
-              <img src={~p"/images/landing-image.png"} alt="landing image" class="shadow-lg w-full h-auto" />
+              <img src={~p"/images/landing-image-webp.webp"} alt="landing image" class="shadow-lg w-full h-[20rem] md:h-[40rem]" />
             </div>
           </div>
         </section>
