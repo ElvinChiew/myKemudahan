@@ -6,35 +6,51 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm bg-slate-700 px-5 py-10 rounded-lg">
-      <.header class="text-center">
-        <p class="text-white font-bold text-3xl">Register an account</p>
-      </.header>
+    <div class="min-h-screen flex items-center justify-center px-4">
+      <div class="flex flex-row items-stretch">
+      <div class="hidden lg:flex w-[420px] h-[520px] rounded-xl bg-zinc-100 px-8 py-10 text-950 dark:bg-gray-950 dark:text-gray-300 justify-center">
+        <div class="flex flex-col items-center text-center">
+          <img src={~p"/images/logo.svg"} alt="logo" class="h-12 w-12 mb-4" />
+            <p class="text-4xl font-bold">MyKemudahan</p>
+            <p class="font-bold">electronic Facility & Assets Requests and Management</p>
+            <p class="mt-10">
+              Welcome to MyKemudahan. This is an electronic Facility & Assets Requests and Managements.
+              If you have any question or suggestions regarding to this system, feel free to drop us a visit or call our phone.
+            </p>
+        </div>
+      </div>
 
-      <.simple_form
-        for={@form}
-        id="registration_form"
-        phx-submit="save"
-        phx-change="validate"
-        phx-trigger-action={@trigger_submit}
-        action={~p"/users/log_in?_action=registered"}
-        method="post"
-      >
-        <.error :if={@check_errors}>
-          Oops, something went wrong! Please check the errors below.
-        </.error>
+        <div class="w-[420px] h-[520px] rounded-xl bg-slate-700 px-8 py-10 text-emerald-500">
+          <.header class="text-center">
+            <p class="text-white font-bold text-3xl">Register an account</p>
+          </.header>
 
-        <.input field={@form[:email]} type="email" label="Email" required />
-        <.input field={@form[:full_name]} type="text" label="Full Name" required />
-        <.input field={@form[:password]} type="password" label="Password" required />
+          <.simple_form
+            for={@form}
+            id="registration_form"
+            phx-submit="save"
+            phx-change="validate"
+            phx-trigger-action={@trigger_submit}
+            action={~p"/users/log_in?_action=registered"}
+            method="post"
+          >
+            <.error :if={@check_errors}>
+              Oops, something went wrong! Please check the errors below.
+            </.error>
 
-        <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
-        </:actions>
-      </.simple_form>
-      <p class="text-xs text-white mt-5">By registering, you have agreed to our terms and conditions. Terms and condition applied. For more information please refer to our
-      <span class="text-teal-500 underline hover:text-teal-300"><a href="/#">FAQ</a></span>
-      page. </p>
+            <.input field={@form[:email]} type="email" label="Email" required />
+            <.input field={@form[:full_name]} type="text" label="Full Name" required />
+            <.input field={@form[:password]} type="password" label="Password" required />
+
+            <:actions>
+              <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
+            </:actions>
+          </.simple_form>
+          <p class="text-xs text-white mt-5">By registering, you have agreed to our terms and conditions. Terms and condition applied. For more information please refer to our
+          <span class="text-teal-500 underline hover:text-teal-300"><a href="/#">FAQ</a></span>
+          page. </p>
+        </div>
+      </div>
     </div>
     """
   end
