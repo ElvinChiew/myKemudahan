@@ -3,16 +3,9 @@ defmodule MyKemudahanWeb.UserLoginLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
+    <div class="mx-auto max-w-sm bg-slate-700 px-5 py-10 rounded-lg text-emerald-500">
       <.header class="text-center">
-        Log in to account
-        <:subtitle>
-          Don't have an account?
-          <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
-            Sign up
-          </.link>
-          for an account now.
-        </:subtitle>
+        <p class="text-white font-bold text-3xl">Account Login</p>
       </.header>
 
       <.simple_form for={@form} id="login_form" action={~p"/users/log_in"} phx-update="ignore">
@@ -27,10 +20,16 @@ defmodule MyKemudahanWeb.UserLoginLive do
         </:actions>
         <:actions>
           <.button phx-disable-with="Logging in..." class="w-full">
-            Log in <span aria-hidden="true">→</span>
+            Log in
           </.button>
         </:actions>
       </.simple_form>
+      <p class="text-xs text-white mt-5">Don’t have any account? Click
+        <span class="text-teal-500 underline hover:text-teal-300">here</span>
+        to sign up. Terms and condition applied. For more information please refer to our
+        <span class="text-teal-500 underline hover:text-teal-300">FAQ</span>
+        page.
+      </p>
     </div>
     """
   end

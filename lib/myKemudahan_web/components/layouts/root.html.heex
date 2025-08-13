@@ -12,47 +12,88 @@
     </script>
   </head>
   <body class="bg-white">
-    <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-      <%= if @current_user do %>
-        <li class="text-[0.8125rem] leading-6 text-zinc-900">
-          {@current_user.email}
-        </li>
+
+    <!-- This is the navbar section -->
+    <nav class="sticky top-0 z-50 flex justify-end space-x-10 px-20 py-6 bg-[#0B132B] text-[#FFF5F5] w-full">
+      <ul class="relative z-10 flex items-center gap-8 px-4 sm:px-6 lg:px-8 justify-end">
+        
+        <!-- Shared Navigation Links -->
         <li>
           <.link
-            href={~p"/users/settings"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+            href={~p"/"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
           >
-            Settings
+            Home
           </.link>
         </li>
         <li>
           <.link
-            href={~p"/users/log_out"}
-            method="delete"
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+            href={~p"/#"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
           >
-            Log out
-          </.link>
-        </li>
-      <% else %>
-        <li>
-          <.link
-            href={~p"/users/register"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Register
+            About
           </.link>
         </li>
         <li>
           <.link
-            href={~p"/users/log_in"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+            href={~p"/#"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
           >
-            Log in
+            Contact Us
           </.link>
         </li>
-      <% end %>
-    </ul>
+
+        <!-- Conditional User-Specific Links -->
+        <%= if @current_user do %>
+          <li class="text-md leading-6 text-white">
+            <%= @current_user.email %>
+          </li>
+          <li>
+            <.link
+              href={~p"/users/settings"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Settings
+            </.link>
+          </li>
+          <li>
+            <.link
+              href={~p"/users/log_out"}
+              method="delete"
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Log out
+            </.link>
+          </li>
+        <% else %>
+          <li>
+            <.link
+              href={~p"/users/register"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Register
+            </.link>
+          </li>
+          <li>
+            <.link
+              href={~p"/users/log_in"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Log in
+            </.link>
+          </li>
+        <% end %>
+      </ul>
+    </nav>
+
     {@inner_content}
+
+    <footer class="bottom-0 z-50 bg-[#0B132B] text-[#FFF5F5] w-full mt-3">
+      <p>&copy; 2025 MyWebsite. All rights reserved.</p>
+      <nav>
+        <a href="/privacy-policy">Privacy Policy</a> |
+        <a href="/contact">Contact Us</a>
+      </nav>
+    </footer>
   </body>
 </html>

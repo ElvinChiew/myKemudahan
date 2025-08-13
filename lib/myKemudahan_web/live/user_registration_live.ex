@@ -6,16 +6,9 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
+    <div class="mx-auto max-w-sm bg-slate-700 px-5 py-10 rounded-lg">
       <.header class="text-center">
-        Register for an account
-        <:subtitle>
-          Already registered?
-          <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
-            Log in
-          </.link>
-          to your account now.
-        </:subtitle>
+        <p class="text-white font-bold text-3xl">Register an account</p>
       </.header>
 
       <.simple_form
@@ -32,12 +25,16 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
         </.error>
 
         <.input field={@form[:email]} type="email" label="Email" required />
+        <.input field={@form[:full_name]} type="text" label="Full Name" required />
         <.input field={@form[:password]} type="password" label="Password" required />
 
         <:actions>
           <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
         </:actions>
       </.simple_form>
+      <p class="text-xs text-white mt-5">By registering, you have agreed to our terms and conditions. Terms and condition applied. For more information please refer to our
+      <span class="text-teal-500 underline hover:text-teal-300"><a href="/#">FAQ</a></span>
+      page. </p>
     </div>
     """
   end
