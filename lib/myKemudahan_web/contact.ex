@@ -3,11 +3,6 @@ defmodule MyKemudahanWeb.Contact do
 
   def render(assigns) do
     ~H"""
-    <!-- Navbar -->
-    <nav class="flex justify-end space-x-10 px-20 py-6 bg-[#0B132B] text-[#FFF5F5] w-full">
-      <a href="#" class="text-lg">Home</a> <a href="#" class="text-lg">About</a>
-      <a href="#" class="text-lg">Contact Us</a> <a href="#" class="text-lg">Login/Register</a>
-    </nav>
     <!-- Title -->
     <div class="flex justify-center items-center my-8">
       <h1 class="text-black font-bold text-4xl">CONTACT US</h1>
@@ -19,7 +14,7 @@ defmodule MyKemudahanWeb.Contact do
         <p class="text-black text-base mb-6 max-w-4xl">
           Do you have any question or suggestion regarding the system, do not hesitate to send us a message using the form on the right or alternatively, drop us a visit, call our helpline or send us an email. We will be happy to assist you.
         </p>
-        
+
         <div class="flex flex-col lg:flex-row gap-8">
           <!-- Contact Details -->
           <div class="lg:w-1/2 flex flex-col justify-center h-full space-y-4">
@@ -90,12 +85,6 @@ defmodule MyKemudahanWeb.Contact do
         </button>
       </div>
     </div>
-    <!-- Footer -->
-    <footer class="bg-[#0B132B] text-[#FFF5F5] w-full mt-3 p-4 text-center">
-      <p>&copy; 2025 MyWebsite. All rights reserved.</p>
-      
-      <nav><a href="/privacy-policy">Privacy Policy</a> | <a href="/contact">Contact Us</a></nav>
-    </footer>
     """
   end
 end
