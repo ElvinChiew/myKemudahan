@@ -5,7 +5,7 @@ defmodule MyKemudahanWeb.UserSettingsLive do
 
   def render(assigns) do
     ~H"""
-    <div class="px-5 py-5 bg-slate-700 space-y-6 rounded-xl shadow-xl">
+    <div class="px-5 py-5 bg-slate-700 space-y-6 rounded-xl shadow-xl mt-10 w-[25rem]">
       <!-- Tab Navigation -->
       <div class="flex space-x-4 border-b border-slate-500 mb-6">
         <button
