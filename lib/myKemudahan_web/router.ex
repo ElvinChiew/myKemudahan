@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.Router do
-  alias DialyxirVendored.Warnings.ContractRange
+  alias MyKemudahanWeb.Userrequest
+
   use MyKemudahanWeb, :router
 
   import MyKemudahanWeb.UserAuth
@@ -23,10 +24,12 @@ defmodule MyKemudahanWeb.Router do
 
     get "/", PageController, :home
 
+    live "/requser", Requser
     live "/welcome", Welcome
     live "/about", About
     live "/contact", Contact
     live "/usermenu", Usermenu
+
   end
 
   # Other scopes may use custom stacks.
