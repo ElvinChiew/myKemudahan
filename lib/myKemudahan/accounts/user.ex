@@ -158,4 +158,10 @@ defmodule MyKemudahan.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  def full_name_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:full_name])
+    |> validate_required([:full_name])
+  end
 end

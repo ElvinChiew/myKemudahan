@@ -350,4 +350,20 @@ defmodule MyKemudahan.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  #function to handle name change in user setting
+  def update_user_full_name(%User{} = user, current_password, %{"full_name" => full_name} = attrs) do
+    if User.valid_password?(user, current_password) do
+      user
+      |> User.full_name_changeset(attrs)
+      |> Repo.update()
+    else
+      {:error,
+       Ecto.Changeset.add_error(User.full_name_changeset(user, %{}), :current_password, "is not valid")}
+    end
+  end
+
+  def change_user_full_name(%User{} = user, attrs \\ %{}) do
+    User.full_name_changeset(user, attrs)
+  end
 end

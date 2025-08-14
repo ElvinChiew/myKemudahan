@@ -28,12 +28,10 @@ defmodule MyKemudahanWeb.UserSettingsLive do
     <%= if @active_tab == "email" do %>
       <.simple_form
         for={@email_form}
-        id="email_form"
-        phx-submit="update_email"
-        phx-change="validate_email"
+        id="full_name_form"
+        phx-submit="update_full_name"
       >
         <.label><p class="text-3xl text-center font-bold">Edit Name</p></.label>
-        <.input field={@email_form[:email]} type="email" label="Email" required />
         <.input field={@email_form[:full_name]} type="text" label="Full Name" required />
         <.input
           field={@email_form[:current_password]}
@@ -45,9 +43,10 @@ defmodule MyKemudahanWeb.UserSettingsLive do
           required
         />
         <:actions>
-          <.button phx-disable-with="Changing...">Update Name</.button>
+            <.button phx-disable-with="Changing...">Update Name</.button>
         </:actions>
       </.simple_form>
+
     <% end %>
 
     <!-- Password Form -->
@@ -132,20 +131,18 @@ defmodule MyKemudahanWeb.UserSettingsLive do
     {:noreply, assign(socket, email_form: email_form, email_form_current_password: password)}
   end
 
-  def handle_event("update_email", params, socket) do
-    %{"current_password" => password, "user" => user_params} = params
+  def handle_event("update_full_name", %{"current_password" => password, "user" => user_params}, socket) do
     user = socket.assigns.current_user
 
-    case Accounts.apply_user_email(user, password, user_params) do
-      {:ok, applied_user} ->
-        Accounts.deliver_user_update_email_instructions(
-          applied_user,
-          user.email,
-          &url(~p"/users/settings/confirm_email/#{&1}")
-        )
-
-        info = "A link to confirm your email change has been sent to the new address."
-        {:noreply, socket |> put_flash(:info, info) |> assign(email_form_current_password: nil)}
+    case Accounts.update_user_full_name(user, password, user_params) do
+      {:ok, updated_user} ->
+        info = "Your full name has been updated successfully."
+        {:noreply,
+          socket
+          |> put_flash(:info, info)
+          |> assign(email_form_current_password: nil)
+          |> assign(:current_user, updated_user)
+        }
 
       {:error, changeset} ->
         {:noreply, assign(socket, :email_form, to_form(Map.put(changeset, :action, :insert)))}
