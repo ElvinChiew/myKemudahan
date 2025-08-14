@@ -1,4 +1,5 @@
 defmodule MyKemudahanWeb.Router do
+  alias DialyxirVendored.Warnings.ContractRange
   use MyKemudahanWeb, :router
 
   pipeline :browser do
@@ -18,6 +19,11 @@ defmodule MyKemudahanWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/welcome", Welcome
+    live "/about", About
+    live "/contact", Contact
+    live "/usermenu", Usermenu
   end
 
   # Other scopes may use custom stacks.
