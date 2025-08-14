@@ -7,11 +7,90 @@
     <.live_title default="MyKemudahan" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
+  
   <body class="bg-white">
-    {@inner_content}
+    <!-- This is the navbar section -->
+    <nav class="sticky top-0 z-50 flex justify-end space-x-10 px-20 py-6 bg-[#0B132B] text-[#FFF5F5] w-full">
+      <ul class="relative z-10 flex items-center gap-8 px-4 sm:px-6 lg:px-8 justify-end">
+        <!-- Shared Navigation Links -->
+        <li>
+          <.link
+            href={~p"/"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+          >
+            Home
+          </.link>
+        </li>
+        
+        <li>
+          <.link
+            href={~p"/#"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+          >
+            About
+          </.link>
+        </li>
+        
+        <li>
+          <.link
+            href={~p"/#"}
+            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+          >
+            Contact Us
+          </.link>
+        </li>
+        <!-- Conditional User-Specific Links -->
+        <%= if @current_user do %>
+          <li class="text-md leading-6 text-white">{@current_user.email}</li>
+          
+          <li>
+            <.link
+              href={~p"/users/settings"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Settings
+            </.link>
+          </li>
+          
+          <li>
+            <.link
+              href={~p"/users/log_out"}
+              method="delete"
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Log out
+            </.link>
+          </li>
+        <% else %>
+          <li>
+            <.link
+              href={~p"/users/register"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Register
+            </.link>
+          </li>
+          
+          <li>
+            <.link
+              href={~p"/users/log_in"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Log in
+            </.link>
+          </li>
+        <% end %>
+      </ul>
+    </nav>
+     {@inner_content}
+    <footer class="bottom-0 z-50 bg-[#0B132B] text-[#FFF5F5] w-full mt-3">
+      <p>&copy; 2025 MyWebsite. All rights reserved.</p>
+      
+      <nav><a href="/privacy-policy">Privacy Policy</a> | <a href="/contact">Contact Us</a></nav>
+    </footer>
   </body>
 </html>
