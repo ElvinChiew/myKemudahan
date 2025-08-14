@@ -6,6 +6,5 @@ defmodule MyKemudahan.Repo.Migrations.AddFullNameAndRole do
       add :full_name, :string
       add :role, :string, default: "user"
     end
-
   end
 end

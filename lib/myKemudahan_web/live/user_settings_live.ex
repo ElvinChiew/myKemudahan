@@ -6,83 +6,84 @@ defmodule MyKemudahanWeb.UserSettingsLive do
   def render(assigns) do
     ~H"""
     <div class="px-5 py-5 bg-slate-700 space-y-6 rounded-xl shadow-xl">
-    <!-- Tab Navigation -->
-    <div class="flex space-x-4 border-b border-slate-500 mb-6">
-      <button
-        class={"pb-2 font-semibold " <> if @active_tab == "email", do: "border-b-2 border-white text-white", else: "text-slate-400"}
-        phx-click="switch_tab"
-        phx-value-tab="email"
-      >
-        Change Email
-      </button>
-      <button
-        class={"pb-2 font-semibold " <> if @active_tab == "password", do: "border-b-2 border-white text-white", else: "text-slate-400"}
-        phx-click="switch_tab"
-        phx-value-tab="password"
-      >
-        Change Password
-      </button>
-    </div>
-
-    <!-- Email Form -->
-    <%= if @active_tab == "email" do %>
-      <.simple_form
-        for={@email_form}
-        id="full_name_form"
-        phx-submit="update_full_name"
-      >
-        <.label><p class="text-3xl text-center font-bold">Edit Name</p></.label>
-        <.input field={@email_form[:full_name]} type="text" label="Full Name" required />
-        <.input
-          field={@email_form[:current_password]}
-          name="current_password"
-          id="current_password_for_email"
-          type="password"
-          label="Current password"
-          value={@email_form_current_password}
-          required
-        />
-        <:actions>
-            <.button phx-disable-with="Changing...">Update Name</.button>
-        </:actions>
-      </.simple_form>
-
-    <% end %>
-
-    <!-- Password Form -->
-    <%= if @active_tab == "password" do %>
-      <.simple_form
-        for={@password_form}
-        id="password_form"
-        action={~p"/users/log_in?_action=password_updated"}
-        method="post"
-        phx-change="validate_password"
-        phx-submit="update_password"
-        phx-trigger-action={@trigger_submit}
-      >
-        <input
-          name={@password_form[:email].name}
-          type="hidden"
-          id="hidden_user_email"
-          value={@current_email}
-        />
-        <.label><p class="text-3xl text-center font-bold">Update Password</p></.label>
-        <.input field={@password_form[:password]} type="password" label="New password" required />
-        <.input field={@password_form[:password_confirmation]} type="password" label="Confirm new password" />
-        <.input
-          field={@password_form[:current_password]}
-          name="current_password"
-          type="password"
-          label="Current password"
-          id="current_password_for_password"
-          value={@current_password}
-          required
-        />
-        <:actions>
-          <.button phx-disable-with="Changing...">Change Password</.button>
-        </:actions>
-      </.simple_form>
-    <% end %>
+      <!-- Tab Navigation -->
+      <div class="flex space-x-4 border-b border-slate-500 mb-6">
+        <button
+          class={"pb-2 font-semibold " <> if @active_tab == "email", do: "border-b-2 border-white text-white", else: "text-slate-400"}
+          phx-click="switch_tab"
+          phx-value-tab="email"
+        >
+          Change Email
+        </button>
+        <button
+          class={"pb-2 font-semibold " <> if @active_tab == "password", do: "border-b-2 border-white text-white", else: "text-slate-400"}
+          phx-click="switch_tab"
+          phx-value-tab="password"
+        >
+          Change Password
+        </button>
+      </div>
+      <!-- Email Form -->
+      <%= if @active_tab == "email" do %>
+        <.simple_form
+          for={@email_form}
+          id="full_name_form"
+          phx-submit="update_full_name"
+        >
+          <.label>
+            <p class="text-3xl text-center font-bold">Edit Name</p>
+          </.label>
+           <.input field={@email_form[:full_name]} type="text" label="Full Name" required />
+          <.input
+            field={@email_form[:current_password]}
+            name="current_password"
+            id="current_password_for_email"
+            type="password"
+            label="Current password"
+            value={@email_form_current_password}
+            required
+          />
+          <:actions><.button phx-disable-with="Changing...">Update Name</.button></:actions>
+        </.simple_form>
+      <% end %>
+      <!-- Password Form -->
+      <%= if @active_tab == "password" do %>
+        <.simple_form
+          for={@password_form}
+          id="password_form"
+          action={~p"/users/log_in?_action=password_updated"}
+          method="post"
+          phx-change="validate_password"
+          phx-submit="update_password"
+          phx-trigger-action={@trigger_submit}
+        >
+          <input
+            name={@password_form[:email].name}
+            type="hidden"
+            id="hidden_user_email"
+            value={@current_email}
+          />
+          <.label>
+            <p class="text-3xl text-center font-bold">Update Password</p>
+          </.label>
+           <.input field={@password_form[:password]} type="password" label="New password" required />
+          <.input
+            field={@password_form[:password_confirmation]}
+            type="password"
+            label="Confirm new password"
+          />
+          <.input
+            field={@password_form[:current_password]}
+            name="current_password"
+            type="password"
+            label="Current password"
+            id="current_password_for_password"
+            value={@current_password}
+            required
+          />
+          <:actions><.button phx-disable-with="Changing...">Change Password</.button></:actions>
+        </.simple_form>
+      <% end %>
     </div>
     """
   end
@@ -107,8 +108,9 @@ defmodule MyKemudahanWeb.UserSettingsLive do
 
     socket =
       socket
-      |> assign(:active_tab, "email") #the default tab
-      #|> assign(:full_name)
+      # the default tab
+      |> assign(:active_tab, "email")
+      # |> assign(:full_name)
       |> assign(:current_password, nil)
       |> assign(:email_form_current_password, nil)
       |> assign(:current_email, user.email)
@@ -131,18 +133,22 @@ defmodule MyKemudahanWeb.UserSettingsLive do
     {:noreply, assign(socket, email_form: email_form, email_form_current_password: password)}
   end
 
-  def handle_event("update_full_name", %{"current_password" => password, "user" => user_params}, socket) do
+  def handle_event(
+        "update_full_name",
+        %{"current_password" => password, "user" => user_params},
+        socket
+      ) do
     user = socket.assigns.current_user
 
     case Accounts.update_user_full_name(user, password, user_params) do
       {:ok, updated_user} ->
         info = "Your full name has been updated successfully."
+
         {:noreply,
-          socket
-          |> put_flash(:info, info)
-          |> assign(email_form_current_password: nil)
-          |> assign(:current_user, updated_user)
-        }
+         socket
+         |> put_flash(:info, info)
+         |> assign(email_form_current_password: nil)
+         |> assign(:current_user, updated_user)}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :email_form, to_form(Map.put(changeset, :action, :insert)))}
