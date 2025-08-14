@@ -1,4 +1,5 @@
 defmodule MyKemudahanWeb.Router do
+  alias MyKemudahanWeb.Userrequest
   use MyKemudahanWeb, :router
 
   pipeline :browser do
@@ -18,6 +19,8 @@ defmodule MyKemudahanWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/requser", Requser
   end
 
   # Other scopes may use custom stacks.
