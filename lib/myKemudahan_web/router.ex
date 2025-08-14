@@ -24,11 +24,14 @@ defmodule MyKemudahanWeb.Router do
 
     get "/", PageController, :home
 
+
+    live "/reqstatus", Reqstatus
     live "/requser", Requser
     live "/welcome", Welcome
     live "/about", About
     live "/contact", Contact
     live "/usermenu", Usermenu
+
 
   end
 
