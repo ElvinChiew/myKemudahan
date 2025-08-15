@@ -5,6 +5,7 @@ defmodule MyKemudahanWeb.UserSettingsLive do
 
   def render(assigns) do
     ~H"""
+    <div class="flex justify-center">
     <div class="px-5 py-5 bg-slate-700 space-y-6 rounded-xl shadow-xl mt-10 w-[25rem]">
       <!-- Tab Navigation -->
       <div class="flex space-x-4 border-b border-slate-500 mb-6">
@@ -13,13 +14,15 @@ defmodule MyKemudahanWeb.UserSettingsLive do
           phx-click="switch_tab"
           phx-value-tab="email"
         >
-          Change Email
+        <span class="mx-2"><i class="fa fa-user-circle text-white text-md" aria-hidden="true"></i></span>
+          Update Name
         </button>
         <button
           class={"pb-2 font-semibold " <> if @active_tab == "password", do: "border-b-2 border-white text-white", else: "text-slate-400"}
           phx-click="switch_tab"
           phx-value-tab="password"
         >
+        <span class="mx-2"><i class="fa fa-lock text-white text-md" aria-hidden="true"></i></span>
           Change Password
         </button>
       </div>
@@ -84,6 +87,7 @@ defmodule MyKemudahanWeb.UserSettingsLive do
           <:actions><.button phx-disable-with="Changing...">Change Password</.button></:actions>
         </.simple_form>
       <% end %>
+    </div>
     </div>
     """
   end
