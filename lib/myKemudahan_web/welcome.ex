@@ -3,12 +3,6 @@ defmodule MyKemudahanWeb.Welcome do
 
   def render(assigns) do
     ~H"""
-    <!-- Navbar -->
-    <nav class="flex justify-end space-x-10 px-20 py-4 bg-[#0B132B] text-[#FFF5F5] w-full">
-      <a href="#" class="text-lg">Home</a> <a href="#" class="text-lg">About</a>
-      <a href="#" class="text-lg">Contact Us</a> <a href="#" class="text-lg">Login/Register</a>
-    </nav>
-
     <div class="px-6 md:px-8 lg:px-0">
       <!-- Hero Section -->
       <section>
@@ -17,11 +11,11 @@ defmodule MyKemudahanWeb.Welcome do
           <div class="w-full lg:w-1/2 flex flex-col items-center justify-center gap-5">
             <img src={~p"/images/MK logo.png"} alt="logo" class="mt-10" />
             <h1 class="text-4xl font-bold text-[#1C2541] mb-4">MyKemudahan</h1>
-            
+
             <h2 class="text-xl font-bold text-[#1C2541] mb-4">
               Electronic Facility & Asset Requests and Management System
             </h2>
-            
+
             <p class="text-sm text-[#1C2541] max-w-xl mx-auto lg:mx-0 mb-6">
               Are you in need of a place to hold your events or perhaps in need of equipment for your events?
               Don’t worry, we got you covered. Click the button to make a request.
@@ -38,17 +32,11 @@ defmodule MyKemudahanWeb.Welcome do
             <img
               src={~p"/images/landing-image-webp.webp"}
               alt="landing image"
-              class="shadow-lg w-full h-[20rem] md:h-[40rem]"
+              class="shadow-lg w-full h-[20rem] md:h-[42rem]"
             />
           </div>
         </div>
       </section>
-      <!-- Footer Section -->
-      <footer class="bg-[#0B132B] text-[#FFF5F5] w-full">
-        <p>&copy; 2025 MyWebsite. All rights reserved.</p>
-        
-        <nav><a href="/privacy-policy">Privacy Policy</a> | <a href="/contact">Contact Us</a></nav>
-      </footer>
     </div>
     """
   end
