@@ -1,0 +1,27 @@
+defmodule MyKemudahan.Assets.Asset do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  alias MyKemudahan.Assets.Category
+
+  schema "assets" do
+    field :name, :string
+    field :status, :string
+    field :description, :string
+    field :image, :string
+    field :cost_per_unit, :decimal
+    #field :category_id, :id
+
+    belongs_to :category, Category
+
+    timestamps(type: :utc_datetime)
+  end
+
+  @doc false
+  def changeset(asset, attrs) do
+    asset
+    |> cast(attrs, [:name, :description, :cost_per_unit, :image, :status, :category_id])
+    |> validate_required([:name, :description, :cost_per_unit, :image, :status, :category_id])
+    |> assoc_constraint(:category)
+  end
+end
