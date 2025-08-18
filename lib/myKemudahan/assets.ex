@@ -146,7 +146,10 @@ defmodule MyKemudahan.Assets do
       ** (Ecto.NoResultsError)
 
   """
-  def get_asset!(id), do: Repo.get!(Asset, id)
+  #def get_asset!(id), do: Repo.get!(Asset, id)
+  def get_asset!(id), do:
+    Repo.get!(Asset, id)
+    |> Repo.preload(:asset_tags)
 
   @doc """
   Creates a asset.

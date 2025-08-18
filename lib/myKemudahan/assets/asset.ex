@@ -3,6 +3,7 @@ defmodule MyKemudahan.Assets.Asset do
   import Ecto.Changeset
 
   alias MyKemudahan.Assets.Category
+  alias MyKemudahan.Assets.AssetTag
 
   schema "assets" do
     field :name, :string
@@ -14,6 +15,8 @@ defmodule MyKemudahan.Assets.Asset do
 
     belongs_to :category, Category
 
+    has_many :asset_tags, AssetTag, on_replace: :delete
+
     timestamps(type: :utc_datetime)
   end
 
@@ -22,6 +25,7 @@ defmodule MyKemudahan.Assets.Asset do
     asset
     |> cast(attrs, [:name, :description, :cost_per_unit, :image, :status, :category_id])
     |> validate_required([:name, :description, :cost_per_unit, :image, :status, :category_id])
+    |> cast_assoc(:asset_tags, with: &MyKemudahan.Assets.AssetTag.changeset/2)
     |> assoc_constraint(:category)
   end
 end
