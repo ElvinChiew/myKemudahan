@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.Router do
-  alias MyKemudahanWeb.Userrequest
+  alias MyKemudahanWeb.Assetunit
+  #alias MyKemudahanWeb.Userrequest
 
   use MyKemudahanWeb, :router
 
@@ -24,6 +25,8 @@ defmodule MyKemudahanWeb.Router do
 
     get "/", PageController, :home
 
+    #asset unit individual
+    live "/test1", Assetunit
 
     live "/reqstatus", Reqstatus
     live "/requser", Requser
@@ -43,10 +46,13 @@ defmodule MyKemudahanWeb.Router do
     #Asset CRUD section
     live "/assets", AssetLive.Index, :index
     live "/assets/new", AssetLive.Index, :new
+    live "/assets/fanum", AssetLive.Fanum, :fanum
     live "/assets/:id/edit", AssetLive.Index, :edit
 
     live "/assets/:id", AssetLive.Show, :show
     live "/assets/:id/show/edit", AssetLive.Show, :edit
+
+
   end
 
   # Other scopes may use custom stacks.

@@ -4,6 +4,8 @@ defmodule MyKemudahan.Assets do
   """
 
   import Ecto.Query, warn: false
+  alias MyKemudahan.Assets.Asset
+  alias MyKemudahan.Assets.AssetTag
   alias MyKemudahan.Repo
 
   alias MyKemudahan.Assets.Category
@@ -117,8 +119,6 @@ defmodule MyKemudahan.Assets do
     Category.changeset(category, attrs)
   end
 
-  alias MyKemudahan.Assets.Asset
-
   @doc """
   Returns the list of assets.
 
@@ -130,6 +130,10 @@ defmodule MyKemudahan.Assets do
   """
   def list_assets do
     Repo.all(Asset)
+  end
+
+  def list_asset_tags do
+    Repo.all(AssetTag)
   end
 
   @doc """
@@ -150,6 +154,9 @@ defmodule MyKemudahan.Assets do
   def get_asset!(id), do:
     Repo.get!(Asset, id)
     |> Repo.preload(:asset_tags)
+
+  def get_asset_tag!(id), do:
+    Repo.get!(AssetTag, id)
 
   @doc """
   Creates a asset.
@@ -187,6 +194,12 @@ defmodule MyKemudahan.Assets do
     |> Repo.update()
   end
 
+  def update_asset_tag(%AssetTag{} = asset, attrs) do
+    asset
+    |> AssetTag.changeset(attrs)
+    |> Repo.update()
+  end
+
   @doc """
   Deletes a asset.
 
@@ -203,6 +216,10 @@ defmodule MyKemudahan.Assets do
     Repo.delete(asset)
   end
 
+  def delete_asset_tag(%AssetTag{} = assettag) do
+    Repo.delete(assettag)
+  end
+
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking asset changes.
 
@@ -214,5 +231,22 @@ defmodule MyKemudahan.Assets do
   """
   def change_asset(%Asset{} = asset, attrs \\ %{}) do
     Asset.changeset(asset, attrs)
+  end
+
+  def list_tags_paginated(page, per_page) do
+    offset = (page - 1) * per_page
+
+    AssetTag
+    |> limit(^per_page)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  def count_tags do
+    Repo.aggregate(AssetTag, :count, :id)
+  end
+
+  def change_asset_tag(%AssetTag{} = tag, attrs \\ %{}) do
+    AssetTag.changeset(tag, attrs)
   end
 end

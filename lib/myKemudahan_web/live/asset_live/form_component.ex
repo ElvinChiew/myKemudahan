@@ -173,6 +173,7 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
   end
 
   defp save_asset(socket, :edit, asset_params) do
+    IO.inspect(asset_params, label: "Saving asset (edit) with params")
     case Assets.update_asset(socket.assigns.asset, asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})
@@ -183,11 +184,13 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        IO.inspect(changeset.errors, label: "Validation errors (edit)")
         {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 
   defp save_asset(socket, :new, asset_params) do
+    IO.inspect(asset_params, label: "Saving asset (new) with params")
     case Assets.create_asset(asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})
@@ -198,17 +201,16 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        IO.inspect(changeset.errors, label: "Validation errors (new)")
         {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 
-  defp parse_asset_tags(params) do
-    asset_params = Map.get(params, "asset", %{})
+  defp parse_asset_tags(all_params) do
+    asset_params = Map.get(all_params, "asset", %{})
     status = asset_params["status"] || "available"
-    # Try to get asset_tags from the top level first, then from within asset params
-    asset_tags = Map.get(params, "asset_tags") || Map.get(params, "asset", %{})["asset_tags"]
 
-    case asset_tags do
+    case Map.get(all_params, "asset_tags") do
       nil -> []
       tags when is_map(tags) ->
         # Convert indexed map to list format for database
@@ -241,11 +243,8 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
     end
   end
 
-  defp parse_asset_tags_from_form(params) do
-    # Try to get asset_tags from the top level first, then from within asset params
-    asset_tags = Map.get(params, "asset_tags") || Map.get(params, "asset", %{})["asset_tags"]
-
-    case asset_tags do
+  defp parse_asset_tags_from_form(all_params) do
+    case Map.get(all_params, "asset_tags") do
       nil -> [%{tag: "", serial_number: ""}]
       tags when is_map(tags) ->
         # Convert indexed map to list format for form state

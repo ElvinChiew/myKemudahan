@@ -1,5 +1,5 @@
 defmodule MyKemudahanWeb.Reqstatus do
-alias GenLSP.Structures.SemanticTokensClientCapabilities
+  #alias GenLSP.Structures.SemanticTokensClientCapabilities
   use MyKemudahanWeb, :live_view
 
   def render(assigns) do
