@@ -16,6 +16,33 @@ defmodule MyKemudahanWeb.AssetLive.Fanum do
     {:noreply, stream_delete(socket, :assets, asset)}
   end
 
+  @impl true
+  def handle_params(%{"id" => id}, _uri, socket) do
+    case socket.assigns.live_action do
+      :edit ->
+        asset = Assets.get_asset!(id)
+        {:noreply,
+          socket
+          |> assign(:page_title, "Edit Asset")
+          |> assign(:asset, asset)}
+
+      _ ->
+        {:noreply,
+          socket
+          |> assign(:page_title, "Asset Tags")
+          |> assign(:asset, nil)}
+    end
+  end
+
+  @impl true
+  def handle_params(_, _uri, socket) do
+    {:noreply,
+      socket
+      |> assign(:page_title, "Asset Tags")
+      |> assign(:asset, nil)}
+  end
+
+
   @doc"""
 
   @impl true

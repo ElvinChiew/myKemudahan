@@ -47,6 +47,7 @@ defmodule MyKemudahanWeb.Router do
     live "/assets", AssetLive.Index, :index
     live "/assets/new", AssetLive.Index, :new
     live "/assets/fanum", AssetLive.Fanum, :fanum
+    live "/assets/fanum/:id/edit", AssetLive.Fanum, :edit
     live "/assets/:id/edit", AssetLive.Index, :edit
 
     live "/assets/:id", AssetLive.Show, :show
