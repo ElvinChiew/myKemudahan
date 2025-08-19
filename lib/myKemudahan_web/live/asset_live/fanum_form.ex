@@ -19,7 +19,16 @@ defmodule MyKemudahanWeb.CategoryLive.FanumForm do
         phx-change="validate"
         phx-submit="save"
       >
-        <.input field={@form[:name]} type="text" label="Name" />
+        <.input field={@form[:name]} type="text" label="Tag" />
+        <.input field={@form[:name]} type="text" label="Serial" />
+        <.input field={@form[:status]} type="select" label="Status"
+        options={[
+          {"Available", "available"},
+          {"Loaned", "loaned"},
+          {"Damaged", "damaged"},
+          {"Maintenance", "maintenance"}
+        ]}
+        />
         <:actions>
           <.button phx-disable-with="Saving...">Save Category</.button>
         </:actions>
