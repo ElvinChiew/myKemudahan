@@ -25,10 +25,6 @@ defmodule MyKemudahanWeb.Router do
 
     get "/", PageController, :home
 
-    #asset unit individual
-    live "/test1", Assetunit
-    live "/dumm", Dumm
-
     live "/reqstatus", Reqstatus
     live "/requser", Requser
     live "/welcome", Welcome
