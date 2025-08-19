@@ -20,6 +20,6 @@ defmodule MyKemudahan.Assets.AssetTag do
     asset_tag
     |> cast(attrs, [:tag, :serial, :status])
     |> validate_required([:tag, :serial])
-    |> put_change(:status, attrs["status"] || "active")
+    #|> put_change(:status, attrs["status"] || "active")
   end
 end

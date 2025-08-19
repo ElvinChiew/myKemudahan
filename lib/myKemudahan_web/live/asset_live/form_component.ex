@@ -36,7 +36,8 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
           />
           </div>
           <div class="w-[12rem]">
-          <.input field={@form[:image]} type="text" label="Image" />
+            <label class="block text-sm font-medium text-white">Image Upload</label>
+            <.live_file_input upload={@uploads.image} />
           </div>
         </div>
         <.input field={@form[:category_id]} type="select" label="Category" options={@category_options}/>
@@ -115,6 +116,13 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
       _ -> [%{tag: "", serial_number: ""}]
     end
 
+    socket =
+      allow_upload(socket, :image,
+        accept: ~w(.jpg .jpeg .png .gif),
+        max_entries: 1,
+        max_file_size: 5_000_000,
+        auto_upload: true)
+
     {:ok,
      socket
      |> assign(assigns)
@@ -149,6 +157,23 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
 
     asset_params_with_tags = Map.put(asset_params, "asset_tags", asset_tags)
     IO.inspect(asset_params_with_tags, label: "Final asset params with tags")
+
+    uploaded_files =
+      consume_uploaded_entries(socket, :image, fn %{path: path}, _entry ->
+        upload_dir = "priv/static/uploads"
+        File.mkdir_p!(upload_dir)
+
+        dest = Path.join(upload_dir, Path.basename(path))
+        File.cp!(path,dest)
+
+        {:ok, "/uploads/#{Path.basename(dest)}"}
+      end)
+
+    asset_params_with_tags =
+      case uploaded_files do
+        [image_url | _] -> Map.put(asset_params_with_tags, "image", image_url)
+        _ -> asset_params_with_tags
+      end
 
     save_asset(socket, socket.assigns.action, asset_params_with_tags)
   end

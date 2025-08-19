@@ -27,6 +27,7 @@ defmodule MyKemudahanWeb.Router do
 
     #asset unit individual
     live "/test1", Assetunit
+    live "/dumm", Dumm
 
     live "/reqstatus", Reqstatus
     live "/requser", Requser
