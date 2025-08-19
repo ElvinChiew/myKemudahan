@@ -1,0 +1,38 @@
+<.header>
+  Listing Asset tags
+</.header>
+
+<.table
+  id="asset_tags"
+  rows={@streams.asset_tags}
+  row_click={fn {_id, asset_tag} -> JS.navigate(~p"/asset_tags/#{asset_tag}") end}
+>
+  <:col :let={{_id, asset_tag}} label="Tag">{asset_tag.tag}</:col>
+  <:col :let={{_id, asset_tag}} label="Serial">{asset_tag.serial}</:col>
+  <:col :let={{_id, asset_tag}} label="Status">{asset_tag.status}</:col>
+  <:action :let={{_id, asset_tag}}>
+    <div class="sr-only">
+      <.link navigate={~p"/asset_tags/#{asset_tag}"}>Show</.link>
+    </div>
+    <.link patch={~p"/asset_tags/#{asset_tag}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, asset_tag}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: asset_tag.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:edit]} id="asset_tag-modal" show on_cancel={JS.patch(~p"/asset_tags")}>
+  <.live_component
+    module={MyKemudahanWeb.AssetTagLive.FormComponent}
+    id={@asset_tag.id}
+    title={@page_title}
+    action={@live_action}
+    asset_tag={@asset_tag}
+    patch={~p"/asset_tags"}
+  />
+</.modal>

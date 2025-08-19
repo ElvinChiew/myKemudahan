@@ -118,4 +118,62 @@ defmodule MyKemudahan.AssetsTest do
       assert %Ecto.Changeset{} = Assets.change_asset(asset)
     end
   end
+
+  describe "asset_tags" do
+    alias MyKemudahan.Assets.AssetTag
+
+    import MyKemudahan.AssetsFixtures
+
+    @invalid_attrs %{serial: nil, status: nil, tag: nil}
+
+    test "list_asset_tags/0 returns all asset_tags" do
+      asset_tag = asset_tag_fixture()
+      assert Assets.list_asset_tags() == [asset_tag]
+    end
+
+    test "get_asset_tag!/1 returns the asset_tag with given id" do
+      asset_tag = asset_tag_fixture()
+      assert Assets.get_asset_tag!(asset_tag.id) == asset_tag
+    end
+
+    test "create_asset_tag/1 with valid data creates a asset_tag" do
+      valid_attrs = %{serial: "some serial", status: "some status", tag: "some tag"}
+
+      assert {:ok, %AssetTag{} = asset_tag} = Assets.create_asset_tag(valid_attrs)
+      assert asset_tag.serial == "some serial"
+      assert asset_tag.status == "some status"
+      assert asset_tag.tag == "some tag"
+    end
+
+    test "create_asset_tag/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Assets.create_asset_tag(@invalid_attrs)
+    end
+
+    test "update_asset_tag/2 with valid data updates the asset_tag" do
+      asset_tag = asset_tag_fixture()
+      update_attrs = %{serial: "some updated serial", status: "some updated status", tag: "some updated tag"}
+
+      assert {:ok, %AssetTag{} = asset_tag} = Assets.update_asset_tag(asset_tag, update_attrs)
+      assert asset_tag.serial == "some updated serial"
+      assert asset_tag.status == "some updated status"
+      assert asset_tag.tag == "some updated tag"
+    end
+
+    test "update_asset_tag/2 with invalid data returns error changeset" do
+      asset_tag = asset_tag_fixture()
+      assert {:error, %Ecto.Changeset{}} = Assets.update_asset_tag(asset_tag, @invalid_attrs)
+      assert asset_tag == Assets.get_asset_tag!(asset_tag.id)
+    end
+
+    test "delete_asset_tag/1 deletes the asset_tag" do
+      asset_tag = asset_tag_fixture()
+      assert {:ok, %AssetTag{}} = Assets.delete_asset_tag(asset_tag)
+      assert_raise Ecto.NoResultsError, fn -> Assets.get_asset_tag!(asset_tag.id) end
+    end
+
+    test "change_asset_tag/1 returns a asset_tag changeset" do
+      asset_tag = asset_tag_fixture()
+      assert %Ecto.Changeset{} = Assets.change_asset_tag(asset_tag)
+    end
+  end
 end

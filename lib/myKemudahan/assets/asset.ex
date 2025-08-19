@@ -23,8 +23,8 @@ defmodule MyKemudahan.Assets.Asset do
   @doc false
   def changeset(asset, attrs) do
     asset
-    |> cast(attrs, [:name, :description, :cost_per_unit, :image, :status, :category_id])
-    |> validate_required([:name, :description, :cost_per_unit, :image, :status, :category_id])
+    |> cast(attrs, [:name, :description, :cost_per_unit, :image, :category_id])
+    |> validate_required([:name, :description, :cost_per_unit, :image, :category_id])
     |> cast_assoc(:asset_tags, with: &MyKemudahan.Assets.AssetTag.changeset/2)
     |> assoc_constraint(:category)
   end

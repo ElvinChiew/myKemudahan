@@ -46,12 +46,18 @@ defmodule MyKemudahanWeb.Router do
     #Asset CRUD section
     live "/assets", AssetLive.Index, :index
     live "/assets/new", AssetLive.Index, :new
-    live "/assets/fanum", AssetLive.Fanum, :fanum
-    live "/assets/fanum/:id/edit", AssetLive.Fanum, :edit
     live "/assets/:id/edit", AssetLive.Index, :edit
 
     live "/assets/:id", AssetLive.Show, :show
     live "/assets/:id/show/edit", AssetLive.Show, :edit
+
+    #asset_tag section
+    live "/asset_tags", AssetTagLive.Index, :index
+    #live "/asset_tags/new", AssetTagLive.Index, :new
+    live "/asset_tags/:id/edit", AssetTagLive.Index, :edit
+
+    live "/asset_tags/:id", AssetTagLive.Show, :show
+    live "/asset_tags/:id/show/edit", AssetTagLive.Show, :edit
 
 
   end

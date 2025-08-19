@@ -35,4 +35,20 @@ defmodule MyKemudahan.AssetsFixtures do
 
     asset
   end
+
+  @doc """
+  Generate a asset_tag.
+  """
+  def asset_tag_fixture(attrs \\ %{}) do
+    {:ok, asset_tag} =
+      attrs
+      |> Enum.into(%{
+        serial: "some serial",
+        status: "some status",
+        tag: "some tag"
+      })
+      |> MyKemudahan.Assets.create_asset_tag()
+
+    asset_tag
+  end
 end

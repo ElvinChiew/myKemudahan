@@ -133,7 +133,7 @@ defmodule MyKemudahan.Assets do
   end
 
   def list_asset_tags do
-    Repo.all(AssetTag)
+    Repo.all(AssetTag) |> Repo.preload(:asset)
   end
 
   @doc """
@@ -157,6 +157,7 @@ defmodule MyKemudahan.Assets do
 
   def get_asset_tag!(id), do:
     Repo.get!(AssetTag, id)
+    |> Repo.preload(:asset)
 
   @doc """
   Creates a asset.
@@ -194,8 +195,8 @@ defmodule MyKemudahan.Assets do
     |> Repo.update()
   end
 
-  def update_asset_tag(%AssetTag{} = asset, attrs) do
-    asset
+  def update_asset_tag(%AssetTag{} = asset_tag, attrs) do
+    asset_tag
     |> AssetTag.changeset(attrs)
     |> Repo.update()
   end
@@ -216,8 +217,8 @@ defmodule MyKemudahan.Assets do
     Repo.delete(asset)
   end
 
-  def delete_asset_tag(%AssetTag{} = assettag) do
-    Repo.delete(assettag)
+  def delete_asset_tag(%AssetTag{} = asset_tag) do
+    Repo.delete(asset_tag)
   end
 
   @doc """
@@ -246,7 +247,16 @@ defmodule MyKemudahan.Assets do
     Repo.aggregate(AssetTag, :count, :id)
   end
 
-  def change_asset_tag(%AssetTag{} = tag, attrs \\ %{}) do
-    AssetTag.changeset(tag, attrs)
+  def change_asset_tag(%AssetTag{} = asset_tag, attrs \\ %{}) do
+    AssetTag.changeset(asset_tag, attrs)
   end
+
+
+
+  #asset Tag liveview function
+
+  #def create_asset_tag(attrs \\ %{}) do
+  #  raise "TODO"
+  #end
+
 end
