@@ -17,4 +17,38 @@ defmodule MyKemudahan.AssetsFixtures do
 
     category
   end
+
+  @doc """
+  Generate a asset.
+  """
+  def asset_fixture(attrs \\ %{}) do
+    {:ok, asset} =
+      attrs
+      |> Enum.into(%{
+        cost_per_unit: "120.5",
+        description: "some description",
+        image: "some image",
+        name: "some name",
+        status: "some status"
+      })
+      |> MyKemudahan.Assets.create_asset()
+
+    asset
+  end
+
+  @doc """
+  Generate a asset_tag.
+  """
+  def asset_tag_fixture(attrs \\ %{}) do
+    {:ok, asset_tag} =
+      attrs
+      |> Enum.into(%{
+        serial: "some serial",
+        status: "some status",
+        tag: "some tag"
+      })
+      |> MyKemudahan.Assets.create_asset_tag()
+
+    asset_tag
+  end
 end

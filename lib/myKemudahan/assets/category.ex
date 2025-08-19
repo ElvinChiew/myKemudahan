@@ -5,6 +5,8 @@ defmodule MyKemudahan.Assets.Category do
   schema "categories" do
     field :name, :string
 
+    has_many :assets, MyKemudahan.Assets.Asset
+
     timestamps(type: :utc_datetime)
   end
 
