@@ -29,9 +29,39 @@ defmodule MyKemudahanWeb.Requser do
     {:noreply, assign(socket, filtered_assets: filtered_assets, selected_category: category_id)}
   end
 
-  def handle_event("submit_form", _params, socket) do
-    # Handle form submission here
-    {:noreply, socket}
+  def handle_event("submit_form", %{
+    "borrow_from" => borrow_from,
+    "borrow_to" => borrow_to,
+    "purpose" => purpose
+  }, socket) do
+    with {:ok, parsed_borrow_from} <- Date.from_iso8601(borrow_from),
+         {:ok, parsed_borrow_to} <- Date.from_iso8601(borrow_to) do
+
+      attrs = %{
+        borrow_from: parsed_borrow_from,
+        borrow_to: parsed_borrow_to,
+        purpose: purpose,
+        total_cost: socket.assigns.total_cost,
+      }
+
+      case MyKemudahan.Requests.create_request_with_items(attrs, socket.assigns.requested_items) do
+        {:ok, _result} ->
+          socket =
+            socket
+            |> put_flash(:info, "Request submitted successfully!")
+            |> assign(requested_items: [], total_cost: Decimal.new("0"))
+
+          {:noreply, socket}
+
+        {:error, _failed_operation, _failed_value, _changes_so_far} ->
+          socket =  put_flash(socket, :error, "Something went wrong. Please try again.")
+          {:noreply, socket}
+      end
+    else
+      _ ->
+          socket = put_flash(socket, :error, "Invalid date format. Please check your dates.")
+          {:noreply, socket}
+    end
   end
 
   def handle_event("add_item", %{"asset_id" => asset_id_str, "quantity" => quantity_str}, socket) do
@@ -110,11 +140,11 @@ defmodule MyKemudahanWeb.Requser do
         <!-- Category Select -->
         <div class="mb-6">
           <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Asset Category:</label>
+          <form phx-change="filter_by_category">
           <select
             name="category"
             id="category"
-            class="w-1/4 p-2 border rounded"
-            phx-change="filter_by_category">
+            class="w-1/4 p-2 border rounded">
             <option value="">All Categories</option>
             <%= for category <- @categories do %>
               <option value={category.id} selected={@selected_category == Integer.to_string(category.id)}>
@@ -122,6 +152,7 @@ defmodule MyKemudahanWeb.Requser do
               </option>
             <% end %>
           </select>
+          </form>
         </div>
 
         <!-- Asset Cards -->
@@ -174,8 +205,9 @@ defmodule MyKemudahanWeb.Requser do
     <div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
     <p class="text-3xl font-bold mb-4">Requested Asset List</p>
 
-    <div class="space-y-4">
-    <div class="flex flex-row gap-10">
+      <!-- Submit Button -->
+      <form id="confirm_form" phx-submit="submit_form">
+        <div class="flex flex-row gap-10">
           <!-- Borrow From Date -->
           <div>
             <label for="borrow_from" class="block text-sm font-medium text-gray-700 mb-1">Borrow From:</label>
@@ -183,8 +215,8 @@ defmodule MyKemudahanWeb.Requser do
               type="date"
               id="borrow_from"
               name="borrow_from"
-              form="confirm_form"
               class="w-full max-w-sm p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+              required
             />
           </div>
 
@@ -195,24 +227,25 @@ defmodule MyKemudahanWeb.Requser do
               type="date"
               id="borrow_to"
               name="borrow_to"
-              form="confirm_form"
               class="w-full max-w-sm p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+              required
             />
           </div>
-    </div>
+        </div>
 
-      <!-- Purpose Textarea -->
-      <div>
-        <label for="purpose" class="block text-sm font-medium text-gray-700 mb-1">Please state the purpose of the request:</label>
-        <textarea
-          id="purpose"
-          name="purpose"
-          rows="4"
-          form="confirm_form"
-          class="w-full max-w-lg p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-          placeholder="Type your reason here..."
-        ></textarea>
-      </div>
+        <!-- Purpose Textarea -->
+        <div>
+          <label for="purpose" class="block text-sm font-medium text-gray-700 mb-1">Please state the purpose of the request:</label>
+          <textarea
+            id="purpose"
+            name="purpose"
+            rows="4"
+            class="w-full max-w-lg p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+            placeholder="Type your reason here..."
+            required
+          ></textarea>
+                </div>
+      </form>
 
       <div class="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
         <table class="min-w-full text-sm text-left">
@@ -295,19 +328,16 @@ defmodule MyKemudahanWeb.Requser do
       </div>
 
       <!-- Submit Button -->
-      <form id="confirm_form" phx-submit="submit_form">
-        <div>
-          <button
-            type="submit"
-            class="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2 rounded-md transition"
-          >
-            Confirm Request
-          </button>
-        </div>
-      </form>
+      <div>
+        <button
+          type="submit"
+          form="confirm_form"
+          class="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2 rounded-md transition"
+        >
+          Confirm Request
+        </button>
+      </div>
     </div>
-    </div>
-
     """
   end
 end
