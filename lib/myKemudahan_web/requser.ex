@@ -120,6 +120,10 @@ defmodule MyKemudahanWeb.Requser do
     end
   end
 
+  def handle_event("go_to_menu", _params, socket) do
+    {:noreply, push_navigate(socket, to: "/usermenu")}
+  end
+
   defp recalc_total(items) do
     Enum.reduce(items, Decimal.new("0"), fn item, acc ->
       item_total = Decimal.mult(item.cost_per_unit, Decimal.new(item.quantity))
@@ -130,7 +134,7 @@ defmodule MyKemudahanWeb.Requser do
   def render(assigns) do
     ~H"""
     <div class="w-full mt-10">
-      <button class="bg-slate-950 text-white px-4 py-2 rounded-xl">Menu</button>
+      <button phx-click="go_to_menu" class="bg-slate-950 text-white px-4 py-2 rounded-xl">Menu</button>
     </div>
 
     <div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
