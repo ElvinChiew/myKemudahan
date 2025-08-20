@@ -4,16 +4,19 @@ defmodule MyKemudahanWeb.Requser do
   alias MyKemudahan.Assets
 
   def mount(_params, _session, socket) do
-    assets = Assets.list_assets() |> MyKemudahan.Repo.preload(:category)
+    all_assets = Assets.list_assets() |> MyKemudahan.Repo.preload(:category)
     categories = Assets.list_all_categories()
 
-    socket = assign(socket,
-      assets: assets,
+    socket =
+      assign(socket,
+      assets: all_assets,
       categories: categories,
       selected_category: nil,
-      filtered_assets: assets,
+      filtered_assets: all_assets,
       requested_items: [],
-      total_cost: Decimal.new("0")
+      total_cost: Decimal.new("0"),
+      current_page: 1,
+      page_size: 12
     )
 
     {:ok, socket}
@@ -26,7 +29,7 @@ defmodule MyKemudahanWeb.Requser do
       socket.assigns.assets |> Enum.filter(&(&1.category_id == String.to_integer(category_id)))
     end
 
-    {:noreply, assign(socket, filtered_assets: filtered_assets, selected_category: category_id)}
+    {:noreply, assign(socket, filtered_assets: filtered_assets, selected_category: category_id, current_page: 1)}
   end
 
   def handle_event("submit_form", %{
@@ -124,11 +127,26 @@ defmodule MyKemudahanWeb.Requser do
     {:noreply, push_navigate(socket, to: "/usermenu")}
   end
 
+  def handle_event("change_page", %{"page" => page_str}, socket) do
+    case Integer.parse(page_str) do
+      {page, ""} when page > 0 ->
+        {:noreply, assign(socket, current_page: page)}
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
   defp recalc_total(items) do
     Enum.reduce(items, Decimal.new("0"), fn item, acc ->
       item_total = Decimal.mult(item.cost_per_unit, Decimal.new(item.quantity))
       Decimal.add(acc, item_total)
     end)
+  end
+
+  defp paginated_assets(filtered_assets, current_page, page_size) do
+    filtered_assets
+    |> Enum.chunk_every(page_size)
+    |> Enum.at(current_page - 1, [])
   end
 
   def render(assigns) do
@@ -161,7 +179,7 @@ defmodule MyKemudahanWeb.Requser do
 
         <!-- Asset Cards -->
         <div class="flex flex-wrap gap-2">
-          <%= for asset <- @filtered_assets do %>
+        <%= for asset <- paginated_assets(@filtered_assets, @current_page, @page_size) do %>
             <div class="w-[13rem] bg-slate-700 rounded-xl shadow-xl p-3 flex flex-col gap-3">
               <!-- Image Placeholder -->
               <div class="w-full h-[10rem] bg-slate-300 rounded-lg flex items-center justify-center">
@@ -204,6 +222,54 @@ defmodule MyKemudahanWeb.Requser do
           <% end %>
         </div>
       </div>
+
+      <!-- Pagination Controls -->
+      <%
+        total_pages = max(Float.ceil(length(@filtered_assets) / @page_size), 1)
+        page_numbers = MyKemudahanWeb.PaginationHelpers.pagination_range(@current_page, total_pages)
+      %>
+
+    <div class="flex justify-center mt-6">
+      <nav class="inline-flex items-center space-x-2">
+        <!-- Prev Button -->
+        <button
+          type="button"
+          phx-click="change_page"
+          phx-value-page={@current_page - 1}
+          class={"px-3 py-2 rounded-md text-sm font-medium #{if @current_page == 1, do: "bg-gray-200 text-gray-400 cursor-not-allowed", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
+          disabled={@current_page == 1}
+        >
+          Prev
+        </button>
+
+        <!-- Page Numbers -->
+        <%= for page <- page_numbers do %>
+          <%= if page == "..." do %>
+            <span class="px-3 py-2 text-gray-500">...</span>
+          <% else %>
+            <button
+              type="button"
+              phx-click="change_page"
+              phx-value-page={page}
+              class={"px-3 py-2 rounded-md text-sm font-medium #{if page == @current_page, do: "bg-teal-600 text-white", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
+            >
+              <%= page %>
+            </button>
+          <% end %>
+        <% end %>
+
+        <!-- Next Button -->
+        <button
+          type="button"
+          phx-click="change_page"
+          phx-value-page={@current_page + 1}
+          class={"px-3 py-2 rounded-md text-sm font-medium #{if @current_page == total_pages, do: "bg-gray-200 text-gray-400 cursor-not-allowed", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
+          disabled={@current_page == total_pages}
+        >
+          Next
+        </button>
+      </nav>
+    </div>
     </div>
 
     <div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
