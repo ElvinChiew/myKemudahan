@@ -48,4 +48,71 @@
         <p class="text-xl font-bold mb-4">Tujuan 1 balablabala</p>
         <p class="text-xl font-bold mb-4">12/10/2024 - 15/12/2024</p>
       </div>
-    </div><!-- End 1 card status -->
+</div><!-- End 1 card status -->
+
+
+<div class="bg-slate-400 p-4 rounded">
+  <h2 class="text-xl font-semibold mb-4">My Requests</h2>
+
+  <table class="table-auto w-full bg-white border border-gray-300">
+    <thead>
+      <tr class="bg-gray-200">
+      <th class="border px-4 py-2 text-left">ID</th>
+        <th class="border px-4 py-2 text-left">Purpose</th>
+        <th class="border px-4 py-2 text-left">From</th>
+        <th class="border px-4 py-2 text-left">To</th>
+        <th class="border px-4 py-2 text-left">Status</th>
+        <th class="border px-4 py-2 text-left">Final Cost (RM)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= for request <- @requests do %>
+        <tr>
+        <td class="border px-4 py-2"><%= request.id %></td>
+          <td class="border px-4 py-2"><%= request.purpose %></td>
+          <td class="border px-4 py-2"><%= request.borrow_from %></td>
+          <td class="border px-4 py-2"><%= request.borrow_to %></td>
+          <td class="border px-4 py-2"><%= request.status %></td>
+          <td class="border px-4 py-2"><%= request.final_cost %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
+  <%= for request <- @requests do %>
+      <div class="flex flex-rows justify-between">
+        <div class="status-color">
+          <span class="inline-block px-3 py-1 text-sm font-semibold text-white bg-blue-700 rounded-full">
+            Sent
+          </span>
+          <span class="inline-block px-3 py-1 text-sm font-semibold text-white bg-green-700 rounded-full">
+            Approved
+          </span>
+          <span class="inline-block px-3 py-1 text-sm font-semibold text-white bg-yellow-400 rounded-full">
+            Pending
+          </span>
+          <span class="inline-block px-3 py-1 text-sm font-semibold text-white bg-red-700 rounded-full">
+            Rejected
+          </span>
+        </div>
+        <div class="button-calcel-detail">
+          <button class="bg-slate-950 text-white px-3 rounded-xl">
+            Cancel
+          </button>
+          <button class="bg-slate-950 text-white px-3 rounded-xl">
+            Detail
+          </button>
+        </div>
+      </div>
+
+      <!--           <td class="border px-4 py-2"><%= request.status %></td>
+          <td class="border px-4 py-2"><%= request.final_cost %></td> -->
+
+        <div class="flex flex-rows justify-between">
+        <p class="text-xl font-bold mb-4"><%= request.purpose %></p>
+        <p class="text-sm font-bold mb-4"><%= request.borrow_from %> - <%= request.borrow_to %></p>
+      </div>
+      <% end %>
+</div><!-- End 1 card status -->

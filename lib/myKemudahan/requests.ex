@@ -3,8 +3,7 @@ defmodule MyKemudahan.Requests do
   alias MyKemudahan.Repo
   alias MyKemudahan.Requests.{Request, RequestItem}
 
-  #import Ecto.Multi
-
+  import Ecto.Query
   def create_request_with_items(attrs, items) do
     Multi.new()
     |> Multi.insert(:request, Request.changeset(%Request{}, attrs))
@@ -28,4 +27,14 @@ defmodule MyKemudahan.Requests do
     end)
     |> Repo.transaction()
   end
+
+  def list_requests do
+    Repo.all(Request)
+  end
+
+  def list_user_requests(user_id) do
+    from(r in Request, where: r.user_id == ^user_id)
+    |> Repo.all()
+  end
+
 end
