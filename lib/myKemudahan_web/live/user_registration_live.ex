@@ -4,8 +4,11 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
   alias MyKemudahan.Accounts
   alias MyKemudahan.Accounts.User
 
+  import MyKemudahanWeb.AdminSidebar
+
   def render(assigns) do
     ~H"""
+    <.sidebar />
     <div class="min-h-screen flex items-center justify-center px-4">
       <div class="flex flex-row items-stretch">
         <div class="hidden lg:flex w-[420px] h-[520px] rounded-xl bg-zinc-100 px-8 py-10 text-950 dark:bg-gray-950 dark:text-gray-300 justify-center">

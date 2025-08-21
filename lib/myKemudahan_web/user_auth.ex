@@ -29,11 +29,19 @@ defmodule MyKemudahanWeb.UserAuth do
     token = Accounts.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
 
+    redirect_path =
+      cond do
+        user_return_to && user_return_to != "/" -> user_return_to
+        user.role == "admin" -> ~p"/assets"
+        true -> ~p"/usermenu"
+      end
+
     conn
     |> renew_session()
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
+    #|> redirect(to: user_return_to || signed_in_path(conn))
+    |> redirect(to: redirect_path)
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
@@ -226,4 +234,5 @@ defmodule MyKemudahanWeb.UserAuth do
   defp maybe_store_return_to(conn), do: conn
 
   defp signed_in_path(_conn), do: ~p"/"
+
 end

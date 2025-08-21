@@ -1,78 +1,85 @@
-<.header class="mt-5">
-  Listing Categories
-  <:actions>
-    <.link patch={~p"/categories/new"}>
-      <.button>New Category</.button>
-    </.link>
-  </:actions>
-</.header>
+<div class="flex">
+  <%= if @current_user && @current_user.role == "admin" do %>
+    <.sidebar/>
+  <% end %>
+  <div class="flex-1 ml-5">
+  <.header class="mt-5">
+    Listing Categories
+    <:actions>
+      <.link patch={~p"/categories/new"}>
+        <.button>New Category</.button>
+      </.link>
+    </:actions>
+  </.header>
 
-<.table
-  id="categories"
-  rows={@streams.categories}
-  row_click={fn {_id, category} -> JS.navigate(~p"/categories/#{category}") end}
->
-  <:col :let={{_id, category}} label="Name">{category.name}</:col>
-  <:action :let={{_id, category}}>
-    <div class="sr-only">
-      <.link navigate={~p"/categories/#{category}"}>Show</.link>
-    </div>
-    <.link patch={~p"/categories/#{category}/edit"}>Edit</.link>
-  </:action>
-  <:action :let={{id, category}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: category.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
-  </:action>
-</.table>
+  <.table
+    id="categories"
+    rows={@streams.categories}
+    row_click={fn {_id, category} -> JS.navigate(~p"/categories/#{category}") end}
+  >
+    <:col :let={{_id, category}} label="Name">{category.name}</:col>
+    <:action :let={{_id, category}}>
+      <div class="sr-only">
+        <.link navigate={~p"/categories/#{category}"}>Show</.link>
+      </div>
+      <.link patch={~p"/categories/#{category}/edit"}>Edit</.link>
+    </:action>
+    <:action :let={{id, category}}>
+      <.link
+        phx-click={JS.push("delete", value: %{id: category.id}) |> hide("##{id}")}
+        data-confirm="Are you sure?"
+      >
+        Delete
+      </.link>
+    </:action>
+  </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="category-modal" show on_cancel={JS.patch(~p"/categories")}>
-  <.live_component
-    module={MyKemudahanWeb.CategoryLive.FormComponent}
-    id={@category.id || :new}
-    title={@page_title}
-    action={@live_action}
-    category={@category}
-    patch={~p"/categories"}
-  />
-</.modal>
+  <.modal :if={@live_action in [:new, :edit]} id="category-modal" show on_cancel={JS.patch(~p"/categories")}>
+    <.live_component
+      module={MyKemudahanWeb.CategoryLive.FormComponent}
+      id={@category.id || :new}
+      title={@page_title}
+      action={@live_action}
+      category={@category}
+      patch={~p"/categories"}
+    />
+  </.modal>
 
-<%= if @total_count > @per_page do %>
-  <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+  <%= if @total_count > @per_page do %>
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
 
-    <% total_pages = Float.ceil(@total_count / @per_page) %>
+      <% total_pages = Float.ceil(@total_count / @per_page) %>
 
-    <!-- Previous -->
-    <.link
-      patch={~p"/categories?page=#{@page - 1}"}
-      class={"btn #{if @page <= 1, do: "opacity-50 pointer-events-none", else: ""}"}
-    >
-      Previous
-    </.link>
+      <!-- Previous -->
+      <.link
+        patch={~p"/categories?page=#{@page - 1}"}
+        class={"btn #{if @page <= 1, do: "opacity-50 pointer-events-none", else: ""}"}
+      >
+        Previous
+      </.link>
 
-    <!-- Numbered Pages -->
-    <%= for p <- pagination_range(@page, total_pages) do %>
-      <%= if p == "..." do %>
-        <span class="px-2 text-gray-500">...</span>
-      <% else %>
-        <.link
-          patch={~p"/categories?page=#{p}"}
-          class={"btn px-3 #{if p == @page, do: "bg-blue-600 text-white", else: ""}"}
-        >
-          <%= p %>
-        </.link>
+      <!-- Numbered Pages -->
+      <%= for p <- pagination_range(@page, total_pages) do %>
+        <%= if p == "..." do %>
+          <span class="px-2 text-gray-500">...</span>
+        <% else %>
+          <.link
+            patch={~p"/categories?page=#{p}"}
+            class={"btn px-3 #{if p == @page, do: "bg-blue-600 text-white", else: ""}"}
+          >
+            <%= p %>
+          </.link>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <!-- Next -->
-    <.link
-      patch={~p"/categories?page=#{@page + 1}"}
-      class={"btn #{if @page >= total_pages, do: "opacity-50 pointer-events-none", else: ""}"}
-    >
-      Next
-    </.link>
+      <!-- Next -->
+      <.link
+        patch={~p"/categories?page=#{@page + 1}"}
+        class={"btn #{if @page >= total_pages, do: "opacity-50 pointer-events-none", else: ""}"}
+      >
+        Next
+      </.link>
+    </div>
+  <% end %>
   </div>
-<% end %>
+</div>

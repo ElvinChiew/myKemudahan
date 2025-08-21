@@ -21,13 +21,12 @@ defmodule MyKemudahanWeb.Router do
   end
 
   scope "/", MyKemudahanWeb do
-    pipe_through :browser
+    pipe_through [:browser]
 
-    get "/", PageController, :home
+    live "/", Welcome
 
     live "/reqstatus", Reqstatus
     live "/requser", Requser
-    live "/welcome", Welcome
     live "/about", About
     live "/contact", Contact
     live "/usermenu", Usermenu
@@ -38,7 +37,6 @@ defmodule MyKemudahanWeb.Router do
     live "/categories/:id/edit", CategoryLive.Index, :edit
 
     live "/categories/:id", CategoryLive.Show, :show
-    live "/categories/:id/show/edit", CategoryLive.Show, :edit
 
     #Asset CRUD section
     live "/assets", AssetLive.Index, :index
@@ -55,7 +53,14 @@ defmodule MyKemudahanWeb.Router do
 
     live "/asset_tags/:id", AssetTagLive.Show, :show
     live "/asset_tags/:id/show/edit", AssetTagLive.Show, :edit
+  end
 
+  pipeline :require_admin do
+    plug MyKemudahanWeb.Plugs.RequireAdmin
+  end
+
+  scope "/admin", MyKemudahanWeb do
+    pipe_through [:browser, :require_admin]
 
   end
 

@@ -7,6 +7,11 @@ defmodule MyKemudahan.Requests.Request do
     field :borrow_to, :date
     field :purpose, :string
     field :total_cost, :decimal
+    field :discount_amount, :decimal
+    field :final_cost, :decimal
+    field :status, :string
+
+    belongs_to :user, MyKemudahan.Accounts.User
 
     has_many :request_items, MyKemudahan.Requests.RequestItem
 

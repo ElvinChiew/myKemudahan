@@ -8,6 +8,7 @@ defmodule MyKemudahanWeb.Layouts do
   layout on both `use MyKemudahanWeb, :controller` and
   `use MyKemudahanWeb, :live_view`.
   """
+  import MyKemudahanWeb.AdminSidebar
   use MyKemudahanWeb, :html
 
   embed_templates "layouts/*"
