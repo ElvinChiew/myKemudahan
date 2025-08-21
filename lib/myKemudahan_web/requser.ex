@@ -1,9 +1,18 @@
 defmodule MyKemudahanWeb.Requser do
+alias MyKemudahan.Accounts
   use MyKemudahanWeb, :live_view
 
   alias MyKemudahan.Assets
+  alias MyKemudahan.Accounts
+
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
+
 
   def mount(_params, _session, socket) do
+    user = socket.assigns.current_user
+
+    IO.inspect(user.full_name, label: "<----- This is the user full_name ---->")
+
     all_assets = Assets.list_assets() |> MyKemudahan.Repo.preload(:category)
     categories = Assets.list_all_categories()
 
@@ -15,8 +24,12 @@ defmodule MyKemudahanWeb.Requser do
       filtered_assets: all_assets,
       requested_items: [],
       total_cost: Decimal.new("0"),
+      discount_amount: Decimal.new("0"),
+      final_cost: Decimal.new("0"),
       current_page: 1,
-      page_size: 12
+      page_size: 12,
+      user_id: user.id,
+      status: "sent"
     )
 
     {:ok, socket}
@@ -45,6 +58,10 @@ defmodule MyKemudahanWeb.Requser do
         borrow_to: parsed_borrow_to,
         purpose: purpose,
         total_cost: socket.assigns.total_cost,
+        user_id: socket.assigns.user_id,
+        status: "sent",
+        discount_amount: Decimal.new("0"),
+        final_cost: socket.assigns.total_cost
       }
 
       case MyKemudahan.Requests.create_request_with_items(attrs, socket.assigns.requested_items) do

@@ -14,13 +14,13 @@ defmodule MyKemudahan.Requests.Request do
     belongs_to :user, MyKemudahan.Accounts.User
 
     has_many :request_items, MyKemudahan.Requests.RequestItem
-
     timestamps()
   end
 
   def changeset(request, attrs) do
     request
-    |> cast(attrs, [:borrow_from, :borrow_to, :purpose, :total_cost])
-    |> validate_required([:borrow_from, :borrow_to, :purpose])
+    |> cast(attrs, [:borrow_from, :borrow_to, :purpose, :total_cost, :discount_amount, :final_cost, :status, :user_id])
+    |> validate_required([:borrow_from, :borrow_to, :purpose, :user_id])
+    |> assoc_constraint(:user)
   end
 end
