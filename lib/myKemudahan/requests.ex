@@ -29,12 +29,16 @@ defmodule MyKemudahan.Requests do
   end
 
   def list_all_requests do
-    Repo.all(Request)
+    Request
+    |> preload(:user)
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
   end
 
   def list_user_requests(user_id) do
     from(r in Request,
     where: r.user_id == ^user_id,
+    preload: [:user],
     order_by: [desc: r.inserted_at])
 
     |> Repo.all()
@@ -43,6 +47,7 @@ defmodule MyKemudahan.Requests do
   def list_user_requests_by_status(user_id, status) do
     from(r in Request,
       where: r.user_id == ^user_id and r.status == ^status,
+      preload: [:user],
       order_by: [desc: r.inserted_at]
     )
     |> Repo.all()
@@ -52,7 +57,20 @@ defmodule MyKemudahan.Requests do
 def list_requests_by_status(status) do
   Request
   |> where(status: ^status)
+  |> preload(:user)
   |> order_by(desc: :inserted_at)
   |> Repo.all()
 end
+
+  # Add this function to get a single request by ID
+  def get_request!(id) do
+    Request
+    |> Repo.get!(id)
+    |> Repo.preload([:user, request_items: :item])
+  end
+
+  def list_request_items(request_id) do
+    from(i in RequestItem, where: i.request_id == ^request_id, preload: :item)
+    |> Repo.all()
+  end
 end
