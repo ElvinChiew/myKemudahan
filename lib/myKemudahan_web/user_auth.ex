@@ -32,7 +32,7 @@ defmodule MyKemudahanWeb.UserAuth do
     redirect_path =
       cond do
         user_return_to && user_return_to != "/" -> user_return_to
-        user.role == "admin" -> ~p"/assets"
+        user.role == "admin" -> ~p"/request_list"
         true -> ~p"/usermenu"
       end
 

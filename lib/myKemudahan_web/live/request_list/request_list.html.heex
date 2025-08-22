@@ -1,0 +1,260 @@
+<div class="flex">
+<.sidebar />
+<div class="flex-1">
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Request Management</h1>
+  </div>
+
+<!-- Status Summary Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+  <!-- Total Card -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer" 
+       phx-click="filter_status" phx-value-status="all">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-gray-500 mb-1">Total Requests</div>
+          <div class="text-3xl font-bold text-gray-800"><%= @status_counts.total %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-gray-400 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <span>All requests in the system</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sent Card -->
+  <div class="bg-white rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+       phx-click="filter_status" phx-value-status="sent">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-blue-600 mb-1">Sent</div>
+          <div class="text-3xl font-bold text-blue-800"><%= @status_counts.sent %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="w-full bg-blue-100 rounded-full h-2">
+          <div class="bg-blue-500 h-2 rounded-full" style={"width: #{percentage(@status_counts.sent, @status_counts.total)}%"}>
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-blue-600">
+          <%= percentage(@status_counts.sent, @status_counts.total) %>% of total
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Card -->
+  <div class="bg-white rounded-xl shadow-md border border-amber-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+       phx-click="filter_status" phx-value-status="pending">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-amber-600 mb-1">Pending</div>
+          <div class="text-3xl font-bold text-amber-800"><%= @status_counts.pending %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="w-full bg-amber-100 rounded-full h-2">
+          <div class="bg-amber-500 h-2 rounded-full" style={"width: #{percentage(@status_counts.pending, @status_counts.total)}%"}>
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-amber-600">
+          <%= percentage(@status_counts.pending, @status_counts.total) %>% of total
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approved Card -->
+  <div class="bg-white rounded-xl shadow-md border border-green-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+       phx-click="filter_status" phx-value-status="approved">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-green-600 mb-1">Approved</div>
+          <div class="text-3xl font-bold text-green-800"><%= @status_counts.approved %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="w-full bg-green-100 rounded-full h-2">
+          <div class="bg-green-500 h-2 rounded-full" style={"width: #{percentage(@status_counts.approved, @status_counts.total)}%"}>
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-green-600">
+          <%= percentage(@status_counts.approved, @status_counts.total) %>% of total
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejected Card -->
+  <div class="bg-white rounded-xl shadow-md border border-red-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+       phx-click="filter_status" phx-value-status="rejected">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-red-600 mb-1">Rejected</div>
+          <div class="text-3xl font-bold text-red-800"><%= @status_counts.rejected %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="w-full bg-red-100 rounded-full h-2">
+          <div class="bg-red-500 h-2 rounded-full" style={"width: #{percentage(@status_counts.rejected, @status_counts.total)}%"}>
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-red-600">
+          <%= percentage(@status_counts.rejected, @status_counts.total) %>% of total
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+
+  <!-- Status Filter Tabs -->
+  <div class="mb-6 flex border-b border-gray-200">
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "all", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="all">
+      All Requests
+    </button>
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "sent", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="sent">
+      Sent
+    </button>
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "pending", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="pending">
+      Pending
+    </button>
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "approved", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="approved">
+      Approved
+    </button>
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "rejected", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="rejected">
+      Rejected
+    </button>
+  </div>
+
+  <!-- Requests Table -->
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final Cost</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <%= for request <- @requests do %>
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#<%= request.id %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              User #<%= request.user_id %>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-900"><%= request.purpose %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= request.borrow_from %> - <%= request.borrow_to %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <%= case request.status do %>
+                <% "sent" -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-blue-800 bg-blue-100 rounded-full">
+                    Sent
+                  </span>
+                <% "approved" -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">
+                    Approved
+                  </span>
+                <% "pending" -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-amber-800 bg-amber-100 rounded-full">
+                    Pending
+                  </span>
+                <% "rejected" -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
+                    Rejected
+                  </span>
+                <% _ -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-gray-800 bg-gray-100 rounded-full">
+                    Unknown
+                  </span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= if request.final_cost do %>
+                RM<%= request.final_cost %>
+              <% else %>
+                -
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <button class="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
+              <%= if request.status in ["sent", "pending"] do %>
+                <button class="text-green-600 hover:text-green-900 mr-3">Approve</button>
+                <button class="text-red-600 hover:text-red-900">Reject</button>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <%= if Enum.empty?(@requests) do %>
+      <div class="text-center py-12">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">No requests found</h3>
+        <p class="mt-1 text-gray-500">There are no requests with the selected status.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+</div>
+</div>

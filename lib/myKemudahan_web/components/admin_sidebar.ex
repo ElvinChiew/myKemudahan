@@ -18,7 +18,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
         <!-- Section: Overview -->
         <div>
           <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">Overview</h2>
-          <a href="#overview"
+          <a href="/request_list"
             class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition bg-slate-800"
             aria-current="page"
             title="Dashboard Overview">

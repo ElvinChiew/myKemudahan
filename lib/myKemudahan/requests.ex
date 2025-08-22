@@ -28,13 +28,31 @@ defmodule MyKemudahan.Requests do
     |> Repo.transaction()
   end
 
-  def list_requests do
+  def list_all_requests do
     Repo.all(Request)
   end
 
   def list_user_requests(user_id) do
-    from(r in Request, where: r.user_id == ^user_id)
+    from(r in Request,
+    where: r.user_id == ^user_id,
+    order_by: [desc: r.inserted_at])
+
     |> Repo.all()
   end
 
+  def list_user_requests_by_status(user_id, status) do
+    from(r in Request,
+      where: r.user_id == ^user_id and r.status == ^status,
+      order_by: [desc: r.inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  # In lib/myKemudahan/requests.ex
+def list_requests_by_status(status) do
+  Request
+  |> where(status: ^status)
+  |> order_by(desc: :inserted_at)
+  |> Repo.all()
+end
 end

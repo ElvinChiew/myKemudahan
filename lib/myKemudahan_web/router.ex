@@ -31,6 +31,9 @@ defmodule MyKemudahanWeb.Router do
     live "/contact", Contact
     live "/usermenu", Usermenu
 
+    #request list admin
+    live "/request_list", RequestList
+
     #Asset CAtegory Section
     live "/categories", CategoryLive.Index, :index
     live "/categories/new", CategoryLive.Index, :new
@@ -53,6 +56,7 @@ defmodule MyKemudahanWeb.Router do
 
     live "/asset_tags/:id", AssetTagLive.Show, :show
     live "/asset_tags/:id/show/edit", AssetTagLive.Show, :edit
+
   end
 
   pipeline :require_admin do
