@@ -17,6 +17,8 @@ defmodule MyKemudahanWeb.Reqstatus do
       |> assign(:requests, requests)
       |> assign(:status_filter, "all")
       |> assign(:current_user, user)
+      |> assign(:selected_request, nil)
+      |> assign(:show_details, false)
 
     {:ok, socket}
   end
@@ -44,4 +46,22 @@ defmodule MyKemudahanWeb.Reqstatus do
   def handle_event("go_to_menu", _params, socket) do
     {:noreply, push_navigate(socket, to: "/usermenu")}
   end
+
+  def handle_event("view_details", %{"id" => request_id}, socket) do
+    # Get the full request with preloaded items
+    request = Requests.get_request!(request_id)
+
+    {:noreply,
+     socket
+     |> assign(:selected_request, request)
+     |> assign(:show_details, true)}
+  end
+
+  def handle_event("close_details", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:selected_request, nil)
+     |> assign(:show_details, false)}
+  end
+
 end

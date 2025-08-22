@@ -66,7 +66,7 @@ end
   def get_request!(id) do
     Request
     |> Repo.get!(id)
-    |> Repo.preload([:user, request_items: :item])
+    |> Repo.preload([:user, request_items: :asset])
   end
 
   def list_request_items(request_id) do
