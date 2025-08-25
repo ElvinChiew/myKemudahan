@@ -173,6 +173,22 @@
 <p class="text-3xl font-bold">Request Lists</p>
 </div>
 
+<form phx-submit="filter_by_date" class="flex gap-4 items-end mb-6">
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">From</label>
+    <input type="date" name="from_date" class="form-input rounded-md border-gray-300" value={@from_date || ""}/>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">To</label>
+    <input type="date" name="to_date" class="form-input rounded-md border-gray-300" value={@to_date || ""}/>
+  </div>
+  <div>
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+      Filter
+    </button>
+  </div>
+</form>
+
   <!-- Status Filter Tabs -->
   <div class="mb-6 flex border-b border-gray-200">
     <button 
