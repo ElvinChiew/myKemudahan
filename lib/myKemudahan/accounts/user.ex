@@ -12,6 +12,8 @@ defmodule MyKemudahan.Accounts.User do
     field :confirmed_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
+
+    has_many :request, MyKemudahan.Requests.Request
   end
 
   @doc """

@@ -1,22 +1,34 @@
 defmodule MyKemudahanWeb.CategoryLive.Index do
   use MyKemudahanWeb, :live_view
 
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
+
   alias MyKemudahan.Assets
   alias MyKemudahan.Assets.Category
 
   import MyKemudahanWeb.PaginationHelpers
+  import MyKemudahanWeb.AdminSidebar
 
   @per_page 10
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:page, 1)
-     |> assign(:per_page, @per_page)
-     |> assign(:category, nil)
-     |> assign(:total_count, Assets.count_categories())
-     |> stream(:categories, Assets.list_categories(1, @per_page))}
+    user = socket.assigns.current_user
+    cond do
+      is_nil(user) or user.role != "admin" ->
+        {:ok,
+         socket
+         |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
+         |> Phoenix.LiveView.redirect(to: "/")}
+      true ->
+        {:ok,
+         socket
+         |> assign(:page, 1)
+         |> assign(:per_page, @per_page)
+         |> assign(:category, nil)
+         |> assign(:total_count, Assets.count_categories())
+         |> stream(:categories, Assets.list_categories(1, @per_page))}
+    end
   end
 
   @impl true

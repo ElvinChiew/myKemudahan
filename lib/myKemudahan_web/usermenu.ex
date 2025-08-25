@@ -24,7 +24,7 @@ defmodule MyKemudahanWeb.Usermenu do
           </p>
 
           <div class="flex justify-end mt-5">
-            <button class="bg-teal-500 rounded-2xl px-3 py-1 text-white">Check Status</button>
+            <button phx-click="to_request_status" class="bg-teal-500 rounded-2xl px-3 py-1 text-white">Check Status</button>
           </div>
         </div>
       </div>
@@ -34,5 +34,9 @@ defmodule MyKemudahanWeb.Usermenu do
 
   def handle_event("go_to_requser", _params, socket) do
     {:noreply, push_navigate(socket, to: "/requser")}
+  end
+
+  def handle_event("to_request_status", _params, socket) do
+    {:noreply, push_navigate(socket, to: "/reqstatus")}
   end
 end

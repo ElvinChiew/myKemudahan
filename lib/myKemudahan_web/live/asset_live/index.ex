@@ -1,12 +1,25 @@
 defmodule MyKemudahanWeb.AssetLive.Index do
   use MyKemudahanWeb, :live_view
 
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
+
   alias MyKemudahan.Assets
   alias MyKemudahan.Assets.Asset
 
+  import MyKemudahanWeb.AdminSidebar
+
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :assets, Assets.list_assets())}
+    user = socket.assigns.current_user
+    cond do
+      is_nil(user) or user.role != "admin" ->
+        {:ok,
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
+        |> Phoenix.LiveView.redirect(to: "/")}
+      true ->
+      {:ok, stream(socket, :assets, Assets.list_assets())}
+    end
   end
 
   @impl true
