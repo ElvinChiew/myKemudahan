@@ -35,8 +35,6 @@ defmodule MyKemudahanWeb.Router do
     live "/usermenu", Usermenu
   end
 
-
-
   scope "/", MyKemudahanWeb do
     pipe_through [:browser, :require_admin]
 
