@@ -18,45 +18,162 @@ defmodule MyKemudahanWeb.RequestList do
     sent: count_by_status(requests, "sent"),
     pending: count_by_status(requests, "pending"),
     approved: count_by_status(requests, "approved"),
-    rejected: count_by_status(requests, "rejected")
+    rejected: count_by_status(requests, "rejected"),
+    cancelled: count_by_status(requests, "cancelled"),
   }
+
+  per_page = 10
+  total_pages = max(ceil(length(requests) / per_page), 1)
+  paginated_requests = Enum.slice(requests, 0, per_page)
 
     socket =
       socket
-      |> assign(:requests, requests)
+      |> assign(:requests,paginated_requests)
       |> assign(:status_filter, "all")
       |> assign(:status_counts, status_counts)
       |> assign(:page_title, "Admin - All Requests")
       |> assign(:all_requests, requests)
+      |> assign(:selected_request, nil)
+      |> assign(:show_details, false)
+      |> assign(:discount_amount, "")
+      |> assign(:page, 1)
+      |> assign(:per_page, per_page)
+      |> assign(:total_pages, total_pages)
 
     {:ok, socket}
   end
 
   # Handle Tabs Click
   def handle_event("filter_status", %{"status" => status}, socket) do
-
     all_requests = Requests.list_all_requests()
+    filtered_requests = apply_status_filter(all_requests, status)
 
-    filtered_requests =
-      case status do
-        "all" -> all_requests
-        _ -> Requests.list_requests_by_status(status)
-      end
+    total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
+    paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
 
     status_counts = %{
       total: length(all_requests),
       sent: Enum.count(all_requests, &(&1.status == "sent")),
       pending: Enum.count(all_requests, &(&1.status == "pending")),
       approved: Enum.count(all_requests, &(&1.status == "approved")),
-      rejected: Enum.count(all_requests, &(&1.status == "rejected"))
+      rejected: Enum.count(all_requests, &(&1.status == "rejected")),
+      cancelled: Enum.count(all_requests, &(&1.status == "cancelled"))
     }
 
     {:noreply,
-      assign(socket,
-        requests: filtered_requests,
-        status_filter: status,
-        status_counts: status_counts
-      )}
+     assign(socket,
+       requests: paginated_requests,
+       all_requests: filtered_requests, # Store filtered requests for pagination
+       status_filter: status,
+       status_counts: status_counts,
+       page: 1,
+       total_pages: total_pages
+     )}
+  end
+
+  def handle_event("view_details", %{"id" => request_id}, socket) do
+    request = Requests.get_request!(request_id)
+    {:noreply,
+     socket
+     |> assign(:selected_request, request)
+     |> assign(:discount_amount, request.discount_amount || "")
+     |> assign(:show_details, true)}
+  end
+
+  def handle_event("update_discount", %{"discount_amount" => discount_amount}, socket) do
+    {:noreply, assign(socket, :discount_amount, discount_amount)}
+  end
+
+  def handle_event("apply_discount", %{"discount_amount" => discount_amount}, socket) do
+    case parse_discount_amount(discount_amount) do
+      {:ok, decimal} ->
+        if Decimal.compare(decimal, Decimal.new("0")) == :gt do
+          case Requests.apply_discount(socket.assigns.selected_request.id, decimal) do
+            {:ok, updated_request} ->
+              # Refresh the requests list
+              all_requests = Requests.list_all_requests()
+              filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+              paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+
+              {:noreply,
+               socket
+               |> assign(:selected_request, updated_request)
+               |> assign(:requests, paginated_requests)
+               |> assign(:all_requests, all_requests)
+               |> put_flash(:info, "Discount applied successfully")}
+
+            {:error, _changeset} ->
+              {:noreply,
+               socket
+               |> put_flash(:error, "Failed to apply discount")}
+          end
+        else
+          {:noreply,
+           socket
+           |> put_flash(:error, "Please enter a valid discount amount greater than 0")}
+        end
+
+      :error ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Please enter a valid number")}
+    end
+  end
+
+  # Helper function to parse discount amount
+  defp parse_discount_amount(nil), do: :error
+  defp parse_discount_amount(""), do: :error
+  defp parse_discount_amount(amount) when is_binary(amount) do
+    case Decimal.parse(amount) do
+      {decimal, ""} -> {:ok, decimal}
+      _ -> :error
+    end
+  end
+  defp parse_discount_amount(_), do: :error
+
+  def handle_event("remove_discount", _, socket) do
+    case Requests.remove_discount(socket.assigns.selected_request.id) do
+      {:ok, updated_request} ->
+        # Refresh the requests list
+        all_requests = Requests.list_all_requests()
+        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+
+        {:noreply,
+         socket
+         |> assign(:selected_request, updated_request)
+         |> assign(:discount_amount, "")
+         |> assign(:requests, filtered_requests)
+         |> assign(:all_requests, all_requests)
+         |> put_flash(:info, "Discount removed successfully")}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to remove discount")}
+    end
+  end
+
+  def handle_event("paginate", %{"page" => page}, socket) do
+    page = String.to_integer(page)
+    filtered_requests = socket.assigns.all_requests
+    total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
+    paginated_requests = paginate_requests(filtered_requests, page, socket.assigns.per_page)
+
+    {:noreply,
+     socket
+     |> assign(:requests, paginated_requests)
+     |> assign(:page, page)
+     |> assign(:total_pages, total_pages)}
+  end
+
+  defp apply_status_filter(requests, "all"), do: requests
+  defp apply_status_filter(requests, status), do: Enum.filter(requests, &(&1.status == status))
+
+  def handle_event("close_details", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:selected_request, nil)
+     |> assign(:show_details, false)}
   end
 
   defp percentage(part, whole) when whole > 0 do
@@ -67,5 +184,28 @@ defmodule MyKemudahanWeb.RequestList do
 
   defp count_by_status(requests, status) do
     Enum.count(requests, &(&1.status == status))
+  end
+
+  defp discount_percentage(request) do
+    total_cost = request.total_cost
+    discount_amount = request.discount_amount
+
+    if total_cost && discount_amount do
+      case Decimal.compare(total_cost, Decimal.new("0")) do
+        :gt ->
+          total_float = Decimal.to_float(total_cost)
+          discount_float = Decimal.to_float(discount_amount)
+          (discount_float / total_float) * 100
+        _ ->
+          0
+      end
+    else
+      0
+    end
+  end
+
+  defp paginate_requests(requests, page, per_page) do
+    start_index = (page - 1) * per_page
+    Enum.slice(requests, start_index, per_page)
   end
 end

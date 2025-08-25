@@ -140,7 +140,34 @@
       </div>
     </div>
   </div>
+
+  <!-- Cancelled Card -->
+  <div class="bg-white rounded-xl shadow-md border border-slate-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+      phx-click="filter_status" phx-value-status="cancelled">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium text-slate-600 mb-1">Cancelled</div>
+          <div class="text-3xl font-bold text-slate-800"><%= @status_counts.cancelled %></div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="w-full bg-slate-100 rounded-full h-2">
+          <div class="bg-slate-500 h-2 rounded-full" style={"width: #{percentage(@status_counts.cancelled, @status_counts.total)}%"}>
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-slate-600">
+          <%= percentage(@status_counts.cancelled, @status_counts.total) %>% of total
+        </div>
+      </div>
     </div>
+  </div>
+  </div>
 
   <!-- Status Filter Tabs -->
   <div class="mb-6 flex border-b border-gray-200">
@@ -173,6 +200,12 @@
       phx-click="filter_status" 
       phx-value-status="rejected">
       Rejected
+    </button>
+    <button 
+      class={"py-2 px-4 font-medium border-b-2 #{if @status_filter == "cancelled", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+      phx-click="filter_status" 
+      phx-value-status="cancelled">
+      Cancelled
     </button>
   </div>
 
@@ -221,9 +254,13 @@
                   <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
                     Rejected
                   </span>
+                <% "cancelled" -> %>
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-slate-800 bg-slate-100 rounded-full">
+                    Cancelled
+                  </span>
                 <% _ -> %>
-                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-gray-800 bg-gray-100 rounded-full">
-                    Unknown
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-slate-800 bg-slate-100 rounded-full">
+                    Cancelled
                   </span>
               <% end %>
             </td>
@@ -235,7 +272,12 @@
               <% end %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button class="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
+              <button 
+                phx-click="view_details" 
+                phx-value-id={request.id}
+                class="text-indigo-600 hover:text-indigo-900 mr-3">
+                View
+              </button>
               <%= if request.status in ["sent", "pending"] do %>
                 <button class="text-green-600 hover:text-green-900 mr-3">Approve</button>
                 <button class="text-red-600 hover:text-red-900">Reject</button>
@@ -257,6 +299,260 @@
       </div>
     <% end %>
   </div>
+
+<!-- Pagination Controls -->
+<%= if @total_pages > 1 do %>
+  <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm text-gray-700">
+          Showing <span class="font-medium"><%= min((@page - 1) * @per_page + 1, length(@all_requests)) %></span>
+          to <span class="font-medium"><%= min(@page * @per_page, length(@all_requests)) %></span>
+          of <span class="font-medium"><%= length(@all_requests) %></span> results
+        </p>
+      </div>
+      <div>
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <!-- Previous Page -->
+          <button
+            phx-click="paginate"
+            phx-value-page={@page - 1}
+            class={"relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 #{if @page == 1, do: "opacity-50 cursor-not-allowed", else: ""}"}
+            disabled={@page == 1}
+          >
+            <span class="sr-only">Previous</span>
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <!-- Page Numbers -->
+          <%= for page_number <- max(1, @page - 2)..min(@total_pages, @page + 2) do %>
+            <button
+              phx-click="paginate"
+              phx-value-page={page_number}
+              class={"relative inline-flex items-center px-4 py-2 border text-sm font-medium #{if page_number == @page, do: "z-10 bg-blue-50 border-blue-500 text-blue-600", else: "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}"}
+            >
+              <%= page_number %>
+            </button>
+          <% end %>
+
+          <!-- Next Page -->
+          <button
+            phx-click="paginate"
+            phx-value-page={@page + 1}
+            class={"relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 #{if @page == @total_pages, do: "opacity-50 cursor-not-allowed", else: ""}"}
+            disabled={@page == @total_pages}
+          >
+            <span class="sr-only">Next</span>
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+<% end %>
+
 </div>
 </div>
 </div>
+
+<!-- Modal for request details -->
+<%= if @show_details && @selected_request do %>
+  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+      <!-- Modal header -->
+      <div class="flex justify-between items-center pb-4 border-b">
+        <h3 class="text-xl font-semibold text-gray-900">Request Details</h3>
+        <button 
+          phx-click="close_details" 
+          class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal content -->
+      <div class="mt-4">
+        <!-- Basic request information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">User</h4>
+            <p class="text-lg font-semibold">
+              <%= if @selected_request.user do %>
+                <%= @selected_request.user.full_name %>
+              <% else %>
+                User #<%= @selected_request.user_id %>
+              <% end %>
+            </p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Status</h4>
+            <span class={
+              [
+                "inline-block px-2 py-1 text-xs font-semibold rounded-full",
+                case @selected_request.status do
+                  "sent" -> "bg-blue-100 text-blue-800"
+                  "pending" -> "bg-amber-100 text-amber-800"
+                  "approved" -> "bg-green-100 text-green-800"
+                  "rejected" -> "bg-red-100 text-red-800"
+                  "cancelled" -> "bg-slate-100 text-slate-800"
+                  _ -> "bg-gray-100 text-gray-800"
+                end
+              ]
+            }>
+              <%= String.capitalize(@selected_request.status) %>
+            </span>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Purpose</h4>
+            <p class="text-md"><%= @selected_request.purpose %></p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Borrow Period</h4>
+            <p class="text-md">
+              <%= @selected_request.borrow_from %> to <%= @selected_request.borrow_to %>
+            </p>
+          </div>
+        </div>
+
+        <!-- Cost information -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Total Cost</h4>
+            <p class="text-lg font-semibold">RM<%= @selected_request.total_cost || "0.00" %></p>
+          </div>
+
+          <%= if not Decimal.equal?(@selected_request.discount_amount || Decimal.new("0"), Decimal.new("0")) do %>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Discount</h4>
+              <p class="text-lg font-semibold">RM<%= @selected_request.discount_amount || "0.00" %></p>
+            </div>
+          <% end %>
+
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Final Cost</h4>
+            <p class="text-lg font-semibold text-green-600">RM<%= @selected_request.final_cost || "0.00" %></p>
+          </div>
+        </div>
+
+        <!-- Discount Management - MOVED OUTSIDE the cost grid -->
+        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+          <h4 class="text-lg font-semibold mb-3 text-blue-800">Discount Management</h4>
+          
+          <form phx-submit="apply_discount">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Discount Amount (RM)</label>
+              <input 
+                type="number" 
+                name="discount_amount" 
+                value={@discount_amount}
+                phx-change="update_discount"
+                step="0.01"
+                min="0"
+                max={@selected_request.total_cost || "0"}
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter discount amount"
+              />
+            </div>
+            
+            <div>
+              <button 
+                type="submit"
+                class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                Apply Discount
+              </button>
+            </div>
+            
+            <div>
+              <button 
+                type="button"
+                phx-click="remove_discount"
+                class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                Remove Discount
+              </button>
+            </div>
+          </div>
+          </form>
+
+          <%= if @selected_request.discount_amount && Decimal.compare(@selected_request.discount_amount, Decimal.new("0")) == :gt do %>
+            <div class="mt-3 p-3 bg-blue-100 rounded-md">
+              <p class="text-sm text-blue-800">
+                <strong>Current discount:</strong> RM<%= @selected_request.discount_amount %>
+                (<%= round(discount_percentage(@selected_request)) %>% of total cost)
+              </p>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Requested items table -->
+        <div class="mb-6">
+          <h4 class="text-lg font-semibold mb-4">Requested Items</h4>
+          <div class="overflow-x-auto">
+            <table class="min-w-full table-auto">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost per Unit</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <%= for item <- @selected_request.request_items do %>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">
+                        <%= if item.asset do %>
+                          <%= item.asset.name %>
+                        <% else %>
+                          Item #<%= item.asset_id %>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900"><%= item.quantity %></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">RM<%= item.cost_per_unit %></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">
+                        RM<%= Decimal.mult(item.quantity, item.cost_per_unit) |> Decimal.to_string() %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+          <div>
+            <span class="font-medium">Submitted:</span> 
+            <%= @selected_request.inserted_at %>
+          </div>
+          <div>
+            <span class="font-medium">Last Updated:</span> 
+            <%= @selected_request.updated_at %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="flex justify-end pt-4 border-t mt-6">
+        <button 
+          phx-click="close_details" 
+          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+

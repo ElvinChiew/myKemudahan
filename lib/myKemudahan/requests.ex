@@ -73,4 +73,64 @@ end
     from(i in RequestItem, where: i.request_id == ^request_id, preload: :item)
     |> Repo.all()
   end
+
+  def cancel_request(request_id) do
+    case Repo.get(Request, request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        # Only allow cancellation if status is sent or pending
+        if request.status in ["sent", "pending"] do
+          request
+          |> Ecto.Changeset.change(%{status: "cancelled"})
+          |> Repo.update()
+        else
+          {:error, "Cannot cancel request with status: #{request.status}"}
+        end
+    end
+  end
+
+  def apply_discount(request_id, discount_amount) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        total_cost = request.total_cost || Decimal.new("0")
+        discount = Decimal.new(discount_amount)
+
+        # Ensure discount doesn't exceed total cost
+        final_discount = if Decimal.compare(discount, total_cost) == :gt do
+          total_cost
+        else
+          discount
+        end
+
+        final_cost = Decimal.sub(total_cost, final_discount)
+
+        request
+        |> Ecto.Changeset.change(%{
+          discount_amount: final_discount,
+          final_cost: final_cost
+        })
+        |> Repo.update()
+    end
+  end
+
+  def remove_discount(request_id) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        request
+        |> Ecto.Changeset.change(%{
+          discount_amount: nil,
+          final_cost: request.total_cost
+        })
+        |> Repo.update()
+    end
+  end
+
 end
