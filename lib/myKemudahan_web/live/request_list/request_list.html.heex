@@ -169,6 +169,10 @@
   </div>
   </div>
 
+<div class="mb-10">
+<p class="text-3xl font-bold">Request Lists</p>
+</div>
+
   <!-- Status Filter Tabs -->
   <div class="mb-6 flex border-b border-gray-200">
     <button 
@@ -271,6 +275,7 @@
                 -
               <% end %>
             </td>
+            <!-- In the Actions column of your table -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <button 
                 phx-click="view_details" 
@@ -278,9 +283,37 @@
                 class="text-indigo-600 hover:text-indigo-900 mr-3">
                 View
               </button>
-              <%= if request.status in ["sent", "pending"] do %>
-                <button class="text-green-600 hover:text-green-900 mr-3">Approve</button>
-                <button class="text-red-600 hover:text-red-900">Reject</button>
+              
+              <%= if request.status == "sent" do %>
+                <!-- For sent requests: Pending and Reject buttons -->
+                <button 
+                  phx-click="pending_request"
+                  phx-value-id={request.id}
+                  class="text-amber-600 hover:text-amber-900 mr-3">
+                  Pending
+                </button>
+                <button 
+                  phx-click="reject_request"
+                  phx-value-id={request.id}
+                  class="text-red-600 hover:text-red-900">
+                  Reject
+                </button>
+              <% end %>
+              
+              <%= if request.status == "pending" do %>
+                <!-- For pending requests: Approve and Reject buttons -->
+                <button 
+                  phx-click="approve_request"
+                  phx-value-id={request.id}
+                  class="text-green-600 hover:text-green-900 mr-3">
+                  Approve
+                </button>
+                <button 
+                  phx-click="reject_request"
+                  phx-value-id={request.id}
+                  class="text-red-600 hover:text-red-900">
+                  Reject
+                </button>
               <% end %>
             </td>
           </tr>

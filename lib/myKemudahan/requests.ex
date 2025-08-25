@@ -133,4 +133,40 @@ end
     end
   end
 
+# In lib/myKemudahan/requests.ex
+
+  def approve_request(request_id) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        # Only allow approval if status is sent or pending
+        if request.status in ["sent", "pending"] do
+          request
+          |> Ecto.Changeset.change(%{status: "approved"})
+          |> Repo.update()
+        else
+          {:error, "Cannot approve request with status: #{request.status}"}
+        end
+    end
+  end
+
+  def reject_request(request_id) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        # Only allow rejection if status is sent or pending
+        if request.status in ["sent", "pending"] do
+          request
+          |> Ecto.Changeset.change(%{status: "rejected"})
+          |> Repo.update()
+        else
+          {:error, "Cannot reject request with status: #{request.status}"}
+        end
+    end
+  end
+
 end

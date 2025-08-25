@@ -208,4 +208,103 @@ defmodule MyKemudahanWeb.RequestList do
     start_index = (page - 1) * per_page
     Enum.slice(requests, start_index, per_page)
   end
+
+  def handle_event("approve_request", %{"id" => request_id}, socket) do
+    case Requests.approve_request(request_id) do
+      {:ok, _request} ->
+        # Refresh the requests list
+        all_requests = Requests.list_all_requests()
+        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+
+        # Update status counts
+        status_counts = calculate_status_counts(all_requests)
+
+        {:noreply,
+         socket
+         |> assign(:requests, paginated_requests)
+         |> assign(:all_requests, filtered_requests)
+         |> assign(:status_counts, status_counts)
+         |> put_flash(:info, "Request approved successfully")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to approve request: #{reason}")}
+    end
+  end
+
+  def handle_event("reject_request", %{"id" => request_id}, socket) do
+    case Requests.reject_request(request_id) do
+      {:ok, _request} ->
+        # Refresh the requests list
+        all_requests = Requests.list_all_requests()
+        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+
+        # Update status counts
+        status_counts = calculate_status_counts(all_requests)
+
+        {:noreply,
+         socket
+         |> assign(:requests, paginated_requests)
+         |> assign(:all_requests, filtered_requests)
+         |> assign(:status_counts, status_counts)
+         |> put_flash(:info, "Request rejected successfully")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to reject request: #{reason}")}
+    end
+  end
+
+  # Add this helper function to calculate status counts
+  defp calculate_status_counts(requests) do
+    %{
+      total: length(requests),
+      sent: Enum.count(requests, &(&1.status == "sent")),
+      pending: Enum.count(requests, &(&1.status == "pending")),
+      approved: Enum.count(requests, &(&1.status == "approved")),
+      rejected: Enum.count(requests, &(&1.status == "rejected")),
+      cancelled: Enum.count(requests, &(&1.status == "cancelled"))
+    }
+  end
+
+  # Add this function to handle setting status to pending
+  def handle_event("pending_request", %{"id" => request_id}, socket) do
+    case set_request_status(request_id, "pending") do
+      {:ok, _request} ->
+        # Refresh the requests list
+        all_requests = Requests.list_all_requests()
+        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+
+        # Update status counts
+        status_counts = calculate_status_counts(all_requests)
+
+        {:noreply,
+        socket
+        |> assign(:requests, paginated_requests)
+        |> assign(:all_requests, filtered_requests)
+        |> assign(:status_counts, status_counts)
+        |> put_flash(:info, "Request marked as pending")}
+
+      {:error, reason} ->
+        {:noreply,
+        socket
+        |> put_flash(:error, "Failed to update request: #{reason}")}
+    end
+  end
+
+  # Helper function to set request status
+  defp set_request_status(request_id, status) do
+    case Requests.get_request!(request_id) do
+      nil -> {:error, "Request not found"}
+      request ->
+        request
+        |> Ecto.Changeset.change(%{status: status})
+        |> Repo.update()
+    end
+  end
 end

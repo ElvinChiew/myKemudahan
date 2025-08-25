@@ -1,5 +1,4 @@
 defmodule MyKemudahanWeb.Reqstatus do
-
   alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
 
@@ -8,37 +7,52 @@ defmodule MyKemudahanWeb.Reqstatus do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
-
     requests = Requests.list_user_requests(user.id)
 
-    #{:ok, assign(socket, requests: requests)}
+    # Pagination settings
+    per_page = 10
+    total_pages = max(ceil(length(requests) / per_page), 1)
+    paginated_requests = paginate_requests(requests, 1, per_page)
+
     socket =
       socket
-      |> assign(:requests, requests)
+      |> assign(:requests, paginated_requests)
+      |> assign(:all_requests, requests)  # Store all requests for filtering
       |> assign(:status_filter, "all")
       |> assign(:current_user, user)
       |> assign(:selected_request, nil)
       |> assign(:show_details, false)
       |> assign(:show_cancel_confirm, false)
       |> assign(:cancel_request_id, nil)
+      |> assign(:page, 1)
+      |> assign(:per_page, per_page)
+      |> assign(:total_pages, total_pages)
 
     {:ok, socket}
   end
 
-  #Handle Tabs Click
+  # Handle Tabs Click
   def handle_event("filter_status", %{"status" => status}, socket) do
     user = socket.assigns.current_user
 
-    requests =
+    all_requests =
       case status do
         "all" -> Requests.list_user_requests(user.id)
         _ -> Requests.list_user_requests_by_status(user.id, status)
       end
-      {:noreply,
-        assign(socket,
-          requests: requests,
-          status_filter: status
-          )}
+
+    # Update pagination
+    total_pages = max(ceil(length(all_requests) / socket.assigns.per_page), 1)
+    paginated_requests = paginate_requests(all_requests, 1, socket.assigns.per_page)
+
+    {:noreply,
+     assign(socket,
+       requests: paginated_requests,
+       all_requests: all_requests,
+       status_filter: status,
+       page: 1,
+       total_pages: total_pages
+     )}
   end
 
   def handle_event("request_asset", _params, socket) do
@@ -81,33 +95,31 @@ defmodule MyKemudahanWeb.Reqstatus do
   end
 
   def handle_event("execute_cancel", %{"id" => request_id}, socket) do
-    IO.puts("=== EXECUTE CANCEL ===")
-    IO.puts("Request ID: #{request_id}")
-
     case Requests.cancel_request(request_id) do
-      {:ok, request} ->
-        IO.puts("Request cancelled successfully: #{inspect(request)}")
-
+      {:ok, _request} ->
         # Refresh the requests list after cancellation
         user = socket.assigns.current_user
 
-        requests =
+        all_requests =
           case socket.assigns.status_filter do
             "all" -> Requests.list_user_requests(user.id)
             status -> Requests.list_user_requests_by_status(user.id, status)
           end
 
-        IO.puts("Refreshed requests count: #{length(requests)}")
+        # Recalculate pagination
+        total_pages = max(ceil(length(all_requests) / socket.assigns.per_page), 1)
+        paginated_requests = paginate_requests(all_requests, socket.assigns.page, socket.assigns.per_page)
 
         {:noreply,
          socket
-         |> assign(:requests, requests)
+         |> assign(:requests, paginated_requests)
+         |> assign(:all_requests, all_requests)
+         |> assign(:total_pages, total_pages)
          |> assign(:show_cancel_confirm, false)
          |> assign(:cancel_request_id, nil)
          |> put_flash(:info, "Request cancelled successfully")}
 
       {:error, reason} ->
-        IO.puts("Failed to cancel request: #{inspect(reason)}")
         {:noreply,
          socket
          |> assign(:show_cancel_confirm, false)
@@ -116,4 +128,20 @@ defmodule MyKemudahanWeb.Reqstatus do
     end
   end
 
+  # Pagination event handler
+  def handle_event("paginate", %{"page" => page}, socket) do
+    page = String.to_integer(page)
+    paginated_requests = paginate_requests(socket.assigns.all_requests, page, socket.assigns.per_page)
+
+    {:noreply,
+     socket
+     |> assign(:requests, paginated_requests)
+     |> assign(:page, page)}
+  end
+
+  # Helper function for pagination
+  defp paginate_requests(requests, page, per_page) do
+    start_index = (page - 1) * per_page
+    Enum.slice(requests, start_index, per_page)
+  end
 end
