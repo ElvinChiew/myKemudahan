@@ -9,16 +9,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    user = socket.assigns.current_user
-    cond do
-      is_nil(user) or user.role != "admin" ->
-        {:ok,
-         socket
-         |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
-         |> Phoenix.LiveView.redirect(to: "/")}
-      true ->
-        {:ok, stream(socket, :asset_tags, Assets.list_asset_tags())}
-    end
+    {:ok, stream(socket, :asset_tags, Assets.list_asset_tags())}
   end
 
   @impl true
