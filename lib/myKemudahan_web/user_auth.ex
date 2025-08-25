@@ -40,7 +40,6 @@ defmodule MyKemudahanWeb.UserAuth do
     |> renew_session()
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params)
-    #|> redirect(to: user_return_to || signed_in_path(conn))
     |> redirect(to: redirect_path)
   end
 

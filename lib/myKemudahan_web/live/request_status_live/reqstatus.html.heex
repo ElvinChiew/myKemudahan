@@ -133,6 +133,11 @@
       
       <!-- Progress indicator for multi-step processes -->
       <div class="mt-4">
+        <%= if request.status == "approved" do %>
+          <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+            Please proceed to counter to complete the payment.
+          </div>
+        <% end %>
         <div class="flex justify-between mb-1">
           <span class="text-xs font-medium text-gray-500">Request Progress</span>
           <span class="text-xs font-medium text-gray-500">
@@ -289,18 +294,6 @@
             <h4 class="text-sm font-medium text-gray-500">Total Cost</h4>
             <p class="text-lg font-semibold">RM<%= @selected_request.total_cost || "0.00" %></p>
           </div>
-
-          <%= if not Decimal.equal?(@selected_request.discount_amount || Decimal.new("0"), Decimal.new("0")) do %>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Discount</h4>
-              <p class="text-lg font-semibold">RM<%= @selected_request.discount_amount || "0.00" %></p>
-            </div>
-          <% end %>
-
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Final Cost</h4>
-            <p class="text-lg font-semibold text-green-600">RM<%= @selected_request.final_cost || "0.00" %></p>
-          </div>
         </div>
 
         <!-- Requested items table -->
@@ -354,6 +347,12 @@
           </div>
         </div>
       </div>
+
+      <%= if @selected_request.status == "approved" do %>
+        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+          <p>Please proceed to counter to complete the payment.</p>
+        </div>
+      <% end %>
 
       <!-- Modal footer -->
       <div class="flex justify-end pt-4 border-t mt-6">
