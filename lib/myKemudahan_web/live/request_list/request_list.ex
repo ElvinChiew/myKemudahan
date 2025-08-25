@@ -39,6 +39,8 @@ defmodule MyKemudahanWeb.RequestList do
       |> assign(:page, 1)
       |> assign(:per_page, per_page)
       |> assign(:total_pages, total_pages)
+      |> assign(:from_date, nil)
+      |> assign(:to_date, nil)
 
     {:ok, socket}
   end
@@ -70,6 +72,36 @@ defmodule MyKemudahanWeb.RequestList do
        total_pages: total_pages
      )}
   end
+
+  def handle_event("filter_by_date", %{"from_date" => from_date, "to_date" => to_date}, socket) do
+    all_requests = Requests.list_all_requests()
+
+    filtered_requests =
+      all_requests
+      |> Enum.filter(fn request ->
+        request_date = NaiveDateTime.to_date(request.inserted_at)
+
+        with {:ok, from} <- Date.from_iso8601(from_date),
+             {:ok, to} <- Date.from_iso8601(to_date) do
+          Date.compare(request_date, from) != :lt and Date.compare(request_date, to) != :gt
+        else
+          _ -> true
+        end
+      end)
+
+    paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
+    total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
+
+    {:noreply,
+     socket
+     |> assign(:from_date, from_date)
+     |> assign(:to_date, to_date)
+     |> assign(:requests, paginated_requests)
+     |> assign(:all_requests, filtered_requests)
+     |> assign(:page, 1)
+     |> assign(:total_pages, total_pages)}
+  end
+
 
   def handle_event("view_details", %{"id" => request_id}, socket) do
     request = Requests.get_request!(request_id)

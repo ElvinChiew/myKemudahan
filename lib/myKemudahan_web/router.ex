@@ -20,16 +20,23 @@ defmodule MyKemudahanWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :require_admin do
+    plug MyKemudahanWeb.Plugs.RequireAdmin
+  end
+
   scope "/", MyKemudahanWeb do
     pipe_through [:browser]
 
     live "/", Welcome
-
     live "/reqstatus", Reqstatus
     live "/requser", Requser
     live "/about", About
     live "/contact", Contact
     live "/usermenu", Usermenu
+  end
+
+  scope "/", MyKemudahanWeb do
+    pipe_through [:browser, :require_admin]
 
     #request list admin
     live "/request_list", RequestList
@@ -38,34 +45,20 @@ defmodule MyKemudahanWeb.Router do
     live "/categories", CategoryLive.Index, :index
     live "/categories/new", CategoryLive.Index, :new
     live "/categories/:id/edit", CategoryLive.Index, :edit
-
     live "/categories/:id", CategoryLive.Show, :show
 
     #Asset CRUD section
     live "/assets", AssetLive.Index, :index
     live "/assets/new", AssetLive.Index, :new
     live "/assets/:id/edit", AssetLive.Index, :edit
-
     live "/assets/:id", AssetLive.Show, :show
     live "/assets/:id/show/edit", AssetLive.Show, :edit
 
     #asset_tag section
     live "/asset_tags", AssetTagLive.Index, :index
-    #live "/asset_tags/new", AssetTagLive.Index, :new
     live "/asset_tags/:id/edit", AssetTagLive.Index, :edit
-
     live "/asset_tags/:id", AssetTagLive.Show, :show
     live "/asset_tags/:id/show/edit", AssetTagLive.Show, :edit
-
-  end
-
-  pipeline :require_admin do
-    plug MyKemudahanWeb.Plugs.RequireAdmin
-  end
-
-  scope "/admin", MyKemudahanWeb do
-    pipe_through [:browser, :require_admin]
-
   end
 
   # Other scopes may use custom stacks.
