@@ -1,5 +1,4 @@
 defmodule MyKemudahanWeb.RequestList do
-  alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
   alias MyKemudahan.Repo
 
@@ -9,36 +8,31 @@ defmodule MyKemudahanWeb.RequestList do
   on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
   def mount(_params, _session, socket) do
-    # For admin view, we'll show all requests, not just the current user's
-    requests = Requests.list_all_requests()
+    all_requests = Requests.list_all_requests()
 
-  # Calculate status counts
-  status_counts = %{
-    total: length(requests),
-    sent: count_by_status(requests, "sent"),
-    pending: count_by_status(requests, "pending"),
-    approved: count_by_status(requests, "approved"),
-    rejected: count_by_status(requests, "rejected"),
-    cancelled: count_by_status(requests, "cancelled"),
-  }
+    filtered_requests = apply_filters(all_requests, "all", nil, nil)
 
-  per_page = 10
-  total_pages = max(ceil(length(requests) / per_page), 1)
-  paginated_requests = Enum.slice(requests, 0, per_page)
+    status_counts = calculate_status_counts(all_requests)
+
+    per_page = 10
+    total_pages = max(ceil(length(filtered_requests) / per_page), 1)
+    paginated_requests = paginate_requests(filtered_requests, 1, per_page)
 
     socket =
       socket
-      |> assign(:requests,paginated_requests)
+      |> assign(:requests, paginated_requests)
       |> assign(:status_filter, "all")
       |> assign(:status_counts, status_counts)
       |> assign(:page_title, "Admin - All Requests")
-      |> assign(:all_requests, requests)
+      |> assign(:all_requests, filtered_requests)
       |> assign(:selected_request, nil)
       |> assign(:show_details, false)
       |> assign(:discount_amount, "")
       |> assign(:page, 1)
       |> assign(:per_page, per_page)
       |> assign(:total_pages, total_pages)
+      |> assign(:from_date, nil)
+      |> assign(:to_date, nil)
 
     {:ok, socket}
   end
@@ -46,19 +40,12 @@ defmodule MyKemudahanWeb.RequestList do
   # Handle Tabs Click
   def handle_event("filter_status", %{"status" => status}, socket) do
     all_requests = Requests.list_all_requests()
-    filtered_requests = apply_status_filter(all_requests, status)
+    filtered_requests = apply_filters(all_requests, status, socket.assigns.from_date, socket.assigns.to_date)
 
     total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
     paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
 
-    status_counts = %{
-      total: length(all_requests),
-      sent: Enum.count(all_requests, &(&1.status == "sent")),
-      pending: Enum.count(all_requests, &(&1.status == "pending")),
-      approved: Enum.count(all_requests, &(&1.status == "approved")),
-      rejected: Enum.count(all_requests, &(&1.status == "rejected")),
-      cancelled: Enum.count(all_requests, &(&1.status == "cancelled"))
-    }
+    status_counts = calculate_status_counts(all_requests)
 
     {:noreply,
      assign(socket,
@@ -70,6 +57,25 @@ defmodule MyKemudahanWeb.RequestList do
        total_pages: total_pages
      )}
   end
+
+  def handle_event("filter_by_date", %{"from_date" => from_date, "to_date" => to_date}, socket) do
+    all_requests = Requests.list_all_requests()
+
+    filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, from_date, to_date)
+
+    paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
+    total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
+
+    {:noreply,
+     socket
+     |> assign(:from_date, from_date)
+     |> assign(:to_date, to_date)
+     |> assign(:requests, paginated_requests)
+     |> assign(:all_requests, filtered_requests)
+     |> assign(:page, 1)
+     |> assign(:total_pages, total_pages)}
+  end
+
 
   def handle_event("view_details", %{"id" => request_id}, socket) do
     request = Requests.get_request!(request_id)
@@ -92,7 +98,7 @@ defmodule MyKemudahanWeb.RequestList do
             {:ok, updated_request} ->
               # Refresh the requests list
               all_requests = Requests.list_all_requests()
-              filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+              filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
               paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
 
               {:noreply,
@@ -136,7 +142,7 @@ defmodule MyKemudahanWeb.RequestList do
       {:ok, updated_request} ->
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
-        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
 
         {:noreply,
          socket
@@ -182,10 +188,6 @@ defmodule MyKemudahanWeb.RequestList do
 
   defp percentage(_part, _whole), do: 0
 
-  defp count_by_status(requests, status) do
-    Enum.count(requests, &(&1.status == status))
-  end
-
   defp discount_percentage(request) do
     total_cost = request.total_cost
     discount_amount = request.discount_amount
@@ -214,7 +216,7 @@ defmodule MyKemudahanWeb.RequestList do
       {:ok, _request} ->
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
-        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
         paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
 
         # Update status counts
@@ -239,7 +241,7 @@ defmodule MyKemudahanWeb.RequestList do
       {:ok, _request} ->
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
-        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
         paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
 
         # Update status counts
@@ -277,7 +279,7 @@ defmodule MyKemudahanWeb.RequestList do
       {:ok, _request} ->
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
-        filtered_requests = apply_status_filter(all_requests, socket.assigns.status_filter)
+        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
         paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
 
         # Update status counts
@@ -306,5 +308,28 @@ defmodule MyKemudahanWeb.RequestList do
         |> Ecto.Changeset.change(%{status: status})
         |> Repo.update()
     end
+  end
+
+  defp apply_filters(requests, status_filter, from_date, to_date) do
+    requests
+    |> filter_by_date(from_date, to_date)
+    |> apply_status_filter(status_filter)
+  end
+
+  defp filter_by_date(requests, nil, nil), do: requests
+  defp filter_by_date(requests, from_date, to_date) do
+    Enum.filter(requests, fn request ->
+      with {:ok, filter_from} when not is_nil(from_date) <- Date.from_iso8601(from_date),
+           {:ok, filter_to} when not is_nil(to_date) <- Date.from_iso8601(to_date) do
+
+        borrow_from = request.borrow_from
+        borrow_to = request.borrow_to
+
+
+        Date.compare(borrow_from, filter_to) != :gt and Date.compare(borrow_to, filter_from) != :lt
+      else
+        _ -> true
+      end
+    end)
   end
 end

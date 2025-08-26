@@ -13,22 +13,13 @@ defmodule MyKemudahanWeb.CategoryLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    user = socket.assigns.current_user
-    cond do
-      is_nil(user) or user.role != "admin" ->
-        {:ok,
-         socket
-         |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
-         |> Phoenix.LiveView.redirect(to: "/")}
-      true ->
-        {:ok,
-         socket
-         |> assign(:page, 1)
-         |> assign(:per_page, @per_page)
-         |> assign(:category, nil)
-         |> assign(:total_count, Assets.count_categories())
-         |> stream(:categories, Assets.list_categories(1, @per_page))}
-    end
+    {:ok,
+      socket
+      |> assign(:page, 1)
+      |> assign(:per_page, @per_page)
+      |> assign(:category, nil)
+      |> assign(:total_count, Assets.count_categories())
+      |> stream(:categories, Assets.list_categories(1, @per_page))}
   end
 
   @impl true
