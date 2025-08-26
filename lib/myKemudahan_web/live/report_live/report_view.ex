@@ -10,64 +10,78 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
   def mount(_params, _session, socket) do
     reports = Reports.list_report()
     total_count = length(reports)
-    page_links = generate_page_links(1, ceil(total_count / @page_size))
 
     socket = assign(socket,
       reports: Enum.take(reports, @page_size),
       all_reports: reports,
+      filtered_reports: reports,
+      selected_status: "all",
+      start_date: nil,
+      end_date: nil,
       total_count: total_count,
       page_size: @page_size,
       current_page: 1,
       total_pages: ceil(total_count / @page_size),
       offset: 0,
-      page_links: page_links
+      page_links: generate_page_links(1, ceil(total_count / @page_size))
     )
 
     {:ok, socket}
   end
+
 
   def handle_event("paginate", %{"page" => page_str}, socket) do
     page = String.to_integer(page_str)
     offset = (page - 1) * socket.assigns.page_size
 
     paginated_reports =
-      socket.assigns.all_reports
+      socket.assigns.filtered_reports
       |> Enum.drop(offset)
       |> Enum.take(socket.assigns.page_size)
 
-    # Generate page links for pagination (showing up to 5 pages)
     page_links = generate_page_links(page, socket.assigns.total_pages)
 
-    {:noreply, assign(socket,
-      reports: paginated_reports,
-      current_page: page,
-      offset: offset,
-      page_links: page_links
-    )}
+    {:noreply,
+     assign(socket,
+       reports: paginated_reports,
+       current_page: page,
+       offset: offset,
+       page_links: page_links
+     )}
   end
 
   def handle_event("update_status", %{"id" => id, "status" => new_status}, socket) do
-    # Update the report status in the database
     report = Reports.get_report!(id)
 
     case Reports.update_report(report, %{status: new_status}) do
       {:ok, updated_report} ->
-        # Update the report in the all_reports list
-        updated_reports = Enum.map(socket.assigns.all_reports, fn r ->
-          if r.id == updated_report.id, do: updated_report, else: r
-        end)
+        updated_all =
+          Enum.map(socket.assigns.all_reports, fn r ->
+            if r.id == updated_report.id, do: updated_report, else: r
+          end)
 
-        # Update the current page reports
+        filtered_reports =
+          if socket.assigns.selected_status == "all" do
+            updated_all
+          else
+            Enum.filter(updated_all, fn r -> r.status == socket.assigns.selected_status end)
+          end
+
         offset = socket.assigns.offset
         current_reports =
-          updated_reports
+          filtered_reports
           |> Enum.drop(offset)
           |> Enum.take(socket.assigns.page_size)
 
-        {:noreply, assign(socket,
-          all_reports: updated_reports,
-          reports: current_reports
-        )}
+        total_count = length(filtered_reports)
+
+        {:noreply,
+         assign(socket,
+           all_reports: updated_all,
+           filtered_reports: filtered_reports,
+           reports: current_reports,
+           total_count: total_count
+         )}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to update status")}
@@ -90,4 +104,100 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
       end
     end
   end
+
+  def handle_event("filter_status", %{"status" => status}, socket) do
+    filtered_reports =
+      socket.assigns.all_reports
+      |> filter_by_status(status)
+      |> filter_by_date(parse_date(socket.assigns.start_date), parse_date(socket.assigns.end_date))
+
+    total_count = length(filtered_reports)
+    total_pages = max(ceil(total_count / socket.assigns.page_size), 1)
+
+    {:noreply,
+     assign(socket,
+       selected_status: status,
+       filtered_reports: filtered_reports,
+       reports: Enum.take(filtered_reports, socket.assigns.page_size),
+       total_count: total_count,
+       current_page: 1,
+       offset: 0,
+       total_pages: total_pages,
+       page_links: generate_page_links(1, total_pages)
+     )}
+  end
+
+
+  def handle_event("filter_date", %{"start_date" => start_date, "end_date" => end_date}, socket) do
+    start_date = parse_date(start_date)
+    end_date = parse_date(end_date)
+
+    filtered_reports =
+      socket.assigns.all_reports
+      |> filter_by_status(socket.assigns.selected_status)
+      |> filter_by_date(start_date, end_date)
+
+    total_count = length(filtered_reports)
+    total_pages = max(ceil(total_count / socket.assigns.page_size), 1)
+
+    {:noreply,
+     assign(socket,
+       start_date: start_date && Date.to_iso8601(start_date),
+       end_date: end_date && Date.to_iso8601(end_date),
+       filtered_reports: filtered_reports,
+       reports: Enum.take(filtered_reports, socket.assigns.page_size),
+       total_count: total_count,
+       current_page: 1,
+       offset: 0,
+       total_pages: total_pages,
+       page_links: generate_page_links(1, total_pages)
+     )}
+  end
+
+  defp parse_date(""), do: nil
+  defp parse_date(nil), do: nil
+  defp parse_date(date_str), do: Date.from_iso8601!(date_str)
+
+  defp filter_by_status(reports, "all"), do: reports
+  defp filter_by_status(reports, status), do: Enum.filter(reports, &(&1.status == status))
+
+  defp filter_by_date(reports, nil, nil), do: reports
+
+  defp filter_by_date(reports, start_date, nil) do
+    Enum.filter(reports, fn r ->
+      Date.compare(NaiveDateTime.to_date(r.reported_at), start_date) != :lt
+    end)
+  end
+
+  defp filter_by_date(reports, nil, end_date) do
+    Enum.filter(reports, fn r ->
+      Date.compare(NaiveDateTime.to_date(r.reported_at), end_date) != :gt
+    end)
+  end
+
+  defp filter_by_date(reports, start_date, end_date) do
+    Enum.filter(reports, fn report ->
+      date = NaiveDateTime.to_date(report.reported_at)
+      date >= start_date and date <= end_date
+    end)
+  end
+
+  def handle_event("reset_filters", _params, socket) do
+    filtered = filter_by_status(socket.assigns.all_reports, socket.assigns.selected_status)
+    total_count = length(filtered)
+
+    {:noreply,
+     assign(socket,
+       start_date: nil,
+       end_date: nil,
+       filtered_reports: filtered,
+       reports: Enum.take(filtered, socket.assigns.page_size),
+       total_count: total_count,
+       current_page: 1,
+       offset: 0,
+       total_pages: max(ceil(total_count / socket.assigns.page_size), 1),
+       page_links: generate_page_links(1, max(ceil(total_count / socket.assigns.page_size), 1))
+     )}
+  end
+
 end

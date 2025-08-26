@@ -20,6 +20,71 @@
         </div>
       </div>
 
+    <!-- Tabs -->
+    <div class="mb-6 border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <%= for status <- ["all", "submitted", "pending", "in_progress", "resolved"] do %>
+        <a
+            href="#"
+            phx-click="filter_status"
+            phx-value-status={status}
+            class={
+            if @selected_status == status do
+                "border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+            else
+                "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+            end
+            }
+        >
+            <%= String.capitalize(String.replace(status, "_", " ")) %>
+        </a>
+        <% end %>
+    </nav>
+    </div>
+
+    <!-- Date Filter -->
+    <form phx-submit="filter_date" class="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
+    <div>
+        <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+        <input
+        type="date"
+        name="start_date"
+        id="start_date"
+        value={@start_date}
+        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm sm:text-sm"
+        />
+    </div>
+
+    <div>
+        <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+        <input
+        type="date"
+        name="end_date"
+        id="end_date"
+        value={@end_date}
+        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm sm:text-sm"
+        />
+    </div>
+
+    <div>
+        <button
+        type="submit"
+        class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+        Filter
+        </button>
+    </div>
+    </form>
+
+    <div class="self-end">
+        <button type="button"
+            phx-click="reset_filters"
+            class="text-sm text-gray-600 hover:text-red-600 underline"
+        >
+            Reset Filters
+        </button>
+    </div>
+
       <!-- Reports Table -->
       <div class="bg-white shadow overflow-hidden rounded-lg">
         <div class="overflow-x-auto">
