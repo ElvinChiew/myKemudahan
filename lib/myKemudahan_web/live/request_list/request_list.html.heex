@@ -254,7 +254,7 @@
             </td>
             <td class="px-6 py-4 text-sm text-gray-900"><%= request.purpose %></td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <%= request.borrow_from %> - <%= request.borrow_to %>
+              <%= Calendar.strftime(request.borrow_from, "%d-%m-%Y") %> - <%= Calendar.strftime(request.borrow_to, "%d-%m-%Y") %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <%= case request.status do %>
@@ -461,7 +461,7 @@
           <div>
             <h4 class="text-sm font-medium text-gray-500">Borrow Period</h4>
             <p class="text-md">
-              <%= @selected_request.borrow_from %> to <%= @selected_request.borrow_to %>
+              <%= Calendar.strftime(@selected_request.borrow_from, "%d-%m-%Y") %> - <%= Calendar.strftime(@selected_request.borrow_to, "%d-%m-%Y") %>
             </p>
           </div>
         </div>
