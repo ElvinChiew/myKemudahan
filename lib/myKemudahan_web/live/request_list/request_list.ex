@@ -1,5 +1,4 @@
 defmodule MyKemudahanWeb.RequestList do
-  alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
   alias MyKemudahan.Repo
 
@@ -188,10 +187,6 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   defp percentage(_part, _whole), do: 0
-
-  defp count_by_status(requests, status) do
-    Enum.count(requests, &(&1.status == status))
-  end
 
   defp discount_percentage(request) do
     total_cost = request.total_cost
