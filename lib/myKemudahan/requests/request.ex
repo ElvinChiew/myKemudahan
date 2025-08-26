@@ -14,6 +14,7 @@ defmodule MyKemudahan.Requests.Request do
     belongs_to :user, MyKemudahan.Accounts.User
 
     has_many :request_items, MyKemudahan.Requests.RequestItem
+    has_many :reports, MyKemudahan.Reports.Report
     timestamps()
   end
 

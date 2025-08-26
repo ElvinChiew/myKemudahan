@@ -65,8 +65,9 @@ end
   # Add this function to get a single request by ID
   def get_request!(id) do
     Request
-    |> Repo.get!(id)
-    |> Repo.preload([:user, request_items: :asset])
+    |> where(id: ^id)
+    |> preload([:user, request_items: :asset])
+    |> Repo.one!()
   end
 
   def list_request_items(request_id) do
