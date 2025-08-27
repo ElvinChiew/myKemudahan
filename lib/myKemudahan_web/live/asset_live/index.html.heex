@@ -19,9 +19,15 @@
   >
     <:col :let={{_id, asset}} label="Name">{asset.name}</:col>
     <:col :let={{_id, asset}} label="Description">{asset.description}</:col>
+
     <:col :let={{_id, asset}} label="Cost per unit">{asset.cost_per_unit}</:col>
-    <:col :let={{_id, asset}} label="Image">{asset.image}</:col>
-    <!--<:col :let={{_id, asset}} label="Status">{asset.status}</:col>-->
+    <:col :let={{_id, asset}} label="Image">
+      <%= if asset.image do %>
+        <img src={asset.image} alt="Asset image" class="h-12 w-12 object-cover rounded-md" />
+      <% else %>
+        <span class="text-gray-400 italic">No image</span>
+      <% end %>
+    </:col>
     <:action :let={{_id, asset}}>
       <div class="sr-only">
         <.link navigate={~p"/assets/#{asset}"}>Show</.link>

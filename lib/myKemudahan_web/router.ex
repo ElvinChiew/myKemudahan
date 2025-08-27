@@ -44,6 +44,10 @@ defmodule MyKemudahanWeb.Router do
     #report view for admin
     live "/reports", ReportLive.ReportView
 
+    #user list view
+    live "/users", UserLive.User
+    live "/admin_view_user", UserLive.AdminViewUser
+
     #Asset CAtegory Section
     live "/categories", CategoryLive.Index, :index
     live "/categories/new", CategoryLive.Index, :new

@@ -1,0 +1,26 @@
+<div class="flex">
+  <.sidebar />
+  <div class="flex-1 p-4">
+    <p class="text-xl font-semibold mb-4">User Table</p>
+    <table class="table-auto w-full border">
+      <thead>
+        <tr class=" bg-sky-200">
+          <th class="border px-4 py-2">Full Name</th>
+          <th class="border px-4 py-2">Email</th>
+          <th class="border px-4 py-2">Role</th>
+          <th class="border px-4 py-2">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for user <- @users do %>
+          <tr class="hover:bg-sky-50">
+            <td class="border px-4 py-2"><%= user.full_name %></td>
+            <td class="border px-4 py-2"><%= user.email %></td>
+            <td class="border px-4 py-2"><%= user.role %></td>
+            <td class="border px-4 py-2"><button class="bg-sky-200 text-sky-800 px-3 rounded-full">View</button></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
