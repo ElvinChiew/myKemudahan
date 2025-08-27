@@ -332,4 +332,20 @@ defmodule MyKemudahanWeb.RequestList do
       end
     end)
   end
+  def handle_event("reset_filters", _, socket) do
+    all_requests = Requests.list_all_requests()
+    filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, nil, nil)
+
+    total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
+    paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
+
+    {:noreply,
+     socket
+     |> assign(:from_date, nil)
+     |> assign(:to_date, nil)
+     |> assign(:requests, paginated_requests)
+     |> assign(:all_requests, filtered_requests)
+     |> assign(:page, 1)
+     |> assign(:total_pages, total_pages)}
+  end
 end
