@@ -1,7 +1,7 @@
 defmodule MyKemudahanWeb.Reqstatus do
   alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
-  alias MyKemudahan.Reports.Report  # Add this
+  alias MyKemudahan.Reports.Report
   alias MyKemudahan.Repo
 
   use MyKemudahanWeb, :live_view

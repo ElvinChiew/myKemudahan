@@ -3,6 +3,8 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
 
   alias MyKemudahan.Reports
   alias MyKemudahan.Reports.Report
+  alias MyKemudahan.Requests
+  alias MyKemudahan.Requests.RequestItem
   import MyKemudahanWeb.AdminSidebar
 
   @page_size 10
@@ -23,12 +25,14 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
       current_page: 1,
       total_pages: ceil(total_count / @page_size),
       offset: 0,
-      page_links: generate_page_links(1, ceil(total_count / @page_size))
+      page_links: generate_page_links(1, ceil(total_count / @page_size)),
+      selected_report: nil,
+      show_details: false,
+      request_items: []
     )
 
     {:ok, socket}
   end
-
 
   def handle_event("paginate", %{"page" => page_str}, socket) do
     page = String.to_integer(page_str)
@@ -87,6 +91,35 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
         {:noreply, put_flash(socket, :error, "Failed to update status")}
     end
   end
+
+  #Event handlers to open and close view modal
+  def handle_event("view_details", %{"id" => id}, socket) do
+    report = Reports.get_report!(id)
+    request_items = get_request_items_for_report(report)
+
+    {:noreply,
+     socket
+     |> assign(:selected_report, report)
+     |> assign(:request_items, request_items)
+     |> assign(:show_details, true)}
+  end
+
+  def handle_event("close_details", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:selected_report, nil)
+     |> assign(:show_details, false)}
+  end
+
+    #Function fetching request items
+    defp get_request_items_for_report(report) do
+      # Assuming your report has a request_id field that links to the request
+      if report.request_id do
+        Requests.list_request_items_by_request_id(report.request_id)
+      else
+        []
+      end
+    end
 
   # Fix the unused variable warning by prefixing with underscore
   defp generate_page_links(_current_page, total_pages) when total_pages <= 5 do

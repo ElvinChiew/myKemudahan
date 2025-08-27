@@ -170,4 +170,12 @@ end
     end
   end
 
+  def list_request_items_by_request_id(request_id) do
+    from(ri in RequestItem,
+      where: ri.request_id == ^request_id,
+      preload: [:asset]
+    )
+    |> Repo.all()
+  end
+
 end
