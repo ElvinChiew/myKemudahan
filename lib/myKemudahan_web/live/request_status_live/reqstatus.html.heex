@@ -243,7 +243,9 @@
     <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
       <!-- Modal header -->
       <div class="flex justify-between items-center pb-4 border-b">
-        <h3 class="text-xl font-semibold text-gray-900">Request Details</h3>
+        <h3 class="text-xl font-semibold text-gray-900">
+          <%= if @show_report_form, do: "Report Form", else: "Request Details" %>
+        </h3>
         <button 
           phx-click="close_details" 
           class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
@@ -253,114 +255,184 @@
 
       <!-- Modal content -->
       <div class="mt-4">
-        <!-- Basic request information -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Purpose</h4>
-            <p class="text-lg font-semibold"><%= @selected_request.purpose %></p>
+        <%= if @show_report_form do %>
+          <!-- Report Form -->
+          <form phx-submit="submit_report">
+            <input type="hidden" name="request_id" value={@selected_request.id} />
+            <input type="hidden" name="item_id" value={@selected_report_item.id} />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input 
+                  type="date" 
+                  name="report_date" 
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <input 
+                  type="number" 
+                  name="quantity" 
+                  min="1"
+                  max={@selected_report_item.quantity}
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+              <textarea 
+                name="remarks" 
+                rows="3"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter any remarks about the item usage"
+              ></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-4">
+              <button 
+                type="button"
+                phx-click="cancel_report"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Submit Report
+              </button>
+            </div>
+          </form>
+        <% else %>
+          <!-- Original Request Details Content -->
+          <!-- Basic request information -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Purpose</h4>
+              <p class="text-lg font-semibold"><%= @selected_request.purpose %></p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Status</h4>
+              <span class={
+                [
+                  "inline-block px-2 py-1 text-xs font-semibold rounded-full",
+                  case @selected_request.status do
+                    "sent" -> "bg-blue-100 text-blue-800"
+                    "pending" -> "bg-amber-100 text-amber-800"
+                    "approved" -> "bg-green-100 text-green-800"
+                    "rejected" -> "bg-red-100 text-red-800"
+                    _ -> "bg-gray-100 text-gray-800"
+                  end
+                ]
+              }>
+                <%= String.capitalize(@selected_request.status) %>
+              </span>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Borrow Period</h4>
+              <p class="text-md">
+                <%= @selected_request.borrow_from %> to <%= @selected_request.borrow_to %>
+              </p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Requested By</h4>
+              <p class="text-md"><%= @selected_request.user.full_name %></p>
+            </div>
           </div>
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Status</h4>
-            <span class={
-              [
-                "inline-block px-2 py-1 text-xs font-semibold rounded-full",
-                case @selected_request.status do
-                  "sent" -> "bg-blue-100 text-blue-800"
-                  "pending" -> "bg-amber-100 text-amber-800"
-                  "approved" -> "bg-green-100 text-green-800"
-                  "rejected" -> "bg-red-100 text-red-800"
-                  _ -> "bg-gray-100 text-gray-800"
-                end
-              ]
-            }>
-              <%= String.capitalize(@selected_request.status) %>
-            </span>
-          </div>
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Borrow Period</h4>
-            <p class="text-md">
-              <%= @selected_request.borrow_from %> to <%= @selected_request.borrow_to %>
-            </p>
-          </div>
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Requested By</h4>
-            <p class="text-md"><%= @selected_request.user.full_name %></p>
-          </div>
-        </div>
 
-        <!-- Cost information -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Total Cost</h4>
-            <p class="text-lg font-semibold">RM<%= @selected_request.total_cost || "0.00" %></p>
+          <!-- Cost information -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Total Cost</h4>
+              <p class="text-lg font-semibold">RM<%= @selected_request.total_cost || "0.00" %></p>
+            </div>
           </div>
-        </div>
 
-        <!-- Requested items table -->
-        <div class="mb-6">
-          <h4 class="text-lg font-semibold mb-4">Requested Items</h4>
-          <div class="overflow-x-auto">
-            <table class="min-w-full table-auto">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost per Unit</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <%= for item <- @selected_request.request_items do %>
+          <!-- Requested items table -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-4">Requested Items</h4>
+            <div class="overflow-x-auto">
+              <table class="min-w-full table-auto">
+                <thead class="bg-gray-50">
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
-                        <%= if item.asset do %>
-                          <%= item.asset.name %>
-                        <% else %>
-                          Item #<%= item.asset_id %>
-                        <% end %>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900"><%= item.quantity %></div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">RM<%= item.cost_per_unit %></div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
-                        RM<%= Decimal.mult(item.quantity, item.cost_per_unit) |> Decimal.to_string() %>
-                      </div>
-                    </td>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost per Unit</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                    <%= if @selected_request.status == "approved" do %>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    <% end %>
                   </tr>
-                <% end %>
-              </tbody>
-            </table>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <%= for item <- @selected_request.request_items do %>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                          <%= if item.asset do %>
+                            <%= item.asset.name %>
+                          <% else %>
+                            Item #<%= item.asset_id %>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900"><%= item.quantity %></div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">RM<%= item.cost_per_unit %></div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                          RM<%= Decimal.mult(item.quantity, item.cost_per_unit) |> Decimal.to_string() %>
+                        </div>
+                      </td>
+                      <%= if @selected_request.status == "approved" do %>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <button 
+                            phx-click="show_report_form"
+                            phx-value-item_id={item.id}
+                            class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition-colors">
+                            Report
+                          </button>
+                        </td>
+                      <% end %>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <!-- Dates -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-          <div>
-            <span class="font-medium">Submitted:</span> 
-            <%= "#{@selected_request.inserted_at.day}-#{@selected_request.inserted_at.month}-#{@selected_request.inserted_at.year}" %>
+          <!-- Dates -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+              <span class="font-medium">Submitted:</span> 
+              <%= "#{@selected_request.inserted_at.day}-#{@selected_request.inserted_at.month}-#{@selected_request.inserted_at.year}" %>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <%= if @selected_request.status == "approved" do %>
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
-          <p>Please proceed to counter to complete the payment.</p>
-        </div>
-      <% end %>
+          <%= if @selected_request.status == "approved" do %>
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+              <p>Please proceed to counter to complete the payment.</p>
+            </div>
+          <% end %>
 
-      <!-- Modal footer -->
-      <div class="flex justify-end pt-4 border-t mt-6">
-        <button 
-          phx-click="close_details" 
-          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-          Close
-        </button>
+          <!-- Modal footer -->
+          <div class="flex justify-end pt-4 border-t mt-6">
+            <button 
+              phx-click="close_details" 
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+              Close
+            </button>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

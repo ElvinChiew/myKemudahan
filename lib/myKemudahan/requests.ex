@@ -65,8 +65,9 @@ end
   # Add this function to get a single request by ID
   def get_request!(id) do
     Request
-    |> Repo.get!(id)
-    |> Repo.preload([:user, request_items: :asset])
+    |> where(id: ^id)
+    |> preload([:user, request_items: :asset])
+    |> Repo.one!()
   end
 
   def list_request_items(request_id) do
@@ -167,6 +168,14 @@ end
           {:error, "Cannot reject request with status: #{request.status}"}
         end
     end
+  end
+
+  def list_request_items_by_request_id(request_id) do
+    from(ri in RequestItem,
+      where: ri.request_id == ^request_id,
+      preload: [:asset]
+    )
+    |> Repo.all()
   end
 
 end

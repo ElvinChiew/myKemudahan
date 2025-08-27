@@ -16,6 +16,7 @@ defmodule MyKemudahan.Assets.Asset do
     belongs_to :category, Category
 
     has_many :asset_tags, AssetTag, on_replace: :delete
+    has_many :report, MyKemudahan.Reports.Report
 
     timestamps(type: :utc_datetime)
   end
