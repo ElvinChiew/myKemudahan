@@ -7,65 +7,119 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
   def render(assigns) do
     ~H"""
     <div>
-      <.header>
-        {@title}
-        <:subtitle>Use this form to manage asset records in your database.</:subtitle>
-      </.header>
+      <h2 class="text-2xl font-bold text-black mb-1"><%= @title %></h2>
+      <p class="text-sm text-gray-300 mb-6">Use this form to manage asset records in your database.</p>
 
-      <.simple_form
-        for={@form}
+      <form
         id="asset-form"
-        phx-target={@myself}
         phx-change="validate"
         phx-submit="save"
+        phx-target={@myself}
+        class="space-y-6"
       >
-        <.input field={@form[:name]} type="text" label="Name" />
-        <.input field={@form[:description]} type="text" label="Description" />
-        <div class="flex flex-row  justify-between">
-          <div class="w-[12rem]">
-          <.input field={@form[:cost_per_unit]} type="number" label="Cost per unit" step="any"/>
-          </div>
-          <div class="w-[12rem]">
-          <.input field={@form[:status]} type="select" label="Status"
-          options={[
-            {"Available", "available"},
-            {"Loaned", "loaned"},
-            {"Damaged", "damaged"},
-            {"Maintenance", "maintenance"}
-          ]}
+        <!-- Name -->
+        <div>
+          <label for="name" class="block text-sm font-medium text-black">Name</label>
+          <input
+            type="text"
+            id="name"
+            name="asset[name]"
+            value={@form[:name].value}
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
-          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-black">Description</label>
+          <input
+            type="text"
+            id="description"
+            name="asset[description]"
+            value={@form[:description].value}
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        <!-- Cost, Status, Image Upload -->
+        <div class="flex flex-row justify-between gap-4">
+          <!-- Cost per unit -->
           <div class="w-[12rem]">
-            <label class="block text-sm font-medium text-white">Image Upload</label>
+            <label class="block text-sm font-medium text-black">Cost per unit</label>
+            <input
+              type="number"
+              name="asset[cost_per_unit]"
+              value={@form[:cost_per_unit].value}
+              step="any"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+            />
+          </div>
+
+          <!-- Status -->
+          <div class="w-[12rem]">
+            <label class="block text-sm font-medium text-black">Status</label>
+            <select
+              name="asset[status]"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+            >
+              <%= Phoenix.HTML.Form.options_for_select([
+                {"Available", "available"},
+                {"Loaned", "loaned"},
+                {"Damaged", "damaged"},
+                {"Maintenance", "maintenance"}
+              ], @form[:status].value) %>
+            </select>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="w-[12rem]">
+            <label class="block text-sm font-medium text-black mb-2">Image Upload</label>
             <.live_file_input upload={@uploads.image} />
           </div>
         </div>
-        <.input field={@form[:category_id]} type="select" label="Category" options={@category_options}/>
 
+        <!-- Category -->
+        <div>
+          <label class="block text-sm font-medium text-black">Category</label>
+          <select
+            name="asset[category_id]"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+          >
+            <%= Phoenix.HTML.Form.options_for_select(@category_options, @form[:category_id].value) %>
+          </select>
+        </div>
+
+        <!-- Asset Tags & Serial Numbers -->
         <div class="space-y-4">
-          <label class="block text-sm font-medium text-white">Asset Tags & Serial Numbers</label>
+          <label class="block text-sm font-medium text-black">Asset Tags & Serial Numbers</label>
+
           <%= for {tag, index} <- Enum.with_index(@asset_tags) do %>
             <div class="flex flex-row justify-between items-end gap-4">
+              <!-- Tag -->
               <div class="w-[13rem]">
-                <label class="block text-sm font-medium text-white">Asset Tag</label>
+                <label class="block text-sm font-medium text-black">Asset Tag</label>
                 <input
                   type="text"
-                  name="asset_tags[#{index}][tag]"
+                  name={"asset_tags[#{index}][tag]"}
                   value={tag[:tag] || ""}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
                   placeholder="Enter asset tag"
                 />
               </div>
+
+              <!-- Serial -->
               <div class="w-[13rem]">
-                <label class="block text-sm font-medium text-white">Asset Serial No</label>
+                <label class="block text-sm font-medium text-black">Asset Serial No</label>
                 <input
                   type="text"
-                  name="asset_tags[#{index}][serial_number]"
+                  name={"asset_tags[#{index}][serial_number]"}
                   value={tag[:serial_number] || ""}
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
                   placeholder="Enter serial number"
                 />
               </div>
+
+              <!-- Buttons -->
               <div class="flex gap-2">
                 <button
                   type="button"
@@ -91,10 +145,17 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
           <% end %>
         </div>
 
-        <:actions>
-          <.button phx-disable-with="Saving...">Save Asset</.button>
-        </:actions>
-      </.simple_form>
+        <!-- Submit -->
+        <div class="pt-6">
+          <button
+            type="submit"
+            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-white hover:bg-indigo-700"
+            phx-disable-with="Saving..."
+          >
+            Save Asset
+          </button>
+        </div>
+      </form>
     </div>
     """
   end

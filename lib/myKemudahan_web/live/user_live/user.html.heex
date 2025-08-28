@@ -1,0 +1,107 @@
+<div class="flex bg-gray-50 min-h-screen">
+  <.sidebar />
+
+  <div class="flex-1 p-6 max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-sky-800">System Users</h1>
+      <p class="text-gray-600 mt-1">Manage system users, including names, emails, and roles.</p>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-wrap items-end gap-4 bg-white border border-gray-200 shadow-sm rounded-lg p-4 mb-6">
+      <!-- Search -->
+      <div class="flex-1 min-w-[220px] max-w-md">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Search by Name</label>
+        <form phx-change="search" class="flex rounded-md shadow-sm">
+          <input 
+            type="text" 
+            name="search" 
+            value={@search} 
+            placeholder="User name here.." 
+            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          />
+        </form>
+      </div>
+
+      <!-- Role Filter -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Filter by Role</label>
+        <form phx-change="filter_role">
+          <select 
+            name="role" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          >
+            <option value="all" selected={@role_filter == "all"}>All Roles</option>
+            <option value="admin" selected={@role_filter == "admin"}>Admin</option>
+            <option value="user" selected={@role_filter == "user"}>User</option>
+          </select>
+        </form>
+      </div>
+
+      <!-- Reset Button -->
+      <div>
+        <form phx-click="reset_filters">
+          <button 
+            type="submit"
+            class="mt-6 px-4 py-2 bg-red-600 border text-white border-gray-300 rounded-md hover:bg-red-400 hover:text-black transition"
+          >
+            Reset
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- User Table -->
+    <div class="overflow-auto rounded-lg shadow-md">
+      <table class="w-full table-auto text-sm text-left border border-gray-200">
+        <thead class="bg-sky-100 text-gray-700 uppercase text-xs tracking-wider">
+          <tr>
+            <th class="px-4 py-3 border">Full Name</th>
+            <th class="px-4 py-3 border">Email</th>
+            <th class="px-4 py-3 border">Role</th>
+            <th class="px-4 py-3 border text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for user <- paginate_users(@filtered_users, @page, @per_page) do %>
+            <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50">
+              <td class="px-4 py-3 border"><%= user.full_name %></td>
+              <td class="px-4 py-3 border"><%= user.email %></td>
+              <td class="px-4 py-3 border"><%= user.role %></td>
+              <td class="px-4 py-3 border text-center">
+                <button 
+                  phx-click="view_user_requests" 
+                  phx-value-user_id={user.id}
+                  class="text-sky-600 bg-sky-100 px-3 py-1 rounded-full hover:bg-sky-200 transition"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <%= if @total_pages > 1 do %>
+      <div class="flex justify-center mt-6 space-x-1">
+        <%= for page <- 1..@total_pages do %>
+          <button 
+            phx-click="paginate" 
+            phx-value-page={page}
+            class={"px-3 py-1 rounded-md border #{if page == @page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
+          >
+            <%= page %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Results Count -->
+    <div class="mt-4 text-sm text-gray-600">
+      Showing <%= min(length(@filtered_users), @per_page) %> of <%= length(@filtered_users) %> users
+    </div>
+  </div>
+</div>

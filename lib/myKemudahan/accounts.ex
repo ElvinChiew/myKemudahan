@@ -370,4 +370,9 @@ defmodule MyKemudahan.Accounts do
   def change_user_full_name(%User{} = user, attrs \\ %{}) do
     User.full_name_changeset(user, attrs)
   end
+
+  def list_all_user do
+    Repo.all(MyKemudahan.Accounts.User)
+  end
+
 end
