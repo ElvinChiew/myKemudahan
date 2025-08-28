@@ -1,10 +1,46 @@
 <div class="flex">
   <.sidebar />
   <div class="flex-1 p-4">
-    <p class="text-xl font-semibold mb-4">User Table</p>
-    <table class="table-auto w-full border">
+    <p class="text-3xl font-bold mb-4">System User</p>
+    <p class="mb-4">Lists of System users, including their Full name, email address, and role</p>
+    
+    <!-- Search and Filter Controls -->
+    <div class="flex flex-wrap gap-4 mb-4 items-end bg-sky-200 shadow-xl px-2 py-2 rounded-md">
+      <!-- Search Input -->
+      <div class="w-full max-w-md">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
+        <form phx-change="search" class="flex">
+          <input 
+            type="text" 
+            name="search" 
+            value={@search} 
+            placeholder="Search users..." 
+            class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500"
+          />
+        </form>
+      </div>
+      
+      <!-- Role Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Role</label>
+        <form phx-change="filter_role">
+          <select 
+            name="role" 
+            class="px-7 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500"
+          >
+            <option value="all" selected={@role_filter == "all"}>All Roles</option>
+            <option value="admin" selected={@role_filter == "admin"}>Admin</option>
+            <option value="user" selected={@role_filter == "user"}>User</option>
+            <!-- Add other role options as needed -->
+          </select>
+        </form>
+      </div>
+    </div>
+    
+    <!-- User Table -->
+    <table class="table-auto w-full border shadow-md">
       <thead>
-        <tr class=" bg-sky-200">
+        <tr class="bg-sky-200">
           <th class="border px-4 py-2">Full Name</th>
           <th class="border px-4 py-2">Email</th>
           <th class="border px-4 py-2">Role</th>
@@ -12,22 +48,43 @@
         </tr>
       </thead>
       <tbody>
-        <%= for user <- @users do %>
+        <%= for user <- paginate_users(@filtered_users, @page, @per_page) do %>
           <tr class="hover:bg-sky-50">
             <td class="border px-4 py-2"><%= user.full_name %></td>
             <td class="border px-4 py-2"><%= user.email %></td>
             <td class="border px-4 py-2"><%= user.role %></td>
             <td class="border px-4 py-2">
-            <button 
+              <button 
                 phx-click="view_user_requests" 
                 phx-value-user_id={user.id}
                 class="bg-sky-200 text-sky-800 px-3 rounded-full hover:bg-sky-300 transition-colors">
                 View
-            </button>
+              </button>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
+    
+    <!-- Pagination Controls -->
+    <%= if @total_pages > 1 do %>
+      <div class="flex justify-center mt-6">
+        <div class="flex space-x-1">
+          <%= for page <- 1..@total_pages do %>
+            <button 
+              phx-click="paginate" 
+              phx-value-page={page}
+              class={"px-3 py-1 rounded-md #{if page == @page, do: "bg-sky-500 text-white", else: "bg-gray-200 text-gray-700 hover:bg-gray-300"}"}>
+              <%= page %>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    
+    <!-- Results Count -->
+    <div class="mt-4 text-sm text-gray-600">
+      Showing <%= min(length(@filtered_users), @per_page) %> of <%= length(@filtered_users) %> users
+    </div>
   </div>
 </div>

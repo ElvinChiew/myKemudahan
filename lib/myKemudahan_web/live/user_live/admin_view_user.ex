@@ -1,7 +1,6 @@
 defmodule MyKemudahanWeb.UserLive.AdminViewUser do
   alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
-  alias MyKemudahan.Reports.Report
   alias MyKemudahan.Repo
   alias MyKemudahan.Accounts
 
@@ -35,6 +34,7 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
       |> assign(:page, 1)
       |> assign(:per_page, per_page)
       |> assign(:total_pages, total_pages)
+      # Remove report-related assignments
       |> assign(:show_report_form, false)
       |> assign(:selected_report_item, nil)
 
@@ -70,14 +70,6 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
     {:noreply, push_navigate(socket, to: "/users")}
   end
 
-  def handle_event("request_asset", _params, socket) do
-    {:noreply, push_navigate(socket, to: "/requser")}
-  end
-
-  def handle_event("go_to_menu", _params, socket) do
-    {:noreply, push_navigate(socket, to: "/usermenu")}
-  end
-
   def handle_event("view_details", %{"id" => request_id}, socket) do
     # Get the full request with preloaded items
     request = Requests.get_request!(request_id)
@@ -93,6 +85,7 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
      socket
      |> assign(:selected_request, nil)
      |> assign(:show_details, false)
+     # Remove report-related assignments
      |> assign(:show_report_form, false)
      |> assign(:selected_report_item, nil)}
   end
@@ -115,12 +108,12 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
     case Requests.cancel_request(request_id) do
       {:ok, _request} ->
         # Refresh the requests list after cancellation
-        user = socket.assigns.current_user
+        target_user = socket.assigns.target_user
 
         all_requests =
           case socket.assigns.status_filter do
-            "all" -> Requests.list_user_requests(user.id)
-            status -> Requests.list_user_requests_by_status(user.id, status)
+            "all" -> Requests.list_user_requests(target_user.id)
+            status -> Requests.list_user_requests_by_status(target_user.id, status)
           end
 
         # Recalculate pagination
@@ -161,93 +154,4 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
     start_index = (page - 1) * per_page
     Enum.slice(requests, start_index, per_page)
   end
-
-  def handle_event("show_report_form", %{"item_id" => item_id}, socket) do
-    # Find the item to report on from the currently selected request
-    # The item_id here should be the request_item ID, not the asset ID
-    item = find_item_by_id(socket.assigns.selected_request.request_items, item_id)
-
-    {:noreply,
-     socket
-     |> assign(:show_report_form, true)
-     |> assign(:selected_report_item, item)}
-  end
-
-  def handle_event("cancel_report", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_report_form, false)
-     |> assign(:selected_report_item, nil)}
-  end
-
-  def handle_event("submit_report", %{"request_id" => request_id, "item_id" => item_id, "report_date" => date, "quantity" => quantity, "remarks" => remarks}, socket) do
-    # Convert string values to appropriate types
-    quantity = String.to_integer(quantity)
-    request_id = String.to_integer(request_id)
-    item_id = String.to_integer(item_id)
-
-    # Parse the date string to NaiveDateTime with error handling
-    case Date.from_iso8601(date) do
-      {:ok, date} ->
-        {:ok, reported_at} = NaiveDateTime.new(date, ~T[00:00:00])
-
-        # Get the current user
-        user = socket.assigns.current_user
-
-        # We need to get the request again to ensure we have the request_items loaded
-        request = MyKemudahan.Requests.get_request!(request_id)
-
-        # Find the request item by its ID (not asset_id)
-        item = Enum.find(request.request_items, &(&1.id == item_id))
-
-        if item do
-          # Prepare report attributes
-          report_attrs = %{
-            reporter_id: user.id,
-            asset_id: item.asset_id,
-            request_id: request_id,
-            reported_at: reported_at,
-            quantity: quantity,
-            description: remarks,
-            status: "submitted"
-          }
-
-          # Create the report directly using the Report changeset and Repo
-          %MyKemudahan.Reports.Report{}
-          |> MyKemudahan.Reports.Report.changeset(report_attrs)
-          |> MyKemudahan.Repo.insert()
-          |> case do
-            {:ok, _report} ->
-              {:noreply,
-               socket
-               |> assign(:show_report_form, false)
-               |> assign(:selected_report_item, nil)
-               |> put_flash(:info, "Report submitted successfully")}
-
-            {:error, changeset} ->
-              {:noreply,
-               socket
-               |> put_flash(:error, "Failed to submit report. Please try again.")}
-          end
-        else
-          IO.puts("Looking for item_id: #{item_id}")
-          {:noreply,
-           socket
-           |> put_flash(:error, "Item not found. Please try again.")}
-        end
-
-      {:error, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Invalid date format. Please use YYYY-MM-DD format.")}
-    end
-  end
-
-  # Helper function to find an item by ID
-  defp find_item_by_id(items, item_id) when is_binary(item_id) do
-    item_id = String.to_integer(item_id)
-    Enum.find(items, &(&1.id == item_id))
-  end
-
-  defp find_item_by_id(_, _), do: nil
 end
