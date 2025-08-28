@@ -141,6 +141,11 @@
             Please proceed to counter to complete the payment.
           </div>
         <% end %>
+        <%= if request.status == "rejected" do %>
+          <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+            <p><%= request.rejection_reason %></p>
+          </div>
+        <% end %>
         <div class="flex justify-between mb-1">
           <span class="text-xs font-medium text-gray-500">Request Progress</span>
           <span class="text-xs font-medium text-gray-500">
@@ -319,6 +324,11 @@
             <%= if @selected_request.status == "approved" do %>
               <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
                 <p>Please proceed to counter to complete the payment.</p>
+              </div>
+            <% end %>
+            <%= if @selected_request.status == "rejected" do %>
+              <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+                <p><%= @selected_request.rejection_reason %></p>
               </div>
             <% end %>
           </div>
