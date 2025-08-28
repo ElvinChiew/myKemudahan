@@ -17,7 +17,14 @@
             <td class="border px-4 py-2"><%= user.full_name %></td>
             <td class="border px-4 py-2"><%= user.email %></td>
             <td class="border px-4 py-2"><%= user.role %></td>
-            <td class="border px-4 py-2"><button class="bg-sky-200 text-sky-800 px-3 rounded-full">View</button></td>
+            <td class="border px-4 py-2">
+            <button 
+                phx-click="view_user_requests" 
+                phx-value-user_id={user.id}
+                class="bg-sky-200 text-sky-800 px-3 rounded-full hover:bg-sky-300 transition-colors">
+                View
+            </button>
+            </td>
           </tr>
         <% end %>
       </tbody>

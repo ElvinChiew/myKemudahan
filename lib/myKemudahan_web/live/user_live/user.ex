@@ -1,7 +1,6 @@
 defmodule MyKemudahanWeb.UserLive.User do
-alias MyKemudahan.Accounts
+  alias MyKemudahan.Accounts
   use MyKemudahanWeb, :live_view
-
   alias MyKemudahan.Accounts
   import MyKemudahanWeb.AdminSidebar
 
@@ -10,5 +9,7 @@ alias MyKemudahan.Accounts
     {:ok, assign(socket, users: users)}
   end
 
-
+  def handle_event("view_user_requests", %{"user_id" => user_id}, socket) do
+    {:noreply, push_navigate(socket, to: "/admin/user-requests/#{user_id}")}
+  end
 end

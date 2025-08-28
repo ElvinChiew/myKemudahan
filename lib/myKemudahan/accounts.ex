@@ -374,4 +374,5 @@ defmodule MyKemudahan.Accounts do
   def list_all_user do
     Repo.all(MyKemudahan.Accounts.User)
   end
+
 end

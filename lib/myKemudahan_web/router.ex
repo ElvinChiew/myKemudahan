@@ -47,6 +47,7 @@ defmodule MyKemudahanWeb.Router do
     #user list view
     live "/users", UserLive.User
     live "/admin_view_user", UserLive.AdminViewUser
+    live "/admin/user-requests/:user_id", UserLive.AdminViewUser, :index
 
     #Asset CAtegory Section
     live "/categories", CategoryLive.Index, :index

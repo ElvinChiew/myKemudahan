@@ -1,5 +1,13 @@
 <div class="w-full mt-5">
-  <button phx-click="go_to_menu" class="bg-slate-950 text-white px-4 py-2 rounded-xl">Menu</button>
+    <button phx-click="go_back" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-400">
+    &larr; Back to Users
+  </button>
+</div>
+
+
+
+<div class="flex justify-center mb-20">
+  <p class="text-3xl font-bold">Requests for <%= @target_user.full_name %></p>
 </div>
 
 <div class="flex justify-center mb-20">
@@ -80,16 +88,6 @@
 
         <!-- Action buttons -->
         <div class="button-group flex gap-2">
-          <!-- Only show Cancel if status is sent or pending -->
-          <%= if request.status in ["sent", "pending"] do %>
-            <button 
-              phx-click="confirm_cancel"
-              phx-value-id={request.id}
-              class="bg-white text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium">
-              Cancel Request
-            </button>
-          <% end %>
-
           <button 
             phx-click="view_details"
             phx-value-id={request.id}
@@ -168,18 +166,17 @@
   <% end %>
   
   <!-- Empty state -->
-  <%= if Enum.empty?(@requests) do %>
-    <div class="text-center py-10">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      <h3 class="mt-4 text-lg font-medium text-gray-900">No requests found</h3>
-      <p class="mt-1 text-gray-500">Get started by creating a new request.</p>
-      <button phx-click="request_asset" class="mt-4 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors text-sm font-medium">
-        Create New Request
-      </button>
-    </div>
-  <% end %>
+<!-- In the empty state section -->
+<%= if Enum.empty?(@requests) do %>
+  <div class="text-center py-10">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <h3 class="mt-4 text-lg font-medium text-gray-900">No requests found</h3>
+    <p class="mt-1 text-gray-500"><%= @target_user.full_name %> hasn't made any requests yet.</p>
+    <!-- Remove or disable the request creation button -->
+  </div>
+<% end %>
 </div>
 
 <!-- Pagination Controls -->

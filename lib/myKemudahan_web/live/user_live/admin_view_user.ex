@@ -3,13 +3,18 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
   alias MyKemudahan.Requests
   alias MyKemudahan.Reports.Report
   alias MyKemudahan.Repo
+  alias MyKemudahan.Accounts
 
   use MyKemudahanWeb, :live_view
   on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
-  def mount(_params, _session, socket) do
-    user = socket.assigns.current_user
-    requests = Requests.list_user_requests(user.id)
+  # Update mount to accept params
+  def mount(%{"user_id" => user_id}, _session, socket) do
+    # Get the target user (the one whose requests we're viewing)
+    target_user = Accounts.get_user!(user_id)
+
+    # Get requests for the target user, not the current user
+    requests = Requests.list_user_requests(target_user.id)
 
     # Pagination settings
     per_page = 10
@@ -19,9 +24,10 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
     socket =
       socket
       |> assign(:requests, paginated_requests)
-      |> assign(:all_requests, requests)  # Store all requests for filtering
+      |> assign(:all_requests, requests)
       |> assign(:status_filter, "all")
-      |> assign(:current_user, user)
+      |> assign(:current_user, socket.assigns.current_user)
+      |> assign(:target_user, target_user)  # Store the user we're viewing
       |> assign(:selected_request, nil)
       |> assign(:show_details, false)
       |> assign(:show_cancel_confirm, false)
@@ -29,20 +35,20 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
       |> assign(:page, 1)
       |> assign(:per_page, per_page)
       |> assign(:total_pages, total_pages)
-      |> assign(:show_report_form, false)  # Add this
-      |> assign(:selected_report_item, nil)  # Add this
+      |> assign(:show_report_form, false)
+      |> assign(:selected_report_item, nil)
 
     {:ok, socket}
   end
 
-  # Handle Tabs Click
+  # Update the filter_status handler to use target_user
   def handle_event("filter_status", %{"status" => status}, socket) do
-    user = socket.assigns.current_user
+    target_user = socket.assigns.target_user
 
     all_requests =
       case status do
-        "all" -> Requests.list_user_requests(user.id)
-        _ -> Requests.list_user_requests_by_status(user.id, status)
+        "all" -> Requests.list_user_requests(target_user.id)
+        _ -> Requests.list_user_requests_by_status(target_user.id, status)
       end
 
     # Update pagination
@@ -57,6 +63,11 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
        page: 1,
        total_pages: total_pages
      )}
+  end
+
+  # Add a back button handler
+  def handle_event("go_back", _params, socket) do
+    {:noreply, push_navigate(socket, to: "/users")}
   end
 
   def handle_event("request_asset", _params, socket) do
