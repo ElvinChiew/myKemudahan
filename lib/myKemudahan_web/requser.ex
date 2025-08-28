@@ -11,8 +11,6 @@ alias MyKemudahan.Accounts
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
 
-    IO.inspect(user.full_name, label: "<----- This is the user full_name ---->")
-
     all_assets = Assets.list_assets() |> MyKemudahan.Repo.preload(:category)
     categories = Assets.list_all_categories()
 
@@ -168,261 +166,283 @@ alias MyKemudahan.Accounts
 
   def render(assigns) do
     ~H"""
-    <div class="w-full mt-10">
-      <button phx-click="go_to_menu" class="bg-slate-950 text-white px-4 py-2 rounded-xl">Menu</button>
-    </div>
-
-    <div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
-      <p class="text-3xl font-bold mb-4">Asset/Facility Request Form</p>
-
-      <div>
-        <!-- Category Select -->
-        <div class="mb-6">
-          <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Asset Category:</label>
-          <form phx-change="filter_by_category">
-          <select
-            name="category"
-            id="category"
-            class="w-1/4 p-2 border rounded">
-            <option value="">All Categories</option>
-            <%= for category <- @categories do %>
-              <option value={category.id} selected={@selected_category == Integer.to_string(category.id)}>
-                <%= category.name %>
-              </option>
-            <% end %>
-          </select>
-          </form>
+    <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header with back button -->
+        <div class="flex items-center justify-between mb-8">
+          <button
+            phx-click="go_to_menu"
+            class="inline-flex items-center text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Menu
+          </button>
+          <h1 class="text-3xl font-bold text-gray-900">Asset Request Form</h1>
+          <div class="w-24"></div> <!-- Spacer for balance -->
         </div>
 
-        <!-- Asset Cards -->
-        <div class="flex flex-wrap gap-2">
-        <%= for asset <- paginated_assets(@filtered_assets, @current_page, @page_size) do %>
-            <div class="w-[13rem] bg-slate-700 rounded-xl shadow-xl p-3 flex flex-col gap-3">
-              <!-- Image Placeholder -->
-              <div class="w-full h-[10rem] bg-slate-300 rounded-lg flex items-center justify-center">
-                <%= if asset.image && asset.image != "" do %>
-                  <img src={asset.image} alt={asset.name} class="w-full h-full object-cover rounded-lg" />
-                <% else %>
-                  <p class="text-sm text-gray-700">No Image</p>
-                <% end %>
-              </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column - Asset Selection -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+              <h2 class="text-xl font-semibold text-gray-800 mb-4">Select Assets</h2>
 
-              <!-- Text Content -->
-              <div class="text-white space-y-1">
-                <p class="font-bold text-base"><%= asset.name %></p>
-                <p class="text-xs text-gray-300"><%= asset.description %></p>
-                <p class="text-xs text-gray-300">Status: <%= asset.status %></p>
-                <p class="text-xs text-gray-300">Cost: RM<%= Decimal.to_string(asset.cost_per_unit, :normal) %></p>
-                <%= if asset.category do %>
-                  <p class="text-xs text-gray-300">Category: <%= asset.category.name %></p>
-                <% end %>
-              </div>
-
-              <!-- Input and Button -->
-              <form phx-submit="add_item" class="flex flex-row items-center gap-2">
-                <input type="hidden" name="asset_id" value={asset.id} />
-                <input
-                  type="number"
-                  min="1"
-                  name="quantity"
-                  class="w-full px-2 py-1 rounded-md text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  placeholder="Qty"
-                  required
-                />
-                <button
-                  type="submit"
-                  class="bg-teal-500 hover:bg-teal-600 px-3 py-1 rounded-2xl text-white text-sm transition">
-                  Request
-                </button>
-              </form>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <!-- Pagination Controls -->
-      <%
-        total_pages = max(Float.ceil(length(@filtered_assets) / @page_size), 1)
-        page_numbers = MyKemudahanWeb.PaginationHelpers.pagination_range(@current_page, total_pages)
-      %>
-
-    <div class="flex justify-center mt-6">
-      <nav class="inline-flex items-center space-x-2">
-        <!-- Prev Button -->
-        <button
-          type="button"
-          phx-click="change_page"
-          phx-value-page={@current_page - 1}
-          class={"px-3 py-2 rounded-md text-sm font-medium #{if @current_page == 1, do: "bg-gray-200 text-gray-400 cursor-not-allowed", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
-          disabled={@current_page == 1}
-        >
-          Prev
-        </button>
-
-        <!-- Page Numbers -->
-        <%= for page <- page_numbers do %>
-          <%= if page == "..." do %>
-            <span class="px-3 py-2 text-gray-500">...</span>
-          <% else %>
-            <button
-              type="button"
-              phx-click="change_page"
-              phx-value-page={page}
-              class={"px-3 py-2 rounded-md text-sm font-medium #{if page == @current_page, do: "bg-teal-600 text-white", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
-            >
-              <%= page %>
-            </button>
-          <% end %>
-        <% end %>
-
-        <!-- Next Button -->
-        <button
-          type="button"
-          phx-click="change_page"
-          phx-value-page={@current_page + 1}
-          class={"px-3 py-2 rounded-md text-sm font-medium #{if @current_page == total_pages, do: "bg-gray-200 text-gray-400 cursor-not-allowed", else: "bg-gray-100 text-gray-700 hover:bg-gray-200"}"}
-          disabled={@current_page == total_pages}
-        >
-          Next
-        </button>
-      </nav>
-    </div>
-    </div>
-
-    <div class="bg-[#F9FAFB] mt-3 rounded-xl px-3 py-4 shadow-2xl">
-    <p class="text-3xl font-bold mb-4">Requested Asset List</p>
-
-      <!-- Submit Button -->
-      <form id="confirm_form" phx-submit="submit_form">
-        <div class="flex flex-row gap-10">
-          <!-- Borrow From Date -->
-          <div>
-            <label for="borrow_from" class="block text-sm font-medium text-gray-700 mb-1">Borrow From:</label>
-            <input
-              type="date"
-              id="borrow_from"
-              name="borrow_from"
-              class="w-full max-w-sm p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-              required
-            />
-          </div>
-
-          <!-- Borrow To Date -->
-          <div>
-            <label for="borrow_to" class="block text-sm font-medium text-gray-700 mb-1">Borrow To:</label>
-            <input
-              type="date"
-              id="borrow_to"
-              name="borrow_to"
-              class="w-full max-w-sm p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-              required
-            />
-          </div>
-        </div>
-
-        <!-- Purpose Textarea -->
-        <div>
-          <label for="purpose" class="block text-sm font-medium text-gray-700 mb-1">Please state the purpose of the request:</label>
-          <textarea
-            id="purpose"
-            name="purpose"
-            rows="4"
-            class="w-full max-w-lg p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-            placeholder="Type your reason here..."
-            required
-          ></textarea>
-                </div>
-      </form>
-
-      <div class="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-        <table class="min-w-full text-sm text-left">
-          <thead class="bg-teal-500 text-white uppercase text-xs">
-            <tr>
-              <th class="px-4 py-3">Asset</th>
-              <th class="px-4 py-3">Quantity</th>
-              <th class="px-4 py-3">Charge (RM)</th>
-              <th class="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody class="divide-y divide-gray-200">
-            <%= for item <- @requested_items do %>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-3 font-medium text-gray-900"><%= item.name %></td>
-
-                <td class="px-4 py-3">
-                  <form phx-submit="update_item" class="flex items-center gap-2">
-                    <input type="hidden" name="_id" value={item.id} />
-                    <input
-                      type="number"
-                      min="1"
-                      name="quantity"
-                      value={item.quantity}
-                      class="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      title="Update quantity"
-                      class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Update
-                    </button>
-                  </form>
-                </td>
-
-                <td class="px-4 py-3 text-gray-700">
-                  RM<%= Decimal.mult(item.cost_per_unit, Decimal.new(item.quantity)) |> Decimal.to_string(:normal) %>
-                </td>
-
-                <td class="px-4 py-3">
-                  <button
-                    type="button"
-                    phx-click="remove_item"
-                    phx-value-id={item.id}
-                    title="Remove item"
-                    class="flex items-center gap-1 px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+              <!-- Category Filter -->
+              <div class="mb-6">
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Filter by Category:</label>
+                <form phx-change="filter_by_category">
+                  <select
+                    name="category"
+                    id="category"
+                    class="w-full md:w-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <option value="">All Categories</option>
+                    <%= for category <- @categories do %>
+                      <option value={category.id} selected={@selected_category == Integer.to_string(category.id)}>
+                        <%= category.name %>
+                      </option>
+                    <% end %>
+                  </select>
+                </form>
+              </div>
+
+              <!-- Asset Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <%= for asset <- paginated_assets(@filtered_assets, @current_page, @page_size) do %>
+                  <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                    <!-- Asset Image -->
+                    <div class="w-full h-40 bg-gray-200 rounded-md overflow-hidden mb-3 flex items-center justify-center">
+                      <%= if asset.image && asset.image != "" do %>
+                        <img src={asset.image} alt={asset.name} class="w-full h-full object-cover" />
+                      <% else %>
+                        <div class="text-gray-400">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      <% end %>
+                    </div>
+
+                    <!-- Asset Details -->
+                    <div class="mb-3">
+                      <h3 class="font-medium text-gray-900 text-lg mb-1"><%= asset.name %></h3>
+                      <p class="text-sm text-gray-600 mb-2 line-clamp-2"><%= asset.description %></p>
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">RM<%= Decimal.to_string(asset.cost_per_unit, :normal) %></span>
+                        <span class={"text-xs px-2 py-1 rounded-full #{if asset.status == "available", do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
+                          <%= asset.status %>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Request Form -->
+                    <form phx-submit="add_item" class="flex items-center gap-2">
+                      <input type="hidden" name="asset_id" value={asset.id} />
+                      <input
+                        type="number"
+                        min="1"
+                        name="quantity"
+                        class="flex-1 p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        placeholder="Quantity"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        class="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded-md transition-colors flex items-center justify-center"
+                        title="Add to request"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                <% end %>
+              </div>
+
+              <!-- Pagination -->
+              <% total_pages = max(Float.ceil(length(@filtered_assets) / @page_size), 1) %>
+              <% page_numbers = MyKemudahanWeb.PaginationHelpers.pagination_range(@current_page, total_pages) %>
+
+              <%= if total_pages > 1 do %>
+                <div class="flex justify-center mt-8">
+                  <nav class="flex items-center space-x-1">
+                    <!-- Previous Button -->
+                    <button
+                      phx-click="change_page"
+                      phx-value-page={@current_page - 1}
+                      disabled={@current_page == 1}
+                      class={"p-2 rounded-md #{if @current_page == 1, do: "text-gray-400 cursor-not-allowed", else: "text-gray-700 hover:bg-gray-100"}"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+
+                    <!-- Page Numbers -->
+                    <%= for page <- page_numbers do %>
+                      <%= if page == "..." do %>
+                        <span class="px-3 py-1 text-gray-500">...</span>
+                      <% else %>
+                        <button
+                          phx-click="change_page"
+                          phx-value-page={page}
+                          class={"px-3 py-1 rounded-md text-sm font-medium #{if page == @current_page, do: "bg-teal-600 text-white", else: "text-gray-700 hover:bg-gray-100"}"}
+                        >
+                          <%= page %>
+                        </button>
+                      <% end %>
+                    <% end %>
+
+                    <!-- Next Button -->
+                    <button
+                      phx-click="change_page"
+                      phx-value-page={@current_page + 1}
+                      disabled={@current_page == total_pages}
+                      class={"p-2 rounded-md #{if @current_page == total_pages, do: "text-gray-400 cursor-not-allowed", else: "text-gray-700 hover:bg-gray-100"}"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Right Column - Request Summary -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm p-6 sticky top-6">
+              <h2 class="text-xl font-semibold text-gray-800 mb-4">Request Summary</h2>
+
+              <!-- Request Details Form -->
+              <form id="confirm_form" phx-submit="submit_form" class="space-y-4 mb-6">
+                <div>
+                  <label for="borrow_from" class="block text-sm font-medium text-gray-700 mb-1">Borrow From:</label>
+                  <input
+                    type="date"
+                    id="borrow_from"
+                    name="borrow_from"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label for="borrow_to" class="block text-sm font-medium text-gray-700 mb-1">Borrow To:</label>
+                  <input
+                    type="date"
+                    id="borrow_to"
+                    name="borrow_to"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label for="purpose" class="block text-sm font-medium text-gray-700 mb-1">Purpose:</label>
+                  <textarea
+                    id="purpose"
+                    name="purpose"
+                    rows="4"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Please describe the purpose of your request..."
+                    required
+                  ></textarea>
+                </div>
+              </form>
+
+              <!-- Requested Items Table -->
+                <div class="mb-6">
+                <h3 class="font-medium text-gray-700 mb-3">Requested Items</h3>
+
+                <%= if @requested_items != [] do %>
+                  <!-- Add scrollable container with fixed height -->
+                  <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                    <div class="space-y-3 p-2">
+                      <%= for item <- @requested_items do %>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div class="flex-1">
+                            <p class="font-medium text-gray-900"><%= item.name %></p>
+                            <div class="flex items-center mt-1">
+                              <form phx-submit="update_item" class="flex items-center">
+                                <input type="hidden" name="_id" value={item.id} />
+                                <input
+                                  type="number"
+                                  min="1"
+                                  name="quantity"
+                                  value={item.quantity}
+                                  class="w-16 p-1 border border-gray-300 rounded text-sm text-center focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                                  required
+                                />
+                                <button
+                                  type="submit"
+                                  class="ml-2 text-teal-600 hover:text-teal-800 transition-colors"
+                                  title="Update quantity"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </button>
+                              </form>
+                              <span class="text-sm text-gray-600 ml-3">
+                                × RM<%= Decimal.to_string(item.cost_per_unit, :normal) %>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium text-gray-900">
+                              RM<%= Decimal.mult(item.cost_per_unit, Decimal.new(item.quantity)) |> Decimal.to_string(:normal) %>
+                            </span>
+                            <button
+                              phx-click="remove_item"
+                              phx-value-id={item.id}
+                              class="text-red-500 hover:text-red-700 transition-colors"
+                              title="Remove item"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <!-- Total Cost (moved outside the scrollable area) -->
+                  <div class="mt-4 pt-3 border-t border-gray-200">
+                    <div class="flex justify-between items-center font-medium text-gray-900">
+                      <span>Total Cost:</span>
+                      <span>RM<%= Decimal.to_string(@total_cost, :normal) %></span>
+                    </div>
+                  </div>
+                <% else %>
+                  <div class="text-center py-8 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            <% end %>
+                    <p>No items added yet</p>
+                  </div>
+                <% end %>
+              </div>
 
-            <%= if @requested_items == [] do %>
-              <tr>
-                <td colspan="4" class="px-4 py-6 text-center text-gray-500 italic">
-                  No items requested yet.
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-
-          <tfoot class="bg-gray-50 border-t border-gray-200 font-semibold">
-            <tr>
-              <td colspan="2" class="px-4 py-3">Total</td>
-              <td class="px-4 py-3 text-gray-900">RM<%= Decimal.to_string(@total_cost, :normal) %></td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <!-- Submit Button -->
-      <div>
-        <button
-          type="submit"
-          form="confirm_form"
-          class="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2 rounded-md transition"
-        >
-          Confirm Request
-        </button>
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                form="confirm_form"
+                disabled={@requested_items == []}
+                class={"w-full py-3 px-4 rounded-lg font-medium transition-colors #{if @requested_items == [], do: "bg-gray-300 text-gray-500 cursor-not-allowed", else: "bg-teal-600 hover:bg-teal-700 text-white"}"}
+              >
+                Submit Request
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     """

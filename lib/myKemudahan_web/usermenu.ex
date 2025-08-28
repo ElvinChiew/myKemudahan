@@ -16,7 +16,7 @@ defmodule MyKemudahanWeb.Usermenu do
           <!-- Card 1 -->
           <div class="w-full max-w-md rounded-xl bg-slate-700 p-8 text-sm/7 text-gray-700 dark:bg-gray-950 dark:text-gray-300 shadow-lg">
             <p class="text-xl font-bold text-center text-white">Asset Borrowing Request</p>
-            <p class="text-white mt-2">Make asset borrowing request quickly and easily, hassle free.</p>
+            <p class="text-white mt-2">Need equipment or tools? Submit your request in seconds. No fuss, no delays, just smooth and hassle-free borrowing.</p>
             <div class="flex justify-end mt-5">
               <button phx-click="go_to_requser" class="bg-teal-500 rounded-2xl px-4 py-2 text-white hover:bg-teal-600">Request</button>
             </div>
