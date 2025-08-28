@@ -56,7 +56,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
         <!-- Section: Users -->
         <div>
           <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">System Users</h2>
-          <a href="#users" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition" title="Manage System Users">
+          <a href="/users" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition" title="Manage System Users">
             <i class="fa fa-user" aria-hidden="true"></i>
             <span class="sidebar-label">System User</span>
           </a>
@@ -95,7 +95,15 @@ defmodule MyKemudahanWeb.AdminSidebar do
 
         // Initialize collapsed groups on page load
         document.addEventListener('DOMContentLoaded', () => {
-          toggleCollapse('asset-group'); // You can change this to start open or closed
+          const currentPath = window.location.pathname;
+          const links = document.querySelectorAll('.sidebar a');
+
+          links.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+              link.classList.add('bg-slate-700', 'text-white'); // Add highlight styles
+            }
+
+          toggleCollapse('asset-group');
         });
     </script>
 
