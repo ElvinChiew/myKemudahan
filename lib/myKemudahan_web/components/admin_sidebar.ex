@@ -34,7 +34,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
             <i id="asset-group-arrow" class="fa fa-chevron-down ml-auto transition-transform duration-300"></i>
           </h2>
           <div id="asset-group" class="space-y-1 px-3">
-            <a href="#asset" class="flex items-center space-x-3 py-2 rounded-md hover:bg-slate-600 transition" title="Asset Overview">
+            <a href="/assets" class="flex items-center space-x-3 py-2 rounded-md hover:bg-slate-600 transition" title="Asset Overview">
               <i class="fa fa-home" aria-hidden="true"></i>
               <span class="sidebar-label">Asset</span>
             </a>
@@ -42,15 +42,20 @@ defmodule MyKemudahanWeb.AdminSidebar do
               <i class="fa fa-tags" aria-hidden="true"></i>
               <span class="sidebar-label">Asset Category</span>
             </a>
-            <a href="/assets" class="flex items-center space-x-3 py-2 rounded-md hover:bg-slate-600 transition" title="Asset Lists">
-              <i class="fa fa-list" aria-hidden="true"></i>
-              <span class="sidebar-label">Asset Lists</span>
-            </a>
             <a href="/asset_tags" class="flex items-center space-x-3 py-2 rounded-md hover:bg-slate-600 transition" title="Asset Units">
               <i class="fa fa-cubes" aria-hidden="true"></i>
               <span class="sidebar-label">Asset Units Lists</span>
             </a>
           </div>
+        </div>
+
+        <!-- Section: Report -->
+        <div>
+          <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">System Users</h2>
+          <a href="/reports" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition" title="Manage System Users">
+            <i class="fa fa-flag" aria-hidden="true"></i>
+            <span class="sidebar-label">Incident Report</span>
+          </a>
         </div>
 
         <!-- Section: Users -->

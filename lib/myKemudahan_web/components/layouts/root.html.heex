@@ -12,7 +12,7 @@
     </script>
   </head>
   
-  <body class="bg-white">
+  <body class="bg-white min-h-screen flex flex-col">
     <!-- This is the navbar section -->
     <nav class="sticky top-0 z-50 flex justify-end space-x-10 px-20 py-6 bg-[#0B132B] text-[#FFF5F5] w-full">
       <ul class="relative z-10 flex items-center gap-8 px-4 sm:px-6 lg:px-8 justify-end">
@@ -86,11 +86,12 @@
         <% end %>
       </ul>
     </nav>
+    <main class="flex-1 flex flex-col">
      {@inner_content}
+    </main>
 
-    <footer class="bottom-0 z-50 bg-[#0B132B] text-[#FFF5F5] w-full mt-3">
+    <footer class="bg-[#0B132B] text-[#FFF5F5] w-full py-4 mt-3 text-center">
       <p>&copy; 2025 MyWebsite. All rights reserved.</p>
-      
       <nav><a href="/privacy-policy">Privacy Policy</a> | <a href="/contact">Contact Us</a></nav>
     </footer>
 

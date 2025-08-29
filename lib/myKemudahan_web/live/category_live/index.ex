@@ -17,6 +17,7 @@ defmodule MyKemudahanWeb.CategoryLive.Index do
       socket
       |> assign(:page, 1)
       |> assign(:per_page, @per_page)
+      |> assign(:search, "")
       |> assign(:category, nil)
       |> assign(:total_count, Assets.count_categories())
       |> stream(:categories, Assets.list_categories(1, @per_page))}
@@ -25,9 +26,12 @@ defmodule MyKemudahanWeb.CategoryLive.Index do
   @impl true
   def handle_params(params, _url, socket) do
     page = Map.get(params, "page", "1") |> String.to_integer()
+    search = Map.get(params, "search", "")  # Get search from params
+
     socket =
       socket
       |> assign(:page, page)
+      |> assign(:search, search)  # Assign search term
       |> paginate()
 
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
@@ -64,9 +68,24 @@ defmodule MyKemudahanWeb.CategoryLive.Index do
     {:noreply, stream_delete(socket, :categories, category)}
   end
 
+  @impl true
+  def handle_event("search", %{"search" => search}, socket) do
+    {:noreply, push_patch(socket, to: ~p"/categories?search=#{search}&page=1")}
+  end
+
+  def handle_event("clear_search", _, socket) do
+    {:noreply, push_patch(socket, to: ~p"/categories?page=1")}
+  end
+
   defp paginate(socket) do
-    total_count = Assets.count_categories()
-    categories = Assets.list_categories(socket.assigns.page, socket.assigns.per_page)
+    search = socket.assigns.search
+    total_count = if search != "", do: Assets.count_categories_search(search), else: Assets.count_categories()
+
+    categories = if search != "" do
+      Assets.search_categories(search, socket.assigns.page, socket.assigns.per_page)
+    else
+      Assets.list_categories(socket.assigns.page, socket.assigns.per_page)
+    end
 
     socket
     |> assign(:total_count, total_count)

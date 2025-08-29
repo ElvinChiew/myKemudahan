@@ -129,11 +129,11 @@ defmodule MyKemudahan.Assets do
 
   """
   def list_assets do
-    Repo.all(Asset)
+    Repo.all(Asset) |> Repo.preload(:category)
   end
 
   def list_asset_tags do
-    Repo.all(AssetTag) |> Repo.preload(:asset)
+    Repo.all(AssetTag) |> Repo.preload(asset: [:category])
   end
 
   @doc """
@@ -240,6 +240,7 @@ defmodule MyKemudahan.Assets do
     AssetTag
     |> limit(^per_page)
     |> offset(^offset)
+    |> preload(asset: [:category])
     |> Repo.all()
   end
 
@@ -251,12 +252,129 @@ defmodule MyKemudahan.Assets do
     AssetTag.changeset(asset_tag, attrs)
   end
 
+  def list_asset_tags_paginated(params) do
+    page = String.to_integer(params["page"] || "1")
+    per_page = String.to_integer(params["per_page"] || "10")
+    search = params["search"]
+    category_id = params["category_id"]
 
+    offset = (page - 1) * per_page
 
-  #asset Tag liveview function
+    # Base query with joins and preloads
+    base_query = from at in AssetTag,
+                join: a in assoc(at, :asset),
+                join: c in assoc(a, :category),
+                preload: [asset: {a, category: c}]
 
-  #def create_asset_tag(attrs \\ %{}) do
-  #  raise "TODO"
-  #end
+    # Apply search filter if provided
+    query = if search && search != "" do
+      from [at, a, c] in base_query,
+      where: ilike(a.name, ^"%#{search}%")
+    else
+      base_query
+    end
 
+    # Apply category filter if provided
+    query = if category_id && category_id != "" do
+      from [at, a, c] in query,
+      where: a.category_id == ^category_id
+    else
+      query
+    end
+
+    # Get paginated results
+    asset_tags = query
+      |> limit(^per_page)
+      |> offset(^offset)
+      |> Repo.all()
+
+    # Get total count for pagination
+    total_count = query
+      |> exclude(:preload)
+      |> exclude(:limit)
+      |> exclude(:offset)
+      |> Repo.aggregate(:count, :id)
+
+    %{
+      asset_tags: asset_tags,
+      total_count: total_count,
+      page: page,
+      per_page: per_page,
+      total_pages: ceil(total_count / per_page)
+    }
+  end
+
+  def list_assets_paginated(params) do
+    page = String.to_integer(params["page"] || "1")
+    per_page = String.to_integer(params["per_page"] || "10")
+    search = params["search"]
+    category_id = params["category_id"]
+
+    offset = (page - 1) * per_page
+
+    # Base query with preload
+    base_query = from a in Asset,
+                join: c in assoc(a, :category),
+                preload: [category: c]
+
+    # Apply search filter if provided
+    query = if search && search != "" do
+      from [a, c] in base_query,
+      where: ilike(a.name, ^"%#{search}%")
+    else
+      base_query
+    end
+
+    # Apply category filter if provided
+    query = if category_id && category_id != "" do
+      from [a, c] in query,
+      where: a.category_id == ^category_id
+    else
+      query
+    end
+
+    # Get paginated results
+    assets = query
+      |> limit(^per_page)
+      |> offset(^offset)
+      |> Repo.all()
+
+    # Get total count for pagination
+    total_count = query
+      |> exclude(:preload)
+      |> exclude(:limit)
+      |> exclude(:offset)
+      |> Repo.aggregate(:count, :id)
+
+    %{
+      assets: assets,
+      total_count: total_count,
+      page: page,
+      per_page: per_page,
+      total_pages: ceil(total_count / per_page)
+    }
+  end
+
+  # Add a function to get all categories for the filter dropdown
+  def list_categories_for_filter do
+    from(c in Category, order_by: c.name)
+    |> Repo.all()
+  end
+
+  def search_categories(search_term, page \\ 1, per_page \\ 10) do
+    offset = (page - 1) * per_page
+
+    Category
+    |> where([c], ilike(c.name, ^"%#{search_term}%"))
+    |> order_by(asc: :name)
+    |> limit(^per_page)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  def count_categories_search(search_term) do
+    Category
+    |> where([c], ilike(c.name, ^"%#{search_term}%"))
+    |> Repo.aggregate(:count, :id)
+  end
 end

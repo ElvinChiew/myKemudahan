@@ -1,58 +1,143 @@
-<div class="flex">
-  <%= if @current_user && @current_user.role == "admin" do %>
-    <.sidebar/>
-  <% end %>
-  <div class="flex-1 ml-5 mt-5">
+<div class="flex min-h-screen">
+  <.sidebar class="h-full"/>
+<div class="flex-1 ml-5 mt-5 h-full flex flex-col">
     <.header>
-    Listing Assets
-    <:actions>
-      <.link patch={~p"/assets/new"}>
-        <.button>New Asset</.button>
-      </.link>
-    </:actions>
-  </.header>
+      <p class="font-bold text-3xl mb-5">Listing Assets</p>
+      <:actions>
+        <.link patch={~p"/assets/new"}>
+          <.button class="mb-5">New Asset</.button>
+        </.link>
+      </:actions>
+    </.header>
 
-  <.table
-    id="assets"
-    rows={@streams.assets}
-    row_click={fn {_id, asset} -> JS.navigate(~p"/assets/#{asset}") end}
-  >
-    <:col :let={{_id, asset}} label="Name">{asset.name}</:col>
-    <:col :let={{_id, asset}} label="Description">{asset.description}</:col>
+    <!-- Search and Filter Section -->
+    <div class="bg-white p-4 rounded-lg shadow-lg ring-1 ring-gray-200 hover:shadow-xl transition-shadow duration-300 mb-4">
+      <form phx-change="search" phx-submit="search" class="mb-4">
+        <div class="flex gap-4 items-end">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
+            <input 
+              type="text" 
+              name="search" 
+              value={@search} 
+              placeholder="Search asset names..." 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              phx-debounce="300"
+            />
+          </div>
+          
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Category</label>
+            <select 
+              name="category_id" 
+              phx-change="filter" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Categories</option>
+              <%= for category <- @categories do %>
+                <option value={category.id} selected={@category_id == to_string(category.id)}>
+                  <%= category.name %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+          
+          <div>
+            <button 
+              type="button" 
+              phx-click="clear_filters" 
+              class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </form>
 
-    <:col :let={{_id, asset}} label="Cost per unit">{asset.cost_per_unit}</:col>
-    <:col :let={{_id, asset}} label="Image">
-      <%= if asset.image do %>
-        <img src={asset.image} alt="Asset image" class="h-12 w-12 object-cover rounded-md" />
-      <% else %>
-        <span class="text-gray-400 italic">No image</span>
-      <% end %>
-    </:col>
-    <:action :let={{_id, asset}}>
-      <div class="sr-only">
-        <.link navigate={~p"/assets/#{asset}"}>Show</.link>
+      <!-- Results Count -->
+      <div class="text-sm text-gray-600 mb-4">
+        Showing <%= length(@assets) %> of <%= @total_count %> assets
       </div>
-      <.link patch={~p"/assets/#{asset}/edit"}>Edit</.link>
-    </:action>
-    <:action :let={{id, asset}}>
-      <.link
-        phx-click={JS.push("delete", value: %{id: asset.id}) |> hide("##{id}")}
-        data-confirm="Are you sure?"
-      >
-        Delete
-      </.link>
-    </:action>
-  </.table>
+    </div>
 
-  <.modal :if={@live_action in [:new, :edit]} id="asset-modal" show on_cancel={JS.patch(~p"/assets")}>
-    <.live_component
-      module={MyKemudahanWeb.AssetLive.FormComponent}
-      id={@asset.id || :new}
-      title={@page_title}
-      action={@live_action}
-      asset={@asset}
-      patch={~p"/assets"}
-    />
-  </.modal>
+    <!-- Table -->
+    <.table
+      id="assets"
+      rows={@streams.assets || []}
+      row_click={fn {_id, asset} -> JS.navigate(~p"/assets/#{asset}") end}
+    >
+      <:col :let={{_id, asset}} label="Name">{asset.name}</:col>
+      <:col :let={{_id, asset}} label="Description">{asset.description}</:col>
+      <:col :let={{_id, asset}} label="Category">{asset.category.name}</:col>
+      <:col :let={{_id, asset}} label="Cost per unit">{asset.cost_per_unit}</:col>
+      <:col :let={{_id, asset}} label="Image">
+        <%= if asset.image do %>
+          <img src={asset.image} alt="Asset image" class="h-12 w-12 object-cover rounded-md" />
+        <% else %>
+          <span class="text-gray-400 italic">No image</span>
+        <% end %>
+      </:col>
+      <:action :let={{_id, asset}}>
+        <div class="sr-only">
+          <.link navigate={~p"/assets/#{asset}"}>Show</.link>
+        </div>
+        <.link patch={~p"/assets/#{asset}/edit"}>Edit</.link>
+      </:action>
+      <:action :let={{id, asset}}>
+        <.link
+          phx-click={JS.push("delete", value: %{id: asset.id}) |> hide("##{id}")}
+          data-confirm="Are you sure?"
+        >
+          Delete
+        </.link>
+      </:action>
+    </.table>
+
+    <!-- Pagination -->
+    <%= if @total_pages > 1 do %>
+      <div class="mt-6 flex justify-center items-center space-x-2">
+        <%= if @page > 1 do %>
+          <.link 
+            patch={~p"/assets?#{%{"page" => @page - 1, "search" => @search, "category_id" => @category_id, "per_page" => @per_page}}"}
+            class="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Previous
+          </.link>
+        <% end %>
+        
+        <%= for page_number <- max(1, @page - 2)..min(@total_pages, @page + 2) do %>
+          <.link 
+            patch={~p"/assets?#{%{"page" => page_number, "search" => @search, "category_id" => @category_id, "per_page" => @per_page}}"}
+            class={"px-3 py-2 border rounded-md #{if page_number == @page, do: "bg-blue-500 text-white border-blue-500", else: "border-gray-300 text-gray-700 hover:bg-gray-50"}"}
+          >
+            <%= page_number %>
+          </.link>
+        <% end %>
+        
+        <%= if @page < @total_pages do %>
+          <.link 
+            patch={~p"/assets?#{%{"page" => @page + 1, "search" => @search, "category_id" => @category_id, "per_page" => @per_page}}"}
+            class="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Next
+          </.link>
+        <% end %>
+      </div>
+      
+      <div class="mt-2 text-center text-sm text-gray-600">
+        Page <%= @page %> of <%= @total_pages %>
+      </div>
+    <% end %>
+
+    <.modal :if={@live_action in [:new, :edit]} id="asset-modal" show on_cancel={JS.patch(~p"/assets")}>
+      <.live_component
+        module={MyKemudahanWeb.AssetLive.FormComponent}
+        id={@asset.id || :new}
+        title={@page_title}
+        action={@live_action}
+        asset={@asset}
+        patch={~p"/assets"}
+      />
+    </.modal>
   </div>
 </div>
