@@ -27,7 +27,12 @@ alias MyKemudahan.Accounts
       current_page: 1,
       page_size: 12,
       user_id: user.id,
-      status: "sent"
+      status: "sent",
+      form_data: %{
+        borrow_from: "",
+        borrow_to: "",
+        purpose: ""
+      }
     )
 
     {:ok, socket}
@@ -43,18 +48,16 @@ alias MyKemudahan.Accounts
     {:noreply, assign(socket, filtered_assets: filtered_assets, selected_category: category_id, current_page: 1)}
   end
 
-  def handle_event("submit_form", %{
-    "borrow_from" => borrow_from,
-    "borrow_to" => borrow_to,
-    "purpose" => purpose
-  }, socket) do
-    with {:ok, parsed_borrow_from} <- Date.from_iso8601(borrow_from),
-         {:ok, parsed_borrow_to} <- Date.from_iso8601(borrow_to) do
+  def handle_event("submit_form", _params, socket) do
+    form_data = socket.assigns.form_data
+
+    with {:ok, parsed_borrow_from} <- Date.from_iso8601(form_data.borrow_from),
+         {:ok, parsed_borrow_to} <- Date.from_iso8601(form_data.borrow_to) do
 
       attrs = %{
         borrow_from: parsed_borrow_from,
         borrow_to: parsed_borrow_to,
-        purpose: purpose,
+        purpose: form_data.purpose,
         total_cost: socket.assigns.total_cost,
         user_id: socket.assigns.user_id,
         status: "sent",
@@ -67,18 +70,22 @@ alias MyKemudahan.Accounts
           socket =
             socket
             |> put_flash(:info, "Request submitted successfully!")
-            |> assign(requested_items: [], total_cost: Decimal.new("0"))
+            |> assign(
+              requested_items: [],
+              total_cost: Decimal.new("0"),
+              form_data: %{borrow_from: "", borrow_to: "", purpose: ""} # Reset form
+            )
 
           {:noreply, socket}
 
         {:error, _failed_operation, _failed_value, _changes_so_far} ->
-          socket =  put_flash(socket, :error, "Something went wrong. Please try again.")
+          socket = put_flash(socket, :error, "Something went wrong. Please try again.")
           {:noreply, socket}
       end
     else
       _ ->
-          socket = put_flash(socket, :error, "Invalid date format. Please check your dates.")
-          {:noreply, socket}
+        socket = put_flash(socket, :error, "Invalid date format. Please check your dates.")
+        {:noreply, socket}
     end
   end
 
@@ -136,6 +143,31 @@ alias MyKemudahan.Accounts
       _ ->
         {:noreply, socket}
     end
+  end
+
+  def handle_event("form_change", %{"borrow_from" => borrow_from, "borrow_to" => borrow_to, "purpose" => purpose}, socket) do
+    form_data = %{
+      borrow_from: borrow_from,
+      borrow_to: borrow_to,
+      purpose: purpose
+    }
+    {:noreply, assign(socket, form_data: form_data)}
+  end
+
+  # Handle individual field changes too
+  def handle_event("form_change", %{"borrow_from" => borrow_from}, socket) do
+    form_data = Map.put(socket.assigns.form_data, :borrow_from, borrow_from)
+    {:noreply, assign(socket, form_data: form_data)}
+  end
+
+  def handle_event("form_change", %{"borrow_to" => borrow_to}, socket) do
+    form_data = Map.put(socket.assigns.form_data, :borrow_to, borrow_to)
+    {:noreply, assign(socket, form_data: form_data)}
+  end
+
+  def handle_event("form_change", %{"purpose" => purpose}, socket) do
+    form_data = Map.put(socket.assigns.form_data, :purpose, purpose)
+    {:noreply, assign(socket, form_data: form_data)}
   end
 
   def handle_event("go_to_menu", _params, socket) do
