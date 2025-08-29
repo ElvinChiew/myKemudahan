@@ -18,6 +18,22 @@ defmodule MyKemudahanWeb.RequestList do
     total_pages = max(ceil(length(filtered_requests) / per_page), 1)
     paginated_requests = paginate_requests(filtered_requests, 1, per_page)
 
+    IO.inspect(status_counts.total)
+    IO.inspect(label: "<--> Status Counts total <-->")
+
+    status_data = %{
+      labels: ["Sent", "Pending", "Approved", "Rejected","Cancelled"],
+      datasets: [
+        %{
+          label: "Requests",
+          data: [status_counts.sent, status_counts.pending, status_counts.approved, status_counts.rejected,status_counts.cancelled],
+          backgroundColor: "rgba(34, 118, 173, 0.7)",
+          borderColor: "rgb(115, 99, 151)",
+          borderWidth: 1
+        }
+      ]
+    }
+
     socket =
       socket
       |> assign(:requests, paginated_requests)
@@ -36,7 +52,7 @@ defmodule MyKemudahanWeb.RequestList do
       |> assign(:rejecting_request, nil)
       |> assign(:rejection_reason, "")
       |> assign(:show_reject_modal, false)
-
+      |> assign(:chart_data, Jason.encode!(status_data))
     {:ok, socket}
   end
 
