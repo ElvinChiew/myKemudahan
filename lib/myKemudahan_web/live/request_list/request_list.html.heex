@@ -172,10 +172,6 @@
   </div>
   </div>
 
-  <div id="chart-container" class="bg-sky-200 w-1/2 h-1/2 px-2 py-2 rounded-md shadow-xl">
-    <canvas id="myChart" data-chart={@chart_data} phx-hook="ChartHook"></canvas>
-  </div>
-
 <div class="mb-10">
 <p class="text-3xl font-bold">Request Lists</p>
 </div>
@@ -676,24 +672,3 @@
     </div>
   </div>
 <% end %>
-
-<script>
-  let Hooks = {};
-  Hooks.ChartHook = {
-    mounted() {
-      const data = JSON.parse(this.el.getAttribute("data-chart"));
-      new Chart(this.el, {
-        type: 'bar',
-        data: data,
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
-  };
-
-  window.Hooks = Hooks;
-</script>
