@@ -153,20 +153,13 @@ end
     end
   end
 
-  def reject_request(request_id) do
-    case get_request!(request_id) do
-      nil ->
-        {:error, "Request not found"}
-
+  def reject_request(id, reason) do
+    case get_request!(id) do
+      nil -> {:error, "Request not found"}
       request ->
-        # Only allow rejection if status is sent or pending
-        if request.status in ["sent", "pending"] do
-          request
-          |> Ecto.Changeset.change(%{status: "rejected"})
-          |> Repo.update()
-        else
-          {:error, "Cannot reject request with status: #{request.status}"}
-        end
+        request
+        |> Ecto.Changeset.change(%{status: "rejected", rejection_reason: reason})
+        |> Repo.update()
     end
   end
 

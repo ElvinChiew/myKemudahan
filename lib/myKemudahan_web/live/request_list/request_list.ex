@@ -33,6 +33,9 @@ defmodule MyKemudahanWeb.RequestList do
       |> assign(:total_pages, total_pages)
       |> assign(:from_date, nil)
       |> assign(:to_date, nil)
+      |> assign(:rejecting_request, nil)
+      |> assign(:rejection_reason, "")
+      |> assign(:show_reject_modal, false)
 
     {:ok, socket}
   end
@@ -124,6 +127,57 @@ defmodule MyKemudahanWeb.RequestList do
          socket
          |> put_flash(:error, "Please enter a valid number")}
     end
+  end
+
+  def handle_event("update_rejection_reason", %{"reason" => reason}, socket) do
+    {:noreply, assign(socket, :rejection_reason, reason)}
+  end
+
+  def handle_event("reject_request", %{}, socket) do
+    case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
+      {:ok, _request} ->
+        all_requests = Requests.list_all_requests()
+        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
+        paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+
+        status_counts = calculate_status_counts(all_requests)
+
+        {:noreply,
+          socket
+          |> assign(:requests, paginated_requests)
+          |> assign(:all_requests, filtered_requests)
+          |> assign(:status_counts, status_counts)
+          |> assign(:show_reject_modal, false)
+          |> assign(:rejecting_request, nil)
+          |> assign(:rejection_reason, "")
+          |> put_flash(:info, "Request rejected successfully")}
+
+      {:error, reason} ->
+        {:noreply,
+          socket
+          |> put_flash(:error, "Failed to reject reques: #{reason}")}
+    end
+  end
+
+  # Handle opening the reject modal
+  def handle_event("show_reject_modal", %{"id" => request_id}, socket) do
+    {:noreply,
+     socket
+     |> assign(:rejecting_request, request_id)
+     |> assign(:rejection_reason, "")
+     |> assign(:show_reject_modal, true)}
+  end
+
+  def handle_event("update_rejection_reason", %{"reason" => reason}, socket) do
+    {:noreply, assign(socket, :rejection_reason, reason)}
+  end
+
+  def handle_event("close_reject_modal", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_reject_modal, false)
+     |> assign(:rejecting_request, nil)
+     |> assign(:rejection_reason, "")}
   end
 
   # Helper function to parse discount amount
@@ -236,8 +290,8 @@ defmodule MyKemudahanWeb.RequestList do
     end
   end
 
-  def handle_event("reject_request", %{"id" => request_id}, socket) do
-    case Requests.reject_request(request_id) do
+  def handle_event("reject_request", %{}, socket) do
+    case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
       {:ok, _request} ->
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
@@ -252,6 +306,9 @@ defmodule MyKemudahanWeb.RequestList do
          |> assign(:requests, paginated_requests)
          |> assign(:all_requests, filtered_requests)
          |> assign(:status_counts, status_counts)
+         |> assign(:show_reject_modal, false)
+         |> assign(:rejecting_request, nil)
+         |> assign(:rejection_reason, "")
          |> put_flash(:info, "Request rejected successfully")}
 
       {:error, reason} ->

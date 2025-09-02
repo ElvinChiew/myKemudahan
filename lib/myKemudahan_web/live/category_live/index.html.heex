@@ -1,16 +1,44 @@
-<div class="flex">
-  <%= if @current_user && @current_user.role == "admin" do %>
-    <.sidebar/>
-  <% end %>
-  <div class="flex-1 ml-5">
+<div class="flex flex-1 min-h-screen">
+  <.sidebar class="h-full"/>
+  <div class="flex-1 ml-5 flex flex-col">
   <.header class="mt-5">
-    Listing Categories
+    <p class="text-3xl font-bold">Listing Categories</p>
     <:actions>
       <.link patch={~p"/categories/new"}>
         <.button>New Category</.button>
       </.link>
     </:actions>
   </.header>
+
+  <!-- Search Form -->
+  <div class="mb-6 mt-5 shadow-lg p-4 rounded-lg py-5">
+    <form phx-submit="search" class="flex items-center gap-3">
+      <div class="relative flex-1 max-w-md">
+        <.input
+          type="text"
+          name="search"
+          value={@search}
+          placeholder="Search categories..."
+          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
+        Search
+      </.button>
+      <%= if @search != "" do %>
+        <button type="button" phx-click="clear_search" class="bg-red-600 hover:bg-red-800 text-white px-3 py-2 rounded-lg">
+          Clear
+        </button>
+      <% end %>
+    </form>
+  </div>
+
+  <!-- Results count -->
+  <%= if @search != "" do %>
+    <div class="mb-4 text-sm text-gray-600">
+      Found <%= @total_count %> <%= if @total_count == 1, do: "result", else: "results" %> for "<%= @search %>"
+    </div>
+  <% end %>
 
   <.table
     id="categories"
@@ -45,41 +73,62 @@
     />
   </.modal>
 
-  <%= if @total_count > @per_page do %>
-    <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+    <%= if @total_count > @per_page do %>
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
 
-      <% total_pages = Float.ceil(@total_count / @per_page) %>
+        <% total_pages = Float.ceil(@total_count / @per_page) %>
 
-      <!-- Previous -->
-      <.link
-        patch={~p"/categories?page=#{@page - 1}"}
-        class={"btn #{if @page <= 1, do: "opacity-50 pointer-events-none", else: ""}"}
-      >
-        Previous
-      </.link>
-
-      <!-- Numbered Pages -->
-      <%= for p <- pagination_range(@page, total_pages) do %>
-        <%= if p == "..." do %>
-          <span class="px-2 text-gray-500">...</span>
+        <!-- Previous -->
+        <%= if @page <= 1 do %>
+          <span
+            class="px-4 py-2 border rounded-md border-gray-300 text-gray-400 cursor-not-allowed select-none"
+            aria-disabled="true"
+          >
+            Previous
+          </span>
         <% else %>
           <.link
-            patch={~p"/categories?page=#{p}"}
-            class={"btn px-3 #{if p == @page, do: "bg-blue-600 text-white", else: ""}"}
+            patch={~p"/categories?page=#{@page - 1}"}
+            class="px-4 py-2 border rounded-md border-blue-500 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
           >
-            <%= p %>
+            Previous
           </.link>
         <% end %>
-      <% end %>
 
-      <!-- Next -->
-      <.link
-        patch={~p"/categories?page=#{@page + 1}"}
-        class={"btn #{if @page >= total_pages, do: "opacity-50 pointer-events-none", else: ""}"}
-      >
-        Next
-      </.link>
-    </div>
-  <% end %>
+        <!-- Numbered Pages -->
+        <%= for p <- pagination_range(@page, total_pages) do %>
+          <%= if p == "..." do %>
+            <span class="px-3 text-gray-500 select-none">...</span>
+          <% else %>
+            <.link
+              patch={~p"/categories?page=#{p}"}
+              class={"px-4 py-2 border rounded-md transition-colors duration-200 #{if p == @page, do: "bg-blue-600 border-blue-600 text-white", else: "border-gray-300 text-gray-700 hover:bg-gray-100"}"}
+              aria-current={if p == @page, do: "page", else: false}
+            >
+              <%= p %>
+            </.link>
+          <% end %>
+        <% end %>
+
+        <!-- Next -->
+        <%= if @page >= total_pages do %>
+          <span
+            class="px-4 py-2 border rounded-md border-gray-300 text-gray-400 cursor-not-allowed select-none"
+            aria-disabled="true"
+          >
+            Next
+          </span>
+        <% else %>
+          <.link
+            patch={~p"/categories?page=#{@page + 1}"}
+            class="px-4 py-2 border rounded-md border-blue-500 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+          >
+            Next
+          </.link>
+        <% end %>
+
+      </div>
+    <% end %>
+
   </div>
 </div>

@@ -6,10 +6,10 @@ defmodule MyKemudahanWeb.AssetTagLive.FormComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="bg-slate-500 mx-5 my-5 px-5 py-5">
+    <div class="mx-5 my-5 px-5 py-5">
       <.header>
         {@title}
-        <:subtitle>Use this form to manage asset_tag records in your database.</:subtitle>
+        <:subtitle>Use this form to manage asset tag records in your database.</:subtitle>
       </.header>
 
       <.simple_form

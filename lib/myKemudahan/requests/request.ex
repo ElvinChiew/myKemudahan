@@ -10,6 +10,7 @@ defmodule MyKemudahan.Requests.Request do
     field :discount_amount, :decimal
     field :final_cost, :decimal
     field :status, :string
+    field :rejection_reason, :string
 
     belongs_to :user, MyKemudahan.Accounts.User
 
@@ -20,7 +21,7 @@ defmodule MyKemudahan.Requests.Request do
 
   def changeset(request, attrs) do
     request
-    |> cast(attrs, [:borrow_from, :borrow_to, :purpose, :total_cost, :discount_amount, :final_cost, :status, :user_id])
+    |> cast(attrs, [:borrow_from, :borrow_to, :purpose, :total_cost, :discount_amount, :final_cost, :status, :user_id, :rejection_reason])
     |> validate_required([:borrow_from, :borrow_to, :purpose, :user_id])
     |> assoc_constraint(:user)
   end
