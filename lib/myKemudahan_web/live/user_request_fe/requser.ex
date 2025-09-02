@@ -76,7 +76,7 @@ alias MyKemudahan.Accounts
               form_data: %{borrow_from: "", borrow_to: "", purpose: ""} # Reset form
             )
 
-          {:noreply, socket}
+          {:noreply, push_navigate(socket, to: "/reqstatus")}
 
         {:error, _failed_operation, _failed_value, _changes_so_far} ->
           socket = put_flash(socket, :error, "Something went wrong. Please try again.")
