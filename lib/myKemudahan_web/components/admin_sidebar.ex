@@ -6,8 +6,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
     <aside id="sidebar"
           class="bg-slate-700 text-white shadow-md sticky left-0 overflow-y-auto z-60 transition-all duration-300 w-64 h-auto"
           data-collapsed="false">
-      <div class="p-4 flex items-center justify-between">
-        <span class="sidebar-label text-lg font-bold" id="sidebar-title">My App</span>
+      <div class="p-4 flex items-center justify-end">
         <!-- Hamburger Button -->
         <button onclick="toggleSidebar()" class="text-white focus:outline-none block">
           <i class="fa fa-bars text-xl"></i>

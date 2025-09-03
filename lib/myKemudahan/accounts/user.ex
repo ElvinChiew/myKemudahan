@@ -14,7 +14,7 @@ defmodule MyKemudahan.Accounts.User do
     timestamps(type: :utc_datetime)
 
     has_many :request, MyKemudahan.Requests.Request
-    has_many :report, MyKemudahan.Reports.Report
+    #has_many :report, MyKemudahan.Reports.Report
   end
 
   @doc """
