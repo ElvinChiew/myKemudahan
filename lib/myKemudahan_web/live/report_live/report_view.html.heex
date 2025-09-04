@@ -27,7 +27,7 @@
       <a href="#" 
         phx-click="filter_status" 
         phx-value-status="all"
-        class={"bg-white rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "all", do: "border-indigo-600 bg-indigo-100 shadow-lg scale-105", else: "border-indigo-400"}"}>
+        class={"#{if @selected_status == "all", do: "bg-indigo-100", else: "bg-white"} rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "all", do: "border-indigo-600 bg-indigo-100 shadow-lg scale-105", else: "border-indigo-400"}"}>
         <div class="flex items-center justify-between">
           <div>
             <p class={"text-sm font-medium #{if @selected_status == "all", do: "text-indigo-700", else: "text-gray-600"}"}>View All</p>
@@ -45,7 +45,7 @@
       <a href="#" 
         phx-click="filter_status" 
         phx-value-status="submitted"
-        class={"bg-white rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "submitted", do: "border-gray-600 bg-gray-100 shadow-lg scale-105", else: "border-gray-400"}"}>
+        class={"#{if @selected_status == "submitted", do: "bg-grey-100", else: "bg-white"} rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "submitted", do: "border-gray-600 bg-gray-100 shadow-lg scale-105", else: "border-gray-400"}"}>
         <div class="flex items-center justify-between">
           <div>
             <p class={"text-sm font-medium #{if @selected_status == "submitted", do: "text-gray-700", else: "text-gray-600"}"}>Submitted</p>
@@ -81,7 +81,7 @@
       <a href="#" 
         phx-click="filter_status" 
         phx-value-status="in_progress"
-        class={"bg-white rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "in_progress", do: "border-blue-600 bg-blue-100 shadow-lg scale-105", else: "border-blue-400"}"}>
+        class={"#{if @selected_status == "in_progress", do: "bg-blue-100", else: "bg-white"} rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "in_progress", do: "border-blue-600 bg-blue-100 shadow-lg scale-105", else: "border-blue-400"}"}>
         <div class="flex items-center justify-between">
           <div>
             <p class={"text-sm font-medium #{if @selected_status == "in_progress", do: "text-blue-700", else: "text-gray-600"}"}>In Progress</p>
@@ -99,7 +99,7 @@
       <a href="#" 
         phx-click="filter_status" 
         phx-value-status="resolved"
-        class={"bg-white rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "resolved", do: "border-green-600 bg-green-100 shadow-lg scale-105", else: "border-green-400"}"}>
+        class={"#{if @selected_status == "resolved", do: "bg-green-100", else: "bg-white"} rounded-lg shadow p-6 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer #{if @selected_status == "resolved", do: "border-green-600 bg-green-100 shadow-lg scale-105", else: "border-green-400"}"}>
         <div class="flex items-center justify-between">
           <div>
             <p class={"text-sm font-medium #{if @selected_status == "resolved", do: "text-green-700", else: "text-green-600"}"}>Resolved</p>

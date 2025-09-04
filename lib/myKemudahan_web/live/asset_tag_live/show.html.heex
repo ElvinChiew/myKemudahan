@@ -1,3 +1,4 @@
+<div class="ml-5">
 <.header>
   Asset tag {@asset_tag.id}
   <:subtitle>This is a asset_tag record from your database.</:subtitle>
@@ -15,6 +16,7 @@
 </.list>
 
 <.back navigate={~p"/asset_tags"}>Back to asset_tags</.back>
+</div>
 
 <.modal :if={@live_action == :edit} id="asset_tag-modal" show on_cancel={JS.patch(~p"/asset_tags/#{@asset_tag}")}>
   <.live_component
