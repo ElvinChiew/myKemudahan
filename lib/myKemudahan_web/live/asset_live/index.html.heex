@@ -69,6 +69,10 @@
       <:col :let={{_id, asset}} label="Name">{asset.name}</:col>
       <:col :let={{_id, asset}} label="Description">{asset.description}</:col>
       <:col :let={{_id, asset}} label="Category">{asset.category.name}</:col>
+      <:col :let={{_id, asset}} label="Units">
+        <span class="font-semibold"><%= asset.available_tags_count || 0 %> available</span>
+        <span class="text-gray-500">of <%= asset.total_tags_count || 0 %> units</span>
+      </:col>
       <:col :let={{_id, asset}} label="Cost per unit">{asset.cost_per_unit}</:col>
       <:col :let={{_id, asset}} label="Image">
         <%= if asset.image do %>

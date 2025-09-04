@@ -11,7 +11,10 @@ defmodule MyKemudahan.Assets.Asset do
     field :description, :string
     field :image, :string
     field :cost_per_unit, :decimal
-    #field :category_id, :id
+    #show the alculated value but not stored in database
+    field :total_tags_count, :integer, virtual: true
+    field :available_tags_count, :integer, virtual: true
+
 
     belongs_to :category, Category
 

@@ -252,6 +252,14 @@ defmodule MyKemudahan.Assets do
     AssetTag.changeset(asset_tag, attrs)
   end
 
+  # Count available tags for a given asset (status == "available")
+  def count_available_tags(asset_id) when is_integer(asset_id) do
+    from(at in AssetTag,
+      where: at.asset_id == ^asset_id and at.status == ^"available"
+    )
+    |> Repo.aggregate(:count, :id)
+  end
+
   def list_asset_tags_paginated(params) do
     page = String.to_integer(params["page"] || "1")
     per_page = String.to_integer(params["per_page"] || "10")
@@ -312,14 +320,26 @@ defmodule MyKemudahan.Assets do
 
     offset = (page - 1) * per_page
 
-    # Base query with preload
+    # Base query with aggregates for tag counts
     base_query = from a in Asset,
                 join: c in assoc(a, :category),
-                preload: [category: c]
+                left_join: at in assoc(a, :asset_tags),
+                group_by: [a.id, c.id],
+                preload: [category: c],
+                select: %{
+                  a |
+                  total_tags_count: count(at.id),
+                  available_tags_count:
+                    fragment(
+                      "COALESCE(SUM(CASE WHEN ? = ? THEN 1 ELSE 0 END), 0)",
+                      at.status,
+                      ^"available"
+                    )
+                }
 
     # Apply search filter if provided
     query = if search && search != "" do
-      from [a, c] in base_query,
+      from [a, c, at] in base_query,
       where: ilike(a.name, ^"%#{search}%")
     else
       base_query
@@ -327,7 +347,7 @@ defmodule MyKemudahan.Assets do
 
     # Apply category filter if provided
     query = if category_id && category_id != "" do
-      from [a, c] in query,
+      from [a, c, at] in query,
       where: a.category_id == ^category_id
     else
       query
@@ -339,11 +359,26 @@ defmodule MyKemudahan.Assets do
       |> offset(^offset)
       |> Repo.all()
 
-    # Get total count for pagination
-    total_count = query
-      |> exclude(:preload)
-      |> exclude(:limit)
-      |> exclude(:offset)
+    # Build a separate count query without group_by to avoid aggregation error
+    count_base = from a in Asset,
+                   join: c in assoc(a, :category)
+
+    count_query = if search && search != "" do
+      from [a, c] in count_base,
+        where: ilike(a.name, ^"%#{search}%")
+    else
+      count_base
+    end
+
+    count_query = if category_id && category_id != "" do
+      from [a, c] in count_query,
+        where: a.category_id == ^category_id
+    else
+      count_query
+    end
+
+    total_count = count_query
+      |> distinct(true)
       |> Repo.aggregate(:count, :id)
 
     %{

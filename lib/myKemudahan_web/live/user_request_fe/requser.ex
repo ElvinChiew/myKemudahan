@@ -94,6 +94,15 @@ alias MyKemudahan.Accounts
          {quantity, ""} <- Integer.parse(quantity_str),
          true <- quantity > 0,
          asset when not is_nil(asset) <- Enum.find(socket.assigns.assets, &(&1.id == asset_id)) do
+      # Enforce quantity not exceeding available tags
+      available = Assets.count_available_tags(asset_id)
+
+      cond do
+        quantity > available ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Only #{available} available for #{asset.name}.")}
+        true ->
       existing_items = socket.assigns.requested_items
       {existing_item, others} =
         existing_items
@@ -104,17 +113,23 @@ alias MyKemudahan.Accounts
           [%{quantity: q}] -> q + quantity
           _ -> quantity
         end
+      if new_quantity > available do
+        {:noreply,
+         socket
+         |> put_flash(:error, "Only #{available} available for #{asset.name}. You already added #{existing_item |> List.first() |> then(&(&1 && &1.quantity || 0))}.")}
+      else
+        updated_item = %{
+          id: asset.id,
+          name: asset.name,
+          cost_per_unit: asset.cost_per_unit,
+          quantity: new_quantity
+        }
 
-      updated_item = %{
-        id: asset.id,
-        name: asset.name,
-        cost_per_unit: asset.cost_per_unit,
-        quantity: new_quantity
-      }
-
-      new_items = [updated_item | Enum.reject(others, &is_nil/1)]
-      new_total = recalc_total(new_items)
-      {:noreply, assign(socket, requested_items: new_items, total_cost: new_total)}
+        new_items = [updated_item | Enum.reject(others, &is_nil/1)]
+        new_total = recalc_total(new_items)
+        {:noreply, assign(socket, requested_items: new_items, total_cost: new_total)}
+      end
+      end
     else
       _ -> {:noreply, socket}
     end
@@ -124,12 +139,21 @@ alias MyKemudahan.Accounts
     with {id, ""} <- Integer.parse(id_str),
          {quantity, ""} <- Integer.parse(quantity_str),
          true <- quantity > 0 do
-      updated =
-        Enum.map(socket.assigns.requested_items, fn item ->
-          if item.id == id, do: %{item | quantity: quantity}, else: item
-        end)
+      # Enforce available quantity for the asset
+      available = Assets.count_available_tags(id)
 
-      {:noreply, assign(socket, requested_items: updated, total_cost: recalc_total(updated))}
+      if quantity > available do
+        {:noreply,
+         socket
+         |> put_flash(:error, "Only #{available} available for the selected asset.")}
+      else
+        updated =
+          Enum.map(socket.assigns.requested_items, fn item ->
+            if item.id == id, do: %{item | quantity: quantity}, else: item
+          end)
+
+        {:noreply, assign(socket, requested_items: updated, total_cost: recalc_total(updated))}
+      end
     else
       _ -> {:noreply, socket}
     end
