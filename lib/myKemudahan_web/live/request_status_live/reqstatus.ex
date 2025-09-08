@@ -1,8 +1,5 @@
 defmodule MyKemudahanWeb.Reqstatus do
-  alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
-  alias MyKemudahan.Reports.Report
-  alias MyKemudahan.Repo
 
   use MyKemudahanWeb, :live_view
   on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
@@ -213,7 +210,7 @@ defmodule MyKemudahanWeb.Reqstatus do
                |> assign(:selected_report_item, nil)
                |> put_flash(:info, "Report submitted successfully")}
 
-            {:error, changeset} ->
+            {:error, _changeset} ->
               {:noreply,
                socket
                |> put_flash(:error, "Failed to submit report. Please try again.")}

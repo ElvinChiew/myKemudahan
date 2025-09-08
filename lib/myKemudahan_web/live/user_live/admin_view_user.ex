@@ -1,7 +1,5 @@
 defmodule MyKemudahanWeb.UserLive.AdminViewUser do
-  alias MyKemudahan.Requests.Request
   alias MyKemudahan.Requests
-  alias MyKemudahan.Repo
   alias MyKemudahan.Accounts
 
   use MyKemudahanWeb, :live_view

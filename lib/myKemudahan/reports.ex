@@ -1,5 +1,4 @@
 defmodule MyKemudahan.Reports do
-  import Ecto.Query
   alias MyKemudahan.Repo
   alias MyKemudahan.Reports.Report
 

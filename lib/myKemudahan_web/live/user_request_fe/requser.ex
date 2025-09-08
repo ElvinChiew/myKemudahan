@@ -1,9 +1,7 @@
 defmodule MyKemudahanWeb.Requser do
-alias MyKemudahan.Accounts
   use MyKemudahanWeb, :live_view
 
   alias MyKemudahan.Assets
-  alias MyKemudahan.Accounts
 
   on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 

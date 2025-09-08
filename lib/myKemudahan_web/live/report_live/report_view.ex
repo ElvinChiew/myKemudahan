@@ -2,9 +2,8 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
   use MyKemudahanWeb, :live_view
 
   alias MyKemudahan.Reports
-  alias MyKemudahan.Reports.Report
   alias MyKemudahan.Requests
-  alias MyKemudahan.Requests.RequestItem
+  # alias MyKemudahan.Requests.RequestItem
   import MyKemudahanWeb.AdminSidebar
 
   @page_size 10
