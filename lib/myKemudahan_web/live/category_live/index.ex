@@ -9,6 +9,7 @@ defmodule MyKemudahanWeb.CategoryLive.Index do
   import MyKemudahanWeb.PaginationHelpers
   import MyKemudahanWeb.AdminSidebar
 
+
   @per_page 10
 
   @impl true

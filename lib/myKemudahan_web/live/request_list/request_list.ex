@@ -7,12 +7,18 @@ defmodule MyKemudahanWeb.RequestList do
   use MyKemudahanWeb, :live_view
   on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
+  @month_names ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+
   def mount(_params, _session, socket) do
     all_requests = Requests.list_all_requests()
 
     filtered_requests = apply_filters(all_requests, "all", nil, nil)
 
     status_counts = calculate_status_counts(all_requests)
+    current_year = Date.utc_today().year
+    available_years = for y <- (current_year-3)..current_year, do: y
+    revenue_year = current_year
+    monthly_revenue = calculate_monthly_revenue_for_year(all_requests, revenue_year)
 
     per_page = 10
     total_pages = max(ceil(length(filtered_requests) / per_page), 1)
@@ -23,6 +29,9 @@ defmodule MyKemudahanWeb.RequestList do
       |> assign(:requests, paginated_requests)
       |> assign(:status_filter, "all")
       |> assign(:status_counts, status_counts)
+      |> assign(:revenue_year, revenue_year)
+      |> assign(:available_years, available_years |> Enum.to_list())
+      |> assign(:monthly_revenue, monthly_revenue)
       |> assign(:page_title, "Admin - All Requests")
       |> assign(:all_requests, filtered_requests)
       |> assign(:selected_request, nil)
@@ -49,6 +58,7 @@ defmodule MyKemudahanWeb.RequestList do
     paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
 
     status_counts = calculate_status_counts(all_requests)
+    monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
     {:noreply,
      assign(socket,
@@ -56,6 +66,7 @@ defmodule MyKemudahanWeb.RequestList do
        all_requests: filtered_requests, # Store filtered requests for pagination
        status_filter: status,
        status_counts: status_counts,
+       monthly_revenue: monthly_revenue,
        page: 1,
        total_pages: total_pages
      )}
@@ -103,12 +114,14 @@ defmodule MyKemudahanWeb.RequestList do
               all_requests = Requests.list_all_requests()
               filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
               paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
+              monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
               {:noreply,
                socket
                |> assign(:selected_request, updated_request)
                |> assign(:requests, paginated_requests)
                |> assign(:all_requests, all_requests)
+               |> assign(:monthly_revenue, monthly_revenue)
                |> put_flash(:info, "Discount applied successfully")}
 
             {:error, _changeset} ->
@@ -141,12 +154,14 @@ defmodule MyKemudahanWeb.RequestList do
         paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
 
         status_counts = calculate_status_counts(all_requests)
+        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
         {:noreply,
           socket
           |> assign(:requests, paginated_requests)
           |> assign(:all_requests, filtered_requests)
           |> assign(:status_counts, status_counts)
+          |> assign(:monthly_revenue, monthly_revenue)
           |> assign(:show_reject_modal, false)
           |> assign(:rejecting_request, nil)
           |> assign(:rejection_reason, "")
@@ -197,6 +212,7 @@ defmodule MyKemudahanWeb.RequestList do
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
         filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
+        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
         {:noreply,
          socket
@@ -204,6 +220,7 @@ defmodule MyKemudahanWeb.RequestList do
          |> assign(:discount_amount, "")
          |> assign(:requests, filtered_requests)
          |> assign(:all_requests, all_requests)
+         |> assign(:monthly_revenue, monthly_revenue)
          |> put_flash(:info, "Discount removed successfully")}
 
       {:error, changeset} ->
@@ -275,12 +292,14 @@ defmodule MyKemudahanWeb.RequestList do
 
         # Update status counts
         status_counts = calculate_status_counts(all_requests)
+        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
         {:noreply,
          socket
          |> assign(:requests, paginated_requests)
          |> assign(:all_requests, filtered_requests)
          |> assign(:status_counts, status_counts)
+         |> assign(:monthly_revenue, monthly_revenue)
          |> put_flash(:info, "Request approved successfully")}
 
       {:error, reason} ->
@@ -300,12 +319,14 @@ defmodule MyKemudahanWeb.RequestList do
 
         # Update status counts
         status_counts = calculate_status_counts(all_requests)
+        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
         {:noreply,
          socket
          |> assign(:requests, paginated_requests)
          |> assign(:all_requests, filtered_requests)
          |> assign(:status_counts, status_counts)
+         |> assign(:monthly_revenue, monthly_revenue)
          |> assign(:show_reject_modal, false)
          |> assign(:rejecting_request, nil)
          |> assign(:rejection_reason, "")
@@ -341,12 +362,14 @@ defmodule MyKemudahanWeb.RequestList do
 
         # Update status counts
         status_counts = calculate_status_counts(all_requests)
+        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
         {:noreply,
         socket
         |> assign(:requests, paginated_requests)
         |> assign(:all_requests, filtered_requests)
         |> assign(:status_counts, status_counts)
+        |> assign(:monthly_revenue, monthly_revenue)
         |> put_flash(:info, "Request marked as pending")}
 
       {:error, reason} ->
@@ -395,6 +418,7 @@ defmodule MyKemudahanWeb.RequestList do
 
     total_pages = max(ceil(length(filtered_requests) / socket.assigns.per_page), 1)
     paginated_requests = paginate_requests(filtered_requests, 1, socket.assigns.per_page)
+    monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
 
     {:noreply,
      socket
@@ -402,7 +426,103 @@ defmodule MyKemudahanWeb.RequestList do
      |> assign(:to_date, nil)
      |> assign(:requests, paginated_requests)
      |> assign(:all_requests, filtered_requests)
+     |> assign(:monthly_revenue, monthly_revenue)
      |> assign(:page, 1)
      |> assign(:total_pages, total_pages)}
+  end
+
+  def handle_event("set_revenue_year", %{"year" => year}, socket) do
+    year_int =
+      case Integer.parse(to_string(year)) do
+        {num, _} -> num
+        :error -> socket.assigns.revenue_year
+      end
+
+    current_year = Date.utc_today().year
+    min_year = current_year - 3
+    clamped_year =
+      year_int
+      |> max(min_year)
+      |> min(current_year)
+
+    all_requests = Requests.list_all_requests()
+    monthly_revenue = calculate_monthly_revenue_for_year(all_requests, clamped_year)
+
+    {:noreply,
+     socket
+     |> assign(:revenue_year, clamped_year)
+     |> assign(:monthly_revenue, monthly_revenue)}
+  end
+
+  # Calculate 12-month revenue for approved requests based on borrow_from month
+  defp calculate_monthly_revenue_for_year(requests, year) do
+    month_keys = for m <- 1..12, do: {year, m}
+
+    initial_totals =
+      month_keys
+      |> Enum.map(fn key -> {key, Decimal.new("0")} end)
+      |> Map.new()
+
+    totals =
+      Enum.reduce(requests, initial_totals, fn request, acc ->
+        cond do
+          request.status != "approved" ->
+            acc
+
+          true ->
+            borrow_from = request.borrow_from
+            key = {borrow_from.year, borrow_from.month}
+
+            if Map.has_key?(acc, key) do
+              amount = final_amount(request)
+              Map.update!(acc, key, fn current -> Decimal.add(current, amount) end)
+            else
+              acc
+            end
+        end
+      end)
+
+    amounts = Enum.map(month_keys, fn key -> Map.get(totals, key, Decimal.new("0")) end)
+    max_amount = Enum.reduce(amounts, Decimal.new("0"), fn amt, acc -> if Decimal.compare(amt, acc) == :gt, do: amt, else: acc end)
+
+    Enum.map(month_keys, fn {year, month} = key ->
+      amount = Map.get(totals, key, Decimal.new("0"))
+      percent =
+        case Decimal.compare(max_amount, Decimal.new("0")) do
+          :gt ->
+            (Decimal.to_float(amount) / Decimal.to_float(max_amount)) * 100.0
+          _ -> 0.0
+        end
+
+      %{
+        label: month_label(year, month),
+        amount: Decimal.to_string(amount),
+        percentage: Float.round(percent, 2)
+      }
+    end)
+
+  end
+
+  defp final_amount(request) do
+    cond do
+      not is_nil(request.final_cost) -> request.final_cost
+      not is_nil(request.total_cost) ->
+        discount = request.discount_amount || Decimal.new("0")
+        Decimal.sub(request.total_cost, discount)
+      true -> Decimal.new("0")
+    end
+  end
+
+  defp month_back(%Date{year: year, month: month} = _date, months_back) do
+    total_months = (year * 12) + (month - 1) - months_back
+    new_year = div(total_months, 12)
+    new_month = rem(total_months, 12) + 1
+    {:ok, d} = Date.new(new_year, new_month, 1)
+    d
+  end
+
+  defp month_label(year, month) do
+    name = Enum.at(@month_names, month - 1)
+    name <> " " <> Integer.to_string(year)
   end
 end

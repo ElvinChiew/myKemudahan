@@ -6,8 +6,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
     <aside id="sidebar"
           class="bg-slate-700 text-white shadow-md sticky left-0 overflow-y-auto z-60 transition-all duration-300 w-64 h-auto"
           data-collapsed="false">
-      <div class="p-4 flex items-center justify-between">
-        <span class="sidebar-label text-lg font-bold" id="sidebar-title">My App</span>
+      <div class="p-4 flex items-center justify-end">
         <!-- Hamburger Button -->
         <button onclick="toggleSidebar()" class="text-white focus:outline-none block">
           <i class="fa fa-bars text-xl"></i>
@@ -19,7 +18,7 @@ defmodule MyKemudahanWeb.AdminSidebar do
         <div>
           <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">Overview</h2>
           <a href="/request_list"
-            class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition bg-slate-800"
+            class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600"
             aria-current="page"
             title="Dashboard Overview">
             <i class="fa fa-bar-chart" aria-hidden="true"></i>
@@ -111,7 +110,6 @@ defmodule MyKemudahanWeb.AdminSidebar do
           toggleCollapse('asset-group');
         });
     </script>
-
     """
   end
 end

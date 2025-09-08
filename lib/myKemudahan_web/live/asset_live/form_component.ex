@@ -209,15 +209,8 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
 
   def handle_event("save", %{"asset" => asset_params} = all_params, socket) do
     # Debug: Log save parameters
-    IO.puts("=== SAVE EVENT TRIGGERED ===")
-    IO.inspect(all_params, label: "All save params")
-
-    # Extract asset_tags from the form data
     asset_tags = parse_asset_tags(all_params)
-    IO.inspect(asset_tags, label: "Parsed asset tags for database")
-
     asset_params_with_tags = Map.put(asset_params, "asset_tags", asset_tags)
-    IO.inspect(asset_params_with_tags, label: "Final asset params with tags")
 
     uploaded_files =
       consume_uploaded_entries(socket, :image, fn %{path: path}, _entry ->
@@ -259,7 +252,6 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
   end
 
   defp save_asset(socket, :edit, asset_params) do
-    IO.inspect(asset_params, label: "Saving asset (edit) with params")
     case Assets.update_asset(socket.assigns.asset, asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})
@@ -270,13 +262,11 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors, label: "Validation errors (edit)")
         {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 
   defp save_asset(socket, :new, asset_params) do
-    IO.inspect(asset_params, label: "Saving asset (new) with params")
     case Assets.create_asset(asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})

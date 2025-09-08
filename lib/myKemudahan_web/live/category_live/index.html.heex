@@ -1,81 +1,115 @@
 <div class="flex flex-1 min-h-screen">
+  <!-- Sidebar component remains unchanged -->
   <.sidebar class="h-full"/>
+  
   <div class="flex-1 ml-5 flex flex-col">
-  <.header class="mt-5">
-    <p class="text-3xl font-bold">Listing Categories</p>
-    <:actions>
-      <.link patch={~p"/categories/new"}>
-        <.button>New Category</.button>
-      </.link>
-    </:actions>
-  </.header>
-
-  <!-- Search Form -->
-  <div class="mb-6 mt-5 shadow-lg p-4 rounded-lg py-5">
-    <form phx-submit="search" class="flex items-center gap-3">
-      <div class="relative flex-1 max-w-md">
-        <.input
-          type="text"
-          name="search"
-          value={@search}
-          placeholder="Search categories..."
-          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+    <!-- Header section -->
+    <header class="mt-5 flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-gray-800">Listing Categories</h1>
+      <div>
+        <.link patch={~p"/categories/new"}>
+          <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            New Category
+          </button>
+        </.link>
       </div>
-      <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
-        Search
-      </.button>
-      <%= if @search != "" do %>
-        <button type="button" phx-click="clear_search" class="bg-red-600 hover:bg-red-800 text-white px-3 py-2 rounded-lg">
-          Clear
+    </header>
+
+    <!-- Search Form -->
+    <div class="mb-6 mt-5 shadow-lg p-4 rounded-lg bg-white">
+      <form phx-submit="search" class="flex items-center gap-3">
+        <div class="relative flex-1 max-w-md">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input
+            type="text"
+            name="search"
+            value={@search}
+            placeholder="Search categories..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+          Search
         </button>
-      <% end %>
-    </form>
-  </div>
-
-  <!-- Results count -->
-  <%= if @search != "" do %>
-    <div class="mb-4 text-sm text-gray-600">
-      Found <%= @total_count %> <%= if @total_count == 1, do: "result", else: "results" %> for "<%= @search %>"
+        <%= if @search != "" do %>
+          <button type="button" phx-click="clear_search" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium">
+            Clear
+          </button>
+        <% end %>
+      </form>
     </div>
-  <% end %>
 
-  <.table
-    id="categories"
-    rows={@streams.categories}
-    row_click={fn {_id, category} -> JS.navigate(~p"/categories/#{category}") end}
-  >
-    <:col :let={{_id, category}} label="Name">{category.name}</:col>
-    <:action :let={{_id, category}}>
-      <div class="sr-only">
-        <.link navigate={~p"/categories/#{category}"}>Show</.link>
+    <!-- Results count -->
+    <%= if @search != "" do %>
+      <div class="mb-4 text-sm text-gray-600">
+        Found <%= @total_count %> <%= if @total_count == 1, do: "result", else: "results" %> for "<%= @search %>"
       </div>
-      <.link patch={~p"/categories/#{category}/edit"}>Edit</.link>
-    </:action>
-    <:action :let={{id, category}}>
-      <.link
-        phx-click={JS.push("delete", value: %{id: category.id}) |> hide("##{id}")}
-        data-confirm="Are you sure?"
-      >
-        Delete
-      </.link>
-    </:action>
-  </.table>
+    <% end %>
 
-  <.modal :if={@live_action in [:new, :edit]} id="category-modal" show on_cancel={JS.patch(~p"/categories")}>
-    <.live_component
-      module={MyKemudahanWeb.CategoryLive.FormComponent}
-      id={@category.id || :new}
-      title={@page_title}
-      action={@live_action}
-      category={@category}
-      patch={~p"/categories"}
-    />
-  </.modal>
+    <!-- Categories Table -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="categories">
+          <%= for {id, category} <- @streams.categories do %>
+            <tr 
+              id={id} 
+              class="hover:bg-gray-50 cursor-pointer" 
+              phx-click={JS.navigate(~p"/categories/#{category}")}
+            >
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <%= category.name %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex items-center justify-end space-x-2">
+                  <div class="sr-only">
+                    <button phx-click={JS.navigate(~p"/categories/#{category}")}>Show</button>
+                  </div>
+                  <.link 
+                    patch={~p"/categories/#{category}/edit"} 
+                    class="text-blue-600 hover:text-blue-900"
+                    onclick="event.stopPropagation();"
+                  >
+                    Edit
+                  </.link>
+                  <.link
+                    phx-click={JS.push("delete", value: %{id: category.id}) |> hide("##{id}")}
+                    data-confirm="Are you sure?"
+                    class="text-red-600 hover:text-red-900"
+                    onclick="event.stopPropagation();"
+                  >
+                    Delete
+                  </.link>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
+    <!-- Modal (unchanged as it's already using standard HTML) -->
+    <.modal :if={@live_action in [:new, :edit]} id="category-modal" show on_cancel={JS.patch(~p"/categories")}>
+      <.live_component
+        module={MyKemudahanWeb.CategoryLive.FormComponent}
+        id={@category.id || :new}
+        title={@page_title}
+        action={@live_action}
+        category={@category}
+        patch={~p"/categories"}
+      />
+    </.modal>
+
+    <!-- Pagination -->
     <%= if @total_count > @per_page do %>
       <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
-
         <% total_pages = Float.ceil(@total_count / @per_page) %>
 
         <!-- Previous -->
@@ -126,9 +160,7 @@
             Next
           </.link>
         <% end %>
-
       </div>
     <% end %>
-
   </div>
 </div>
