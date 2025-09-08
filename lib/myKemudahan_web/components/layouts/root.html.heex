@@ -14,113 +14,122 @@
   
   <body class="bg-white min-h-screen flex flex-col">
     
-    <!-- This is the navbar section -->
-    <nav class="sticky top-0 z-50 flex justify-between space-x-10 px-20 py-6 bg-[#0B132B] text-[#FFF5F5] w-full">
-    <div> <p class="left-0 text-white text-2xl font-bold">MyKemudahan</p></div>
-    <div>
-          <button
-        id="nav-toggle"
-        class="md:hidden inline-flex items-center justify-center p-2 rounded text-white hover:text-zinc-300 focus:outline-none"
-        aria-controls="nav-menu"
-        aria-expanded="false"
-      >
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      <ul
-        id="nav-menu"
-        class="z-10 hidden md:flex items-center gap-8 px-4 sm:px-6 lg:px-8 justify-end flex-col md:flex-row absolute md:static right-5 top-full mt-2 md:mt-0 bg-[#0B132B] md:bg-transparent rounded-md md:rounded-none shadow-lg md:shadow-none p-4 md:p-0"
-      >
-        <!-- Shared Navigation Links -->
-        <li>
-          <.link
-            href={~p"/"}
-            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-          >
-            Home
-          </.link>
-        </li>
-        
-        <li>
-          <.link
-            href={~p"/about"}
-            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-          >
-            About
-          </.link>
-        </li>
-        
-        <li>
-          <.link
-            href={~p"/contact"}
-            class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-          >
-            Contact Us
-          </.link>
-        </li>
-        <!-- Conditional User-Specific Links -->
-        <%= if @current_user do %>
-          <%= if @current_user.role == "admin" do %>
+  <nav class="sticky top-0 z-50 bg-[#0B132B] text-[#FFF5F5] w-full py-6 px-4 sm:px-6 lg:px-20">
+    <div class="flex justify-between items-center space-x-10 max-w-7xl mx-auto">
+      <!-- Left: Brand Name -->
+      <p class="text-white text-2xl font-bold">MyKemudahan</p>
+
+      <!-- Right: Navigation Menu -->
+      <div>
+        <!-- Mobile Hamburger Button -->
+        <button
+          id="nav-toggle"
+          class="md:hidden inline-flex items-center justify-center p-2 rounded text-white hover:text-zinc-300 focus:outline-none"
+          aria-controls="nav-menu"
+          aria-expanded="false"
+        >
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <!-- Menu Items -->
+        <ul
+          id="nav-menu"
+          class="z-10 hidden md:flex items-center gap-8 px-4 sm:px-6 lg:px-8 justify-end flex-col md:flex-row absolute md:static right-5 top-full mt-2 md:mt-0 bg-[#0B132B] md:bg-transparent rounded-md md:rounded-none shadow-lg md:shadow-none p-4 md:p-0"
+        >
+          <!-- Shared Navigation Links -->
+          <li>
+            <.link
+              href={~p"/"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Home
+            </.link>
+          </li>
+
+          <li>
+            <.link
+              href={~p"/about"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              About
+            </.link>
+          </li>
+
+          <li>
+            <.link
+              href={~p"/contact"}
+              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+            >
+              Contact Us
+            </.link>
+          </li>
+
+          <!-- Conditional User-Specific Links -->
+          <%= if @current_user do %>
+            <%= if @current_user.role == "admin" do %>
+              <li>
+                <.link
+                  href={~p"/request_list"}
+                  class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+                >
+                  Dashboard
+                </.link>
+              </li>
+            <% end %>
+
             <li>
               <.link
-                href={~p"/request_list"}
+                href={~p"/usermenu"}
                 class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
               >
-                Dashboard
+                Request Menu
+              </.link>
+            </li>
+
+            <li>
+              <.link
+                href={~p"/users/settings"}
+                class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+              >
+                Settings
+              </.link>
+            </li>
+
+            <li>
+              <.link
+                href={~p"/users/log_out"}
+                method="delete"
+                class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+              >
+                Log out
+              </.link>
+            </li>
+          <% else %>
+            <li>
+              <.link
+                href={~p"/users/register"}
+                class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+              >
+                Register
+              </.link>
+            </li>
+
+            <li>
+              <.link
+                href={~p"/users/log_in"}
+                class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
+              >
+                Log in
               </.link>
             </li>
           <% end %>
-
-          <li>
-            <.link
-              href={~p"/usermenu"}
-              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-            >
-              Request Menu
-            </.link>
-          </li>
-
-          <li>
-            <.link
-              href={~p"/users/settings"}
-              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-            >
-              Settings
-            </.link>
-          </li>
-          
-          <li>
-            <.link
-              href={~p"/users/log_out"}
-              method="delete"
-              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-            >
-              Log out
-            </.link>
-          </li>
-        <% else %>
-          <li>
-            <.link
-              href={~p"/users/register"}
-              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-            >
-              Register
-            </.link>
-          </li>
-          
-          <li>
-            <.link
-              href={~p"/users/log_in"}
-              class="text-md leading-6 text-white font-semibold hover:text-zinc-700"
-            >
-              Log in
-            </.link>
-          </li>
-        <% end %>
-      </ul>
+        </ul>
+      </div>
     </div>
-    </nav>
+  </nav>
+
     <main class="flex-1 flex flex-col">
      {@inner_content}
     </main>
