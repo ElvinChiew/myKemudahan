@@ -252,7 +252,6 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
   end
 
   defp save_asset(socket, :edit, asset_params) do
-    IO.inspect(asset_params, label: "Saving asset (edit) with params")
     case Assets.update_asset(socket.assigns.asset, asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})
@@ -268,7 +267,6 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
   end
 
   defp save_asset(socket, :new, asset_params) do
-    IO.inspect(asset_params, label: "Saving asset (new) with params")
     case Assets.create_asset(asset_params) do
       {:ok, asset} ->
         notify_parent({:saved, asset})

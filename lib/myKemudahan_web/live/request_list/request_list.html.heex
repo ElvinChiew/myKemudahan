@@ -172,33 +172,6 @@
   </div>
   </div>
 
-<div class="mb-10">
-<p class="text-3xl font-bold">Request Lists</p>
-</div>
-
-<form phx-submit="filter_by_date" class="flex gap-4 items-end mb-6">
-  <div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">From</label>
-    <input type="date" name="from_date" class="form-input rounded-md border-gray-300" value={@from_date || ""}/>
-  </div>
-  <div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">To</label>
-    <input type="date" name="to_date" class="form-input rounded-md border-gray-300" value={@to_date || ""}/>
-  </div>
-  <div>
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-      Filter
-    </button>
-  </div>
-      <div class="self-end">
-        <button type="button"
-            phx-click="reset_filters"
-            class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-        >
-            Reset Filters
-        </button>
-    </div>
-</form>
 
   <!-- Monthly Approved Revenue by Year -->
   <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 mb-8">
@@ -231,6 +204,34 @@
       <% end %>
     </div>
   </div>
+
+<div class="mb-10">
+<p class="text-3xl font-bold">Request Lists</p>
+</div>
+
+<form phx-submit="filter_by_date" class="flex gap-4 items-end mb-6">
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">From</label>
+    <input type="date" name="from_date" class="form-input rounded-md border-gray-300" value={@from_date || ""}/>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">To</label>
+    <input type="date" name="to_date" class="form-input rounded-md border-gray-300" value={@to_date || ""}/>
+  </div>
+  <div>
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+      Filter
+    </button>
+  </div>
+      <div class="self-end">
+        <button type="button"
+            phx-click="reset_filters"
+            class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+            Reset Filters
+        </button>
+    </div>
+</form>
 
   <!-- Status Filter Tabs -->
   <div class="mb-6 flex border-b border-gray-200">
