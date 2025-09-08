@@ -200,6 +200,38 @@
     </div>
 </form>
 
+  <!-- Monthly Approved Revenue by Year -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 mb-8">
+    <div class="flex items-baseline justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Approved Revenue (<%= @revenue_year %>)</h3>
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-gray-500">based on start month (borrow_from)</span>
+        <form phx-change="set_revenue_year" class="ml-3">
+          <select name="year" class="text-xs border-gray-300 rounded-md">
+            <%= for y <- @available_years do %>
+              <option value={y} selected={@revenue_year == y}><%= y %></option>
+            <% end %>
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-2 items-end" style="min-height: 160px;">
+      <%= for month <- @monthly_revenue do %>
+        <div class="flex flex-col items-center space-y-1">
+          <div class="w-full bg-blue-100 rounded-md relative" style={"height: #{max(month.percentage, 2)}px; min-height: 2px;"}>
+            <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-gray-600 whitespace-nowrap">
+              RM<%= month.amount %>
+            </div>
+          </div>
+          <div class="text-[10px] text-gray-700 text-center">
+            <%= month.label %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <!-- Status Filter Tabs -->
   <div class="mb-6 flex border-b border-gray-200">
     <button 
