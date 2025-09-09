@@ -241,21 +241,21 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
 
   defp filter_by_date(reports, start_date, nil) do
     Enum.filter(reports, fn r ->
-      NaiveDateTime.to_date(r.reported_at) >= start_date
+      Date.compare(NaiveDateTime.to_date(r.reported_at), start_date) in [:eq, :gt]
     end)
   end
 
   defp filter_by_date(reports, nil, end_date) do
     Enum.filter(reports, fn r ->
-      NaiveDateTime.to_date(r.reported_at) <= end_date
+      Date.compare(NaiveDateTime.to_date(r.reported_at), end_date) in [:eq, :lt]
     end)
   end
 
   defp filter_by_date(reports, start_date, end_date) do
-    IO.inspect({"Filtering dates", start_date: start_date, end_date: end_date})
     Enum.filter(reports, fn report ->
       date = NaiveDateTime.to_date(report.reported_at)
-      date >= start_date and date <= end_date
+      Date.compare(date, start_date) in [:eq, :gt] and
+        Date.compare(date, end_date) in [:eq, :lt]
     end)
   end
 
