@@ -26,7 +26,7 @@ defmodule MyKemudahanWeb.Contact do
             <!-- Email -->
             <div class="flex items-center gap-3">
               <i class="fa fa-envelope text-black"></i>
-              <p class="text-black text-base">test@example.com</p>
+              <p class="text-black text-base">support@mykemudahan.com</p>
             </div>
             <!-- Address -->
             <div class="flex items-start gap-3">

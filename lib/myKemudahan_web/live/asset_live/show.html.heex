@@ -13,7 +13,13 @@
   <:item title="Name">{@asset.name}</:item>
   <:item title="Description">{@asset.description}</:item>
   <:item title="Cost per unit">{@asset.cost_per_unit}</:item>
-  <:item title="Image">{@asset.image}</:item>
+    <:item title="Image">
+    <%= if @asset.image do %>
+      <img src={@asset.image} alt="Asset image" class="h-40 w-40 object-cover rounded-md" />
+    <% else %>
+      <span class="text-gray-400 italic">No image</span>
+    <% end %>
+  </:item>
   <:item title="Status">{@asset.status}</:item>
 </.list>
 

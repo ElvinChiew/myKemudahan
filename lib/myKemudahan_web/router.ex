@@ -32,6 +32,7 @@ defmodule MyKemudahanWeb.Router do
     live "/about", About
     live "/contact", Contact
     live "/usermenu", Usermenu
+    live "/privacy-policy", Privacypolicy
   end
 
   scope "/", MyKemudahanWeb do
