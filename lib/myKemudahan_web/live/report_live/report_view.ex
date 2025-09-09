@@ -3,7 +3,7 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
 
   alias MyKemudahan.Reports
   alias MyKemudahan.Requests
-  # alias MyKemudahan.Requests.RequestItem
+
   import MyKemudahanWeb.AdminSidebar
 
   @page_size 10
@@ -38,7 +38,11 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
       selected_report: nil,
       show_details: false,
       request_items: [],
-      status_counts: status_counts
+      status_counts: status_counts,
+      show_resolution_modal: false,
+      resolution_report_id: nil,
+      resolution_remark: "",
+      resolution_errors: []
     )
 
     {:ok, socket}
@@ -203,17 +207,98 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
     {:noreply, socket}
   end
 
-    #Function fetching request items
-    defp get_request_items_for_report(report) do
-      # Assuming your report has a request_id field that links to the request
-      if report.request_id do
-        Requests.list_request_items_by_request_id(report.request_id)
-      else
-        []
+  def handle_event("show_resolution_modal", %{"id" => id}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resolution_modal, true)
+     |> assign(:resolution_report_id, id)
+     |> assign(:resolution_remark, "")
+     |> assign(:resolution_errors, [])}
+  end
+
+  def handle_event("hide_resolution_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resolution_modal, false)
+     |> assign(:resolution_report_id, nil)
+     |> assign(:resolution_remark, "")
+     |> assign(:resolution_errors, [])}
+  end
+
+  def handle_event("update_resolution_remark", %{"remark" => remark}, socket) do
+    {:noreply, assign(socket, :resolution_remark, remark)}
+  end
+
+  def handle_event("save_resolution", _params, socket) do
+    report_id = socket.assigns.resolution_report_id
+    remark = socket.assigns.resolution_remark
+
+    if String.trim(remark) == "" do
+      {:noreply, assign(socket, :resolution_errors, ["Resolution remark cannot be empty"])}
+    else
+      report = Reports.get_report!(report_id)
+
+      case Reports.update_report(report, %{
+        status: "resolved",
+        resolution_remark: remark
+      }) do
+        {:ok, updated_report} ->
+          # Update the reports list as before
+          updated_all =
+            Enum.map(socket.assigns.all_reports, fn r ->
+              if r.id == updated_report.id, do: updated_report, else: r
+            end)
+
+          filtered_reports =
+            if socket.assigns.selected_status == "all" do
+              updated_all
+            else
+              Enum.filter(updated_all, fn r -> r.status == socket.assigns.selected_status end)
+            end
+
+          offset = socket.assigns.offset
+          current_reports =
+            filtered_reports
+            |> Enum.drop(offset)
+            |> Enum.take(socket.assigns.page_size)
+
+          total_count = length(filtered_reports)
+
+          socket =
+            socket
+            |> assign(
+              all_reports: updated_all,
+              filtered_reports: filtered_reports,
+              reports: current_reports,
+              total_count: total_count,
+              show_resolution_modal: false,
+              resolution_report_id: nil,
+              resolution_remark: "",
+              resolution_errors: []
+            )
+            |> update_status_counts(updated_all)
+
+          {:noreply, socket}
+
+        {:error, _changeset} ->
+          {:noreply,
+           socket
+           |> assign(:resolution_errors, ["Failed to update report"])
+           |> put_flash(:error, "Failed to update report")}
       end
     end
+  end
 
-  # Fix the unused variable warning by prefixing with underscore
+
+  #Function fetching request items
+  defp get_request_items_for_report(report) do
+    if report.request_id do
+      Requests.list_request_items_by_request_id(report.request_id)
+    else
+      []
+    end
+  end
+
   defp generate_page_links(_current_page, total_pages) when total_pages <= 5 do
     1..total_pages
   end
