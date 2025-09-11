@@ -31,9 +31,9 @@ defmodule MyKemudahanWeb.About do
               class="absolute bottom-[-150px] shadow-lg ml-auto blur-sm w-full h-auto"
             />
             <!-- Glass Cards Container -->
-            <div class="absolute top-10 left-10 flex flex-col gap-y-6">
+            <div class="absolute top-10 left-10 sm:top-4 sm:left-4 flex flex-col gap-y-6 transform scale-90 sm:scale-100 origin-top-left">
               <!-- Card 1 -->
-              <div class="flex items-start gap-4">
+              <div class="flex items-start gap-4 mt-10">
                 <div class="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border border-white/30 p-4 shadow-lg mt-2 flex items-center justify-center">
                   <i class="fa fa-rocket text-[60px] text-[#0B132B]" aria-hidden="true"></i>
                 </div>

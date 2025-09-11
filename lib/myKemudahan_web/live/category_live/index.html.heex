@@ -109,7 +109,7 @@
 
     <!-- Pagination -->
     <%= if @total_count > @per_page do %>
-      <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-2 mb-3">
         <% total_pages = Float.ceil(@total_count / @per_page) %>
 
         <!-- Previous -->

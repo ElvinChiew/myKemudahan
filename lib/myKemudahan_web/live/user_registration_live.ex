@@ -6,7 +6,7 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
 
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="h-auto lg:min-h-screen flex flex-col lg:items-center justify-start lg:justify-center px-4 pt-6">
       <div class="flex flex-row items-stretch">
         <div class="hidden lg:flex w-[420px] h-[520px] rounded-xl bg-zinc-100 px-8 py-10 text-950 dark:bg-gray-950 dark:text-gray-300 justify-center">
           <div class="flex flex-col items-center text-center">
@@ -22,7 +22,7 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
           </div>
         </div>
 
-        <div class="w-[420px] h-[520px] rounded-xl bg-slate-700 px-8 py-10 text-emerald-500">
+        <div class="w-full max-w-[420px] rounded-xl bg-slate-700 px-4 sm:px-8 py-8 text-emerald-500 mr-2">
           <.header class="text-center">
             <p class="text-white font-bold text-3xl">Register an account</p>
           </.header>
@@ -49,7 +49,7 @@ defmodule MyKemudahanWeb.UserRegistrationLive do
             </:actions>
           </.simple_form>
 
-          <p class="text-xs text-white mt-5">
+          <p class="text-xs text-white mt-5 leading-relaxed">
             By registering, you have agreed to our terms and conditions. Terms and condition applied. For more information please refer to our
             <span class="text-teal-500 underline hover:text-teal-300"><a href="/#">FAQ</a></span>
             page.
