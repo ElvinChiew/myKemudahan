@@ -41,42 +41,42 @@ defmodule MyKemudahanWeb.AssetLive.FormComponent do
           />
         </div>
 
-        <!-- Cost, Status, Image Upload -->
-        <div class="flex flex-row justify-between gap-4">
-          <!-- Cost per unit -->
-          <div class="w-[12rem]">
-            <label class="block text-sm font-medium text-black">Cost per unit</label>
-            <input
-              type="number"
-              name="asset[cost_per_unit]"
-              value={@form[:cost_per_unit].value}
-              step="any"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-            />
-          </div>
-
-          <!-- Status -->
-          <div class="w-[12rem]">
-            <label class="block text-sm font-medium text-black">Status</label>
-            <select
-              name="asset[status]"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-            >
-              <%= Phoenix.HTML.Form.options_for_select([
-                {"Available", "available"},
-                {"Loaned", "loaned"},
-                {"Damaged", "damaged"},
-                {"Maintenance", "maintenance"}
-              ], @form[:status].value) %>
-            </select>
-          </div>
-
-          <!-- Image Upload -->
-          <div class="w-[12rem]">
-            <label class="block text-sm font-medium text-black mb-2">Image Upload</label>
-            <.live_file_input upload={@uploads.image} />
-          </div>
+      <!-- Cost, Status, Image Upload -->
+        <div class="flex flex-col md:flex-row justify-between gap-4">
+        <!-- Cost per unit -->
+        <div class="w-full md:w-[12rem]">
+          <label class="block text-sm font-medium text-black">Cost per unit</label>
+          <input
+            type="number"
+            name="asset[cost_per_unit]"
+            value={@form[:cost_per_unit].value}
+            step="any"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+          />
         </div>
+
+        <!-- Status -->
+        <div class="w-full md:w-[12rem]">
+          <label class="block text-sm font-medium text-black">Status</label>
+          <select
+            name="asset[status]"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+          >
+            <%= Phoenix.HTML.Form.options_for_select([
+              {"Available", "available"},
+              {"Loaned", "loaned"},
+              {"Damaged", "damaged"},
+              {"Maintenance", "maintenance"}
+            ], @form[:status].value) %>
+          </select>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="w-full md:w-[12rem]">
+          <label class="block text-sm font-medium text-black mb-2">Image Upload</label>
+          <.live_file_input upload={@uploads.image} />
+        </div>
+      </div>
 
         <!-- Category -->
         <div>
