@@ -14,7 +14,7 @@ defmodule MyKemudahanWeb.Usermenu do
         <!-- Content Layer -->
         <div class="relative z-10 flex flex-col md:flex-row gap-6 md:gap-20 p-4">
           <!-- Card 1 -->
-          <div class="w-full max-w-md rounded-xl bg-slate-700 p-8 text-sm/7 text-gray-700 dark:bg-gray-950 dark:text-gray-300 shadow-lg">
+          <div class="w-full max-w-md rounded-xl bg-slate-700 p-8 text-sm/7 text-gray-700 shadow-lg">
             <p class="text-xl font-bold text-center text-white">Asset Borrowing Request</p>
             <p class="text-white mt-2">Need equipment or tools? Submit your request in seconds. No fuss, no delays, just smooth and hassle-free borrowing.</p>
             <div class="flex justify-end mt-5">

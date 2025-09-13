@@ -1,17 +1,24 @@
-<div class="flex items-center justify-between mb-8 mt-4 ml-5">
-  <button
-    phx-click="go_to_menu"
-    class="inline-flex items-center text-sm font-medium  text-teal-600 hover:text-teal-800 transition-colors"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-    </svg>
-    Back to Menu
-  </button>
-  <h1 class="text-3xl font-bold text-gray-900">Asset Request Form</h1>
-  <div class="w-24"></div> <!-- Spacer for balance -->
+<div class="flex flex-col items-center mb-8 mt-4 mx-4 space-y-2">
+  <!-- Back Button: Left-aligned -->
+  <div class="w-full flex justify-start">
+    <button
+      phx-click="go_to_menu"
+      class="inline-flex items-center text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to Menu
+    </button>
+  </div>
+
+  <!-- Title: Centered -->
+  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center">
+    Asset Request Form
+  </h1>
 </div>
 
+<div class="mb-6 overflow-x-auto">
 <div class="mb-6 flex border-b border-gray-200">
   <%= for tab <- ["all", "sent", "pending", "approved", "rejected", "cancelled"] do %>
     <button
@@ -27,6 +34,7 @@
       <%= String.capitalize(tab) %>
     </button>
   <% end %>
+</div>
 </div>
 
 <div class="bg-[#F9FAFB] rounded-xl px-3 py-4 shadow-sm">
