@@ -258,4 +258,10 @@ end
     |> preload([request: [:user, request_items: :asset]])
     |> Repo.one!()
   end
+
+  def create_return_request(attrs) do
+    %ReturnRequest{}
+    |> ReturnRequest.changeset(attrs)
+    |> Repo.insert()
+  end
 end
