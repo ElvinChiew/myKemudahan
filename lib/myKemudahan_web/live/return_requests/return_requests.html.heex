@@ -1,69 +1,131 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900">Asset Return Requests</h1>
-    <p class="mt-1 text-sm text-gray-500">Manage all asset return requests from users</p>
-  </div>
+<div class="flex bg-gray-50 min-h-screen">
+  <.sidebar />
 
-  <!-- Status Filter Tabs -->
-  <div class="mb-6 flex border-b border-gray-200">
-    <%= for tab <- ["all", "pending", "approved", "rejected"] do %>
-      <button
-        phx-click="filter_status"
-        phx-value-status={tab}
-        class={
-          if @status_filter == tab do
-            "py-2 px-4 font-medium border-b-2 border-blue-500 text-blue-600"
-          else
-            "py-2 px-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          end
-        }>
-        <%= String.capitalize(tab) %>
-      </button>
-    <% end %>
-  </div>
+  <div class="flex-1 p-4 md:p-6 max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-4 md:mb-6">
+      <h1 class="text-2xl md:text-3xl font-bold text-sky-800">Asset Return Requests</h1>
+      <p class="text-gray-600 mt-1 text-sm">Manage all asset return requests from users</p>
+    </div>
 
-  <!-- Return Requests Table -->
-  <div class="bg-white shadow rounded-lg overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <!-- Status Filter -->
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-3 md:p-4 mb-4 md:mb-6 space-y-3 md:space-y-0 md:flex md:items-end md:gap-4">
+      <div class="w-full">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Filter by Status</label>
+        <form phx-change="filter_status" class="flex rounded-md shadow-sm">
+          <select 
+            name="status" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+          >
+            <%= for tab <- ["all", "pending", "approved", "rejected"] do %>
+              <option value={tab} selected={@status_filter == tab}>
+                <%= String.capitalize(tab) %>
+              </option>
+            <% end %>
+          </select>
+        </form>
+      </div>
+
+      <!-- Reset Button -->
+      <div class="w-full md:w-auto">
+        <form phx-click="reset_filters">
+          <button 
+            type="submit"
+            class="w-full md:w-auto px-4 py-2 bg-red-600 text-white border border-gray-300 rounded-md hover:bg-red-800 transition text-sm"
+          >
+            Reset
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Return Requests Table -->
+    <div class="overflow-x-auto rounded-lg shadow-md">
+      <table class="w-full table-auto text-xs md:text-sm text-left border border-gray-200">
+        <thead class="bg-sky-100 text-gray-700 uppercase tracking-wider hidden md:table-header-group">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              User
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Submitted
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">User</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">Submitted</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">Status</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border text-center">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
           <%= if Enum.empty?(@return_requests) do %>
             <tr>
-              <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+              <td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">
                 No return requests found
               </td>
             </tr>
           <% else %>
             <%= for return_request <- @return_requests do %>
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50 block md:table-row mb-2 md:mb-0">
+                <!-- Mobile Card View -->
+                <td class="block md:hidden px-3 py-2 border-b">
+                  <div class="font-semibold text-sky-800">
+                    <%= if return_request.request.user do %>
+                      <%= return_request.request.user.full_name %>
+                    <% else %>
+                      Unknown User
+                    <% end %>
+                  </div>
+                  <div class="text-gray-600 text-xs">
+                    <%= Calendar.strftime(return_request.submitted_at, "%d/%m/%Y %H:%M") %>
+                  </div>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class={
+                      [
+                        "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
+                        case return_request.status do
+                          "pending" -> "bg-amber-100 text-amber-800"
+                          "approved" -> "bg-green-100 text-green-800"
+                          "rejected" -> "bg-red-100 text-red-800"
+                          _ -> "bg-gray-100 text-gray-800"
+                        end
+                      ]
+                    }>
+                      <%= String.capitalize(return_request.status) %>
+                    </span>
+                    <div class="space-x-1">
+                      <button 
+                        phx-click="show_details" 
+                        phx-value-id={return_request.id}
+                        class="text-sky-900 bg-sky-100 px-2 py-1 rounded-full hover:bg-sky-200 transition text-xs"
+                      >
+                        View
+                      </button>
+                      <%= if return_request.status == "pending" do %>
+                        <button 
+                          phx-click="approve_return" 
+                          phx-value-id={return_request.id}
+                          class="text-green-900 bg-green-100 px-2 py-1 rounded-full hover:bg-green-200 transition text-xs"
+                        >
+                          ✓
+                        </button>
+                        <button 
+                          phx-click="reject_return" 
+                          phx-value-id={return_request.id}
+                          class="text-red-900 bg-red-100 px-2 py-1 rounded-full hover:bg-red-200 transition text-xs"
+                        >
+                          ✗
+                        </button>
+                      <% end %>
+                    </div>
+                  </div>
+                </td>
+                
+                <!-- Desktop Table View -->
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
                   <%= if return_request.request.user do %>
                     <%= return_request.request.user.full_name %>
                   <% else %>
                     Unknown User
                   <% end %>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
                   <%= Calendar.strftime(return_request.submitted_at, "%d/%m/%Y %H:%M") %>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
                   <span class={
                     [
                       "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
@@ -78,24 +140,27 @@
                     <%= String.capitalize(return_request.status) %>
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border text-center space-x-1 md:space-x-2">
                   <button 
                     phx-click="show_details" 
                     phx-value-id={return_request.id}
-                    class="text-blue-600 hover:text-blue-900">
-                    View Details
+                    class="text-sky-900 bg-sky-100 px-2 md:px-3 py-1 rounded-full hover:bg-sky-200 transition text-xs"
+                  >
+                    View
                   </button>
                   <%= if return_request.status == "pending" do %>
                     <button 
                       phx-click="approve_return" 
                       phx-value-id={return_request.id}
-                      class="text-green-600 hover:text-green-900">
+                      class="text-green-900 bg-green-100 px-2 md:px-3 py-1 rounded-full hover:bg-green-200 transition text-xs"
+                    >
                       Approve
                     </button>
                     <button 
                       phx-click="reject_return" 
                       phx-value-id={return_request.id}
-                      class="text-red-600 hover:text-red-900">
+                      class="text-red-900 bg-red-100 px-2 md:px-3 py-1 rounded-full hover:bg-red-200 transition text-xs"
+                    >
                       Reject
                     </button>
                   <% end %>
@@ -106,28 +171,35 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Results Count -->
+    <div class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600 text-center md:text-left">
+      Showing <%= length(@return_requests) %> return requests
+    </div>
   </div>
 </div>
 
 <!-- Modal for Detailed View -->
 <%= if @show_details && @selected_request do %>
-  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 md:p-0">
+    <div class="relative top-4 md:top-20 mx-auto p-4 md:p-5 border w-full md:w-11/12 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
       <!-- Modal header -->
-      <div class="flex justify-between items-center pb-4 border-b">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <h3 class="text-lg font-semibold">Return Request Details</h3>
         <button 
           phx-click="close_details" 
-          class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+          class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+        >
           &times;
         </button>
       </div>
 
       <!-- Modal content -->
-      <div class="mt-4 space-y-4">
+      <div class="mt-3 space-y-3 text-sm md:text-base">
         <!-- User Information -->
         <div>
           <h4 class="text-sm font-medium text-gray-500">Requested By</h4>
-          <p class="text-lg">
+          <p>
             <%= if @selected_request.request.user do %>
               <%= @selected_request.request.user.full_name %>
             <% else %>
@@ -137,45 +209,56 @@
         </div>
 
         <!-- Dates -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <h4 class="text-sm font-medium text-gray-500">Submitted At</h4>
-            <p class="text-md">
+            <p class="text-sm">
               <%= Calendar.strftime(@selected_request.submitted_at, "%d/%m/%Y %H:%M") %>
             </p>
           </div>
           <%= if @selected_request.processed_at do %>
             <div>
               <h4 class="text-sm font-medium text-gray-500">Processed At</h4>
-              <p class="text-md">
+              <p class="text-sm">
                 <%= Calendar.strftime(@selected_request.processed_at, "%d/%m/%Y %H:%M") %>
               </p>
             </div>
           <% end %>
         </div>
 
-        <!-- Notes -->
-        <%= if @selected_request.notes do %>
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Notes</h4>
-            <p class="text-md bg-gray-50 p-3 rounded-md">
-              <%= @selected_request.notes %>
-            </p>
-          </div>
-        <% end %>
+        <!-- Notes & Remarks -->
+        <div class="space-y-2">
+          <%= if @selected_request.notes do %>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">User Notes</h4>
+              <p class="text-sm bg-gray-50 p-2 rounded-md">
+                <%= @selected_request.notes %>
+              </p>
+            </div>
+          <% end %>
+
+          <%= if @selected_request.admin_remarks do %>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Admin Remarks</h4>
+              <p class="text-sm bg-gray-50 p-2 rounded-md">
+                <%= @selected_request.admin_remarks %>
+              </p>
+            </div>
+          <% end %>
+        </div>
 
         <!-- Original Request Information -->
-        <div class="mt-6 pt-6 border-t">
-          <h4 class="text-lg font-semibold mb-4">Original Request Information</h4>
+        <div class="mt-4 pt-4 border-t">
+          <h4 class="font-semibold mb-3">Original Request Information</h4>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
             <div>
               <h4 class="text-sm font-medium text-gray-500">Purpose</h4>
-              <p class="text-md"><%= @selected_request.request.purpose %></p>
+              <p class="text-sm"><%= @selected_request.request.purpose %></p>
             </div>
             <div>
               <h4 class="text-sm font-medium text-gray-500">Borrow Period</h4>
-              <p class="text-md">
+              <p class="text-sm">
                 <%= Calendar.strftime(@selected_request.request.borrow_from, "%d/%m/%Y") %> - 
                 <%= Calendar.strftime(@selected_request.request.borrow_to, "%d/%m/%Y") %>
               </p>
@@ -184,8 +267,8 @@
 
           <!-- Requested Items -->
           <h4 class="text-sm font-medium text-gray-500 mb-2">Requested Items</h4>
-          <div class="bg-gray-50 p-4 rounded-md">
-            <ul class="list-disc list-inside">
+          <div class="bg-gray-50 p-3 rounded-md">
+            <ul class="list-disc list-inside space-y-1 text-sm">
               <%= for item <- @selected_request.request.request_items do %>
                 <li>
                   <%= if item.asset do %>
@@ -198,30 +281,133 @@
             </ul>
           </div>
         </div>
+
+        <!-- Notes & Remarks -->
+        <div class="space-y-2">
+        <%= if @selected_request.notes do %>
+            <div>
+            <h4 class="text-sm font-medium text-gray-500">User Notes</h4>
+            <p class="text-sm bg-gray-50 p-2 rounded-md">
+                <%= @selected_request.notes %>
+            </p>
+            </div>
+        <% end %>
+
+        <%= if @selected_request.status in ["approved", "rejected"] and @selected_request.admin_remarks do %>
+            <div>
+            <h4 class="text-sm font-medium text-gray-500">
+                Admin Remarks
+                <span class="ml-2 text-xs font-normal text-gray-400">
+                (<%= String.capitalize(@selected_request.status) %>)
+                </span>
+            </h4>
+            <p class="text-sm bg-gray-50 p-2 rounded-md">
+                <%= @selected_request.admin_remarks %>
+            </p>
+            </div>
+        <% end %>
+        </div>
+
       </div>
 
+
       <!-- Modal footer -->
-      <div class="flex justify-end pt-4 border-t mt-6 space-x-2">
+      <div class="flex flex-wrap justify-end pt-3 border-t mt-4 gap-2">
         <%= if @selected_request.status == "pending" do %>
           <button 
             phx-click="reject_return" 
             phx-value-id={@selected_request.id}
-            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm"
+          >
             Reject
           </button>
           <button 
             phx-click="approve_return" 
             phx-value-id={@selected_request.id}
-            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-sm"
+          >
             Approve
           </button>
+        <% else %>
+          <%= if @selected_request.status == "approved" do %>
+            <button 
+              phx-click="open_remark_modal" 
+              phx-value-id={@selected_request.id}
+              phx-value-action="rejected"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm"
+            >
+              Change to Rejected
+            </button>
+          <% else %>
+            <button 
+              phx-click="open_remark_modal" 
+              phx-value-id={@selected_request.id}
+              phx-value-action="approved"
+              class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-sm"
+            >
+              Change to Approved
+            </button>
+          <% end %>
         <% end %>
         <button 
           phx-click="close_details" 
-          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded text-sm"
+        >
           Close
         </button>
       </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Remark Modal -->
+<%= if @show_remark_modal do %>
+  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 md:p-0">
+    <div class="relative top-4 md:top-20 mx-auto p-4 md:p-5 border w-full md:w-11/12 lg:w-1/3 shadow-lg rounded-md bg-white">
+      <!-- Modal header -->
+      <div class="flex justify-between items-center pb-3 border-b">
+        <h3 class="text-lg font-semibold">
+          <%= String.capitalize(@remark_action) %> Return Request
+        </h3>
+        <button 
+          phx-click="cancel_remark" 
+          class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+        >
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal content -->
+    <form phx-submit="submit_remark" phx-change="update_remark">
+    <div class="mt-3">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+        Remarks (Optional)
+        </label>
+        <textarea
+        name="remark"
+        rows="3"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+        placeholder="Enter any remarks for this action..."
+        ><%= @remark_text %></textarea>
+    </div>
+
+    <!-- Modal footer -->
+    <div class="flex justify-end pt-3 border-t mt-4 space-x-2">
+        <button 
+        type="button"
+        phx-click="cancel_remark" 
+        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded text-sm"
+        >
+        Cancel
+        </button>
+        <button 
+        type="submit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded text-sm"
+        >
+        <%= String.capitalize(@remark_action) %>
+        </button>
+    </div>
+    </form>
     </div>
   </div>
 <% end %>

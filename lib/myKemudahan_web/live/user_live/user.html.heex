@@ -1,36 +1,36 @@
 <div class="flex bg-gray-50 min-h-screen">
   <.sidebar />
 
-  <div class="flex-1 p-6 max-w-7xl mx-auto">
+  <div class="flex-1 p-4 md:p-6 max-w-7xl mx-auto">
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-sky-800">System Users</h1>
-      <p class="text-gray-600 mt-1">Manage system users, including names, emails, and roles.</p>
+    <div class="mb-4 md:mb-6">
+      <h1 class="text-2xl md:text-3xl font-bold text-sky-800">System Users</h1>
+      <p class="text-gray-600 mt-1 text-sm">Manage system users, including names, emails, and roles.</p>
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="flex flex-wrap items-end gap-4 bg-white border border-gray-200 shadow-sm rounded-lg p-4 mb-6">
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-3 md:p-4 mb-4 md:mb-6 space-y-3 md:space-y-0">
       <!-- Search -->
-      <div class="flex-1 min-w-[220px] max-w-md">
+      <div class="w-full">
         <label class="block text-sm font-semibold text-gray-700 mb-1">Search by Name</label>
-        <form phx-change="search" class="flex rounded-md shadow-sm">
+        <form phx-change="search">
           <input 
             type="text" 
             name="search" 
             value={@search} 
             placeholder="User name here.." 
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
           />
         </form>
       </div>
 
       <!-- Role Filter -->
-      <div class="min-w-[150px]">
+      <div class="w-full">
         <label class="block text-sm font-semibold text-gray-700 mb-1">Filter by Role</label>
         <form phx-change="filter_role">
           <select 
             name="role" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
           >
             <option value="all" selected={@role_filter == "all"}>All Roles</option>
             <option value="admin" selected={@role_filter == "admin"}>Admin</option>
@@ -40,40 +40,59 @@
       </div>
 
       <!-- Reset Button -->
-      <div>
+      <div class="w-full md:w-auto">
         <form phx-click="reset_filters">
           <button 
             type="submit"
-            class="mt-6 px-4 py-2 bg-red-600 border text-white border-gray-300 rounded-md hover:bg-red-800 transition"
+            class="w-full md:w-auto px-4 py-2 bg-red-600 text-white border border-gray-300 rounded-md hover:bg-red-800 transition text-sm"
           >
-            Reset
+            Reset Filters
           </button>
         </form>
       </div>
     </div>
 
     <!-- User Table -->
-    <div class="overflow-auto rounded-lg shadow-md">
-      <table class="w-full table-auto text-sm text-left border border-gray-200">
-        <thead class="bg-sky-100 text-gray-700 uppercase text-xs tracking-wider">
+    <div class="overflow-x-auto rounded-lg shadow-md">
+      <table class="w-full table-auto text-xs md:text-sm text-left border border-gray-200">
+        <thead class="bg-sky-100 text-gray-700 uppercase tracking-wider hidden md:table-header-group">
           <tr>
-            <th class="px-4 py-3 border">Full Name</th>
-            <th class="px-4 py-3 border">Email</th>
-            <th class="px-4 py-3 border">Role</th>
-            <th class="px-4 py-3 border text-center">Action</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">Full Name</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">Email</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">Role</th>
+            <th class="px-2 md:px-4 py-2 md:py-3 border text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           <%= for user <- paginate_users(@filtered_users, @page, @per_page) do %>
-            <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50">
-              <td class="px-4 py-3 border"><%= user.full_name %></td>
-              <td class="px-4 py-3 border"><%= user.email %></td>
-              <td class="px-4 py-3 border"><%= user.role %></td>
-              <td class="px-4 py-3 border text-center">
+            <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50 block md:table-row mb-2 md:mb-0">
+              <!-- Mobile Card View -->
+              <td class="block md:hidden px-3 py-2 border-b">
+                <div class="font-semibold text-sky-800"><%= user.full_name %></div>
+                <div class="text-gray-600 text-xs"><%= user.email %></div>
+                <div class="flex justify-between items-center mt-1">
+                  <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                    <%= user.role %>
+                  </span>
+                  <button 
+                    phx-click="view_user_requests" 
+                    phx-value-user_id={user.id}
+                    class="text-sky-900 bg-sky-100 px-2 py-1 rounded-full hover:bg-sky-200 transition text-xs"
+                  >
+                    View
+                  </button>
+                </div>
+              </td>
+              
+              <!-- Desktop Table View -->
+              <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border"><%= user.full_name %></td>
+              <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border"><%= user.email %></td>
+              <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border"><%= user.role %></td>
+              <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border text-center">
                 <button 
                   phx-click="view_user_requests" 
                   phx-value-user_id={user.id}
-                  class="text-sky-900 bg-sky-100 px-3 py-1 rounded-full hover:bg-sky-200 transition"
+                  class="text-sky-900 bg-sky-100 px-2 md:px-3 py-1 rounded-full hover:bg-sky-200 transition text-xs"
                 >
                   View
                 </button>
@@ -86,12 +105,12 @@
 
     <!-- Pagination -->
     <%= if @total_pages > 1 do %>
-      <div class="flex justify-center mt-6 space-x-1">
+      <div class="flex justify-center mt-4 md:mt-6 space-x-1 flex-wrap">
         <%= for page <- 1..@total_pages do %>
           <button 
             phx-click="paginate" 
             phx-value-page={page}
-            class={"px-3 py-1 rounded-md border #{if page == @page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
+            class={"px-2 py-1 md:px-3 md:py-1 rounded-md border text-xs md:text-sm #{if page == @page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
           >
             <%= page %>
           </button>
@@ -100,7 +119,7 @@
     <% end %>
 
     <!-- Results Count -->
-    <div class="mt-4 text-sm text-gray-600">
+    <div class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600 text-center md:text-left">
       Showing <%= min(length(@filtered_users), @per_page) %> of <%= length(@filtered_users) %> users
     </div>
   </div>

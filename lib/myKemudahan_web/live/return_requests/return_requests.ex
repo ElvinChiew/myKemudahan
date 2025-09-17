@@ -1,9 +1,11 @@
 defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   use MyKemudahanWeb, :live_view
+
   alias MyKemudahan.Requests
   alias MyKemudahan.Requests.ReturnRequest
   alias MyKemudahan.Repo
   import Ecto.Query
+  import MyKemudahanWeb.AdminSidebar
 
   def mount(_params, _session, socket) do
     return_requests = list_return_requests_with_associations("pending")
@@ -15,11 +17,11 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
       status_filter: "pending",
       show_remark_modal: false,
       remark_action: nil,
-      remark_text: ""
+      remark_text: "",
+      selected_request_id: nil
     )}
   end
 
-  # Helper function to query with associations
   defp list_return_requests_with_associations(status) do
     query = from rr in ReturnRequest,
       preload: [request: ^from(r in MyKemudahan.Requests.Request, preload: [:user, request_items: :asset])]
@@ -47,35 +49,33 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
     {:noreply, assign(socket, selected_request: return_request, show_details: true)}
   end
 
-  def handle_event("approve_return", params, socket) do
-    return_request_id = params["id"]
-    # Rest of your approve logic...
-    case Requests.update_return_request_status(return_request_id, "approved") do
-      {:ok, _} ->
-        return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
-        {:noreply,
-         assign(socket, return_requests: return_requests)
-         |> put_flash(:info, "Return request approved successfully")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to approve return request")}
-    end
+  def handle_event("open_remark_modal", %{"id" => id, "action" => action}, socket) do
+    {:noreply, assign(socket,
+      show_remark_modal: true,
+      remark_action: action,
+      selected_request_id: id,
+      remark_text: ""
+    )}
   end
 
-  def handle_event("reject_return", params, socket) do
-    return_request_id = params["id"]
-    # Rest of your reject logic...
-    case Requests.update_return_request_status(return_request_id, "rejected") do
-      {:ok, _} ->
-        return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
-        {:noreply,
-         assign(socket, return_requests: return_requests)
-         |> put_flash(:info, "Return request rejected")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to reject return request")}
-    end
+  def handle_event("approve_return", %{"id" => id}, socket) do
+    {:noreply, assign(socket,
+      show_remark_modal: true,
+      remark_action: "approved",
+      selected_request_id: id,
+      remark_text: ""
+    )}
   end
+
+  def handle_event("reject_return", %{"id" => id}, socket) do
+    {:noreply, assign(socket,
+      show_remark_modal: true,
+      remark_action: "rejected",
+      selected_request_id: id,
+      remark_text: ""
+    )}
+  end
+
   def handle_event("close_details", _params, socket) do
     {:noreply, assign(socket, selected_request: nil, show_details: false)}
   end
@@ -84,11 +84,11 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
     {:noreply, assign(socket, remark_text: remark)}
   end
 
-  def handle_event("submit_remark", _params, socket) do
+  def handle_event("submit_remark", %{"remark" => remark}, socket) do
     case Requests.update_return_request_status(
       socket.assigns.selected_request_id,
       socket.assigns.remark_action,
-      socket.assigns.remark_text
+      remark
     ) do
       {:ok, _} ->
         return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
@@ -98,7 +98,9 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
            show_remark_modal: false,
            remark_action: nil,
            remark_text: "",
-           selected_request_id: nil
+           selected_request_id: nil,
+           selected_request: nil,
+           show_details: false
          )
          |> put_flash(:info, "Return request #{socket.assigns.remark_action} successfully")}
 

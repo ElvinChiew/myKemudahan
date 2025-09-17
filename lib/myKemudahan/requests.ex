@@ -212,32 +212,18 @@ end
     |> Repo.one()
   end
 
-  def update_return_request_status(return_request_id, status, notes \\ nil) do
-    case Repo.get(ReturnRequest, return_request_id) do
+  def update_return_request_status(id, new_status, admin_remarks) do
+    case Repo.get(ReturnRequest, id) do
       nil ->
-        {:error, "Return request not found"}
+        {:error, :not_found}
 
       return_request ->
-        changeset_attrs = %{status: status}
-
-        # If approving, set processed_at
-        changeset_attrs =
-          if status == "approved" do
-            Map.put(changeset_attrs, :processed_at, NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second))
-          else
-            changeset_attrs
-          end
-
-        # Add notes if provided
-        changeset_attrs =
-          if notes do
-            Map.put(changeset_attrs, :notes, notes)
-          else
-            changeset_attrs
-          end
-
         return_request
-        |> ReturnRequest.changeset(changeset_attrs)
+        |> ReturnRequest.changeset(%{
+          status: new_status,
+          processed_at: NaiveDateTime.utc_now(),
+          admin_remarks: admin_remarks
+        })
         |> Repo.update()
     end
   end
@@ -272,5 +258,4 @@ end
     |> preload([request: [:user, request_items: :asset]])
     |> Repo.one!()
   end
-
 end

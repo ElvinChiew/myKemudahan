@@ -19,9 +19,9 @@ import Config
 
 config :myKemudahan, MyKemudahan.Mailer,
   adapter: Swoosh.Adapters.SMTP,
-  relay: "relay",
-  username: "username",
-  password: "password",
+  relay: "",
+  username: "",
+  password: "",
   port: 587,
   ssl: false,
   tls: :always,

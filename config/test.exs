@@ -10,7 +10,7 @@ config :pbkdf2_elixir, :rounds, 1
 # Run `mix help test` for more information.
 config :myKemudahan, MyKemudahan.Repo,
   username: "postgres",
-  password: "postgres",
+  password: "123456",
   hostname: "localhost",
   database: "mykemudahan_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
