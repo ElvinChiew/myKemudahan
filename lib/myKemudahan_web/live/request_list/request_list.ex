@@ -294,25 +294,19 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   def handle_event("reject_request", %{}, socket) do
-    IO.puts("DEBUG: reject_request event triggered")
     case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
       {:ok, request} ->
 
         complete_request = Requests.get_request_with_items!(request.id)
 
         try do
-          IO.puts("DEBUG: Attempting to send rejection email")
           RequestEmail.rejection_email(complete_request, socket.assigns.rejection_reason)
           |> Mailer.deliver()
-          IO.puts("DEBUG: Email sent successfully")
         rescue
           error ->
             IO.inspect(error, label: "Email delivery failed")
             # Continue even if email fails
         end
-
-        IO.inspect(complete_request.user.email, label: "Sending email to")
-        IO.inspect(socket.assigns.rejection_reason, label: "Rejection reason")
 
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
