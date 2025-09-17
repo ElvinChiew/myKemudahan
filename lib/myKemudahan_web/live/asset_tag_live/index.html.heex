@@ -1,6 +1,7 @@
-<div class="flex min-h-screen">
-  <.sidebar class="h-full"/>
-<div class="flex-1 ml-5 mt-5 h-full flex flex-col">
+<div class="flex flex-col md:flex-row min-h-screen">
+  <.sidebar class="w-full md:w-60 h-auto md:h-full" />
+
+  <div class="flex-1 mt-5 md:ml-5 h-full flex flex-col px-4 md:px-0">
     <.header>
       <p class="font-bold text-3xl mt-3 text-slate-900 mb-5">Listing Asset tags</p>
     </.header>
@@ -8,7 +9,7 @@
     <!-- Search and Filter Section -->
     <div class="bg-slate-200 p-4 rounded-lg shadow-lg mb-4">
       <form phx-change="search" phx-submit="search" class="mb-4">
-        <div class="flex gap-4 items-end">
+        <div class="flex flex-col md:flex-row gap-4">
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
             <input 
@@ -40,7 +41,7 @@
             <button 
               type="button" 
               phx-click="clear_filters" 
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              class="px-4 py-2 md:mt-6 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               Clear Filters
             </button>
@@ -54,32 +55,35 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <.table
-      id="asset_tags"
-      rows={@streams.asset_tags}
-      row_click={fn {_id, asset_tag} -> JS.navigate(~p"/asset_tags/#{asset_tag}") end}
-    >
-      <:col :let={{_id, asset_tag}} label="Tag">{asset_tag.tag}</:col>
-      <:col :let={{_id, asset_tag}} label="Serial">{asset_tag.serial}</:col>
-      <:col :let={{_id, asset_tag}} label="Asset">{asset_tag.asset.name}</:col>
-      <:col :let={{_id, asset_tag}} label="Category">{asset_tag.asset.category.name}</:col>
-      <:col :let={{_id, asset_tag}} label="Status">{asset_tag.status}</:col>
-      <:action :let={{_id, asset_tag}}>
-        <div class="sr-only">
-          <.link navigate={~p"/asset_tags/#{asset_tag}"}>Show</.link>
-        </div>
-        <.link patch={~p"/asset_tags/#{asset_tag}/edit"}>Edit</.link>
-      </:action>
-      <:action :let={{id, asset_tag}}>
-        <.link
-          phx-click={JS.push("delete", value: %{id: asset_tag.id}) |> hide("##{id}")}
-          data-confirm="Are you sure?"
-        >
-          Delete
-        </.link>
-      </:action>
-    </.table>
+<!-- Responsive wrapper -->
+<div class="overflow-x-auto overflow-y-hidden md:overflow-visible">
+  <.table
+    id="asset_tags"
+    rows={@streams.asset_tags}
+    row_click={fn {_id, asset_tag} -> JS.navigate(~p"/asset_tags/#{asset_tag}") end}
+    class="w-full md:w-[80%]"
+  >
+    <:col :let={{_id, asset_tag}} label="Tag">{asset_tag.tag}</:col>
+    <:col :let={{_id, asset_tag}} label="Serial">{asset_tag.serial}</:col>
+    <:col :let={{_id, asset_tag}} label="Asset">{asset_tag.asset.name}</:col>
+    <:col :let={{_id, asset_tag}} label="Category">{asset_tag.asset.category.name}</:col>
+    <:col :let={{_id, asset_tag}} label="Status">{asset_tag.status}</:col>
+    <:action :let={{_id, asset_tag}}>
+      <div class="sr-only">
+        <.link navigate={~p"/asset_tags/#{asset_tag}"}>Show</.link>
+      </div>
+      <.link patch={~p"/asset_tags/#{asset_tag}/edit"}>Edit</.link>
+    </:action>
+    <:action :let={{id, asset_tag}}>
+      <.link
+        phx-click={JS.push("delete", value: %{id: asset_tag.id}) |> hide("##{id}")}
+        data-confirm="Are you sure?"
+      >
+        Delete
+      </.link>
+    </:action>
+  </.table>
+</div>
 
     <!-- Pagination -->
     <%= if @total_pages > 1 do %>

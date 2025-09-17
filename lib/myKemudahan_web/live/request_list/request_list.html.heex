@@ -371,6 +371,7 @@
                       <button 
                         phx-click="approve_request"
                         phx-value-id={request.id}
+                        phx-disable-with="Approving..."
                         class="bg-green-100 px-2 py-1 rounded-full text-green-600 hover:text-white hover:bg-green-700 text-xs mr-2 sm:mr-3 sm:text-sm">
                         Approve
                       </button>
@@ -700,6 +701,7 @@
             </button>
             <button 
               type="submit"
+              phx-disable-with="Rejecting..."
               class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm sm:py-2 sm:px-4">
               Confirm Rejection
             </button>

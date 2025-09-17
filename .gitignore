@@ -36,5 +36,6 @@ npm-debug.log
 /assets/node_modules/
 
 #ignore stored adderss for images
-/uploads
+/priv/static/uploads/
 
+.env

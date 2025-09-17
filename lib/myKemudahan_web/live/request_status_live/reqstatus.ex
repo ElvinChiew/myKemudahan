@@ -26,8 +26,11 @@ defmodule MyKemudahanWeb.Reqstatus do
       |> assign(:page, 1)
       |> assign(:per_page, per_page)
       |> assign(:total_pages, total_pages)
-      |> assign(:show_report_form, false)  # Add this
-      |> assign(:selected_report_item, nil)  # Add this
+      |> assign(:show_report_form, false)
+      |> assign(:selected_report_item, nil)
+      |> assign(:show_return_modal, false)
+      |> assign(:return_request_id, nil)
+      |> assign(:return_notes, "")
 
     {:ok, socket}
   end
@@ -228,6 +231,47 @@ defmodule MyKemudahanWeb.Reqstatus do
          |> put_flash(:error, "Invalid date format. Please use YYYY-MM-DD format.")}
     end
   end
+
+  def handle_event("submit_return_request", %{"request_id" => request_id, "notes" => notes}, socket) do
+    # Convert string to integer
+    request_id = String.to_integer(request_id)
+
+    case Requests.submit_return_request(request_id, notes) do
+      {:ok, _return_request} ->
+        socket =
+          socket
+          |> put_flash(:info, "Return request submitted successfully.")
+          |> assign(show_return_modal: false, return_request_id: nil, return_notes: "")
+
+        # Refresh the requests to show the updated return status
+        user = socket.assigns.current_user
+        all_requests = Requests.list_user_requests(user.id)
+        paginated_requests = paginate_requests(all_requests, socket.assigns.page, socket.assigns.per_page)
+
+        {:noreply, assign(socket, requests: paginated_requests, all_requests: all_requests)}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to submit return request: #{reason}")
+         |> assign(show_return_modal: false)}
+    end
+  end
+
+
+  def handle_event("show_return_modal", %{"id" => id}, socket) do
+    {:noreply, assign(socket, show_return_modal: true, return_request_id: id, return_notes: "")}
+  end
+
+  def handle_event("cancel_return_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_return_modal, false)
+     |> assign(:return_request_id, nil)
+     |> assign(:return_notes, "")}
+  end
+
+
 
   # Helper function to find an item by ID
   defp find_item_by_id(items, item_id) when is_binary(item_id) do

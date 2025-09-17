@@ -1,7 +1,7 @@
 defmodule MyKemudahan.Requests do
   alias Ecto.Multi
   alias MyKemudahan.Repo
-  alias MyKemudahan.Requests.{Request, RequestItem}
+  alias MyKemudahan.Requests.{Request, RequestItem, ReturnRequest}
 
   import Ecto.Query
   def create_request_with_items(attrs, items) do
@@ -171,4 +171,97 @@ end
     |> Repo.all()
   end
 
+  def get_request_with_items!(id) do
+    Request
+    |> where(id: ^id)
+    |> preload([:user, request_items: [:asset]])
+    |> Repo.one!()
+  end
+
+  # Add these functions to your context
+  def submit_return_request(request_id, notes \\ nil) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        # Check if request is approved and doesn't already have a return request
+        if request.status != "approved" do
+          {:error, "Only approved requests can be returned"}
+        else
+          case get_return_request_by_request_id(request_id) do
+            nil ->
+              # Create new return request
+              %ReturnRequest{}
+              |> ReturnRequest.changeset(%{
+                request_id: request_id,
+                submitted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+                notes: notes
+              })
+              |> Repo.insert()
+
+            _existing_request ->
+              {:error, "Return request already exists for this request"}
+          end
+        end
+    end
+  end
+
+  def get_return_request_by_request_id(request_id) do
+    from(rr in ReturnRequest, where: rr.request_id == ^request_id)
+    |> Repo.one()
+  end
+
+  def update_return_request_status(id, new_status, admin_remarks) do
+    case Repo.get(ReturnRequest, id) do
+      nil ->
+        {:error, :not_found}
+
+      return_request ->
+        return_request
+        |> ReturnRequest.changeset(%{
+          status: new_status,
+          processed_at: NaiveDateTime.utc_now(),
+          admin_remarks: admin_remarks
+        })
+        |> Repo.update()
+    end
+  end
+
+  def list_all_return_requests do
+    from(rr in ReturnRequest,
+      preload: [request: [:user]],
+      order_by: [desc: rr.inserted_at])
+    |> Repo.all()
+  end
+
+
+  def list_pending_return_requests do
+    ReturnRequest
+    |> where(status: "pending")
+    |> preload([request: :user])
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
+  end
+
+  def list_return_requests_by_status(status) do
+    ReturnRequest
+    |> where(status: ^status)
+    |> preload([request: :user])
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
+  end
+
+  def get_return_request_with_details!(id) do
+    ReturnRequest
+    |> where(id: ^id)
+    |> preload([request: [:user, request_items: :asset]])
+    |> Repo.one!()
+  end
+
+  def create_return_request(attrs) do
+    %ReturnRequest{}
+    |> ReturnRequest.changeset(attrs)
+    |> Repo.insert()
+  end
 end

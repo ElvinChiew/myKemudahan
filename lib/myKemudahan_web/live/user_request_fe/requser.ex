@@ -9,7 +9,9 @@ defmodule MyKemudahanWeb.Requser do
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
 
-    all_assets = Assets.list_assets() |> MyKemudahan.Repo.preload(:category)
+    all_assets = Assets.list_assets()
+                  |> MyKemudahan.Repo.preload(:category)
+                  |> Enum.filter(&(Assets.count_available_tags(&1.id) > 0))
     categories = Assets.list_all_categories()
 
     socket =
@@ -23,7 +25,7 @@ defmodule MyKemudahanWeb.Requser do
       discount_amount: Decimal.new("0"),
       final_cost: Decimal.new("0"),
       current_page: 1,
-      page_size: 12,
+      page_size: 10,
       user_id: user.id,
       status: "sent",
       form_data: %{
@@ -42,7 +44,6 @@ defmodule MyKemudahanWeb.Requser do
     else
       socket.assigns.assets |> Enum.filter(&(&1.category_id == String.to_integer(category_id)))
     end
-
     {:noreply, assign(socket, filtered_assets: filtered_assets, selected_category: category_id, current_page: 1)}
   end
 

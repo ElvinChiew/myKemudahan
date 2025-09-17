@@ -22,14 +22,22 @@ defmodule MyKemudahanWeb.AdminSidebar do
           <nav class="space-y-6 px-2 py-4" id="sidebar-menu">
             <!-- Section: Overview -->
             <div>
-              <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Overview</h2>
+              <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Requests</h2>
               <a href="/request_list"
                 class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600"
                 aria-current="page"
                 onclick="closeMobileSidebar()">
                 <i class="fa fa-bar-chart w-5 text-center" aria-hidden="true"></i>
-                <span>Overview</span>
+                <span>Requests Management</span>
               </a>
+
+              <a href="/return-requests"
+              class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600"
+              aria-current="page"
+              onclick="closeMobileSidebar()">
+              <i class="fa fa-truck" aria-hidden="true"></i>
+              <span>Asset Return</span>
+            </a>
             </div>
 
             <!-- Section: Asset Management -->
