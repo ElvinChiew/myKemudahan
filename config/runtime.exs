@@ -16,6 +16,26 @@ import Config
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
+
+config :myKemudahan, MyKemudahan.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
+  relay: "relay",
+  username: "username",
+  password: "password",
+  port: 587,
+  ssl: false,
+  tls: :always,
+  auth: :always,
+  retries: 2,
+  tls_options: [
+    verify: :verify_peer,
+    cacertfile: Application.app_dir(:certifi, "priv/cacerts.pem"),
+    server_name_indication: ~c"smtp.gmail.com",
+    depth: 99,
+    versions: [:"tlsv1.2", :"tlsv1.3"]
+  ],
+  no_mx_lookups: false
+
 if System.get_env("PHX_SERVER") do
   config :myKemudahan, MyKemudahanWeb.Endpoint, server: true
 end

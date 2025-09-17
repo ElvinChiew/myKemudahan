@@ -1,6 +1,8 @@
 defmodule MyKemudahanWeb.RequestList do
   alias MyKemudahan.Requests
   alias MyKemudahan.Repo
+  alias MyKemudahan.Mailer
+  alias MyKemudahan.Mailer.RequestEmail
 
   import MyKemudahanWeb.AdminSidebar
 
@@ -146,34 +148,6 @@ defmodule MyKemudahanWeb.RequestList do
     {:noreply, assign(socket, :rejection_reason, reason)}
   end
 
-  def handle_event("reject_request", %{}, socket) do
-    case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
-      {:ok, _request} ->
-        all_requests = Requests.list_all_requests()
-        filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
-        paginated_requests = paginate_requests(filtered_requests, socket.assigns.page, socket.assigns.per_page)
-
-        status_counts = calculate_status_counts(all_requests)
-        monthly_revenue = calculate_monthly_revenue_for_year(all_requests, socket.assigns.revenue_year)
-
-        {:noreply,
-          socket
-          |> assign(:requests, paginated_requests)
-          |> assign(:all_requests, filtered_requests)
-          |> assign(:status_counts, status_counts)
-          |> assign(:monthly_revenue, monthly_revenue)
-          |> assign(:show_reject_modal, false)
-          |> assign(:rejecting_request, nil)
-          |> assign(:rejection_reason, "")
-          |> put_flash(:info, "Request rejected successfully")}
-
-      {:error, reason} ->
-        {:noreply,
-          socket
-          |> put_flash(:error, "Failed to reject reques: #{reason}")}
-    end
-  end
-
   # Handle opening the reject modal
   def handle_event("show_reject_modal", %{"id" => request_id}, socket) do
     {:noreply,
@@ -284,7 +258,17 @@ defmodule MyKemudahanWeb.RequestList do
 
   def handle_event("approve_request", %{"id" => request_id}, socket) do
     case Requests.approve_request(request_id) do
-      {:ok, _request} ->
+      {:ok, request} ->
+
+        #send email approval to user
+        try do
+          RequestEmail.approval_email(request)
+          |> Mailer.deliver()
+        rescue
+          error ->
+            IO.inspect(error, label: "Email delivery failed")
+        end
+
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
         filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
@@ -300,7 +284,7 @@ defmodule MyKemudahanWeb.RequestList do
          |> assign(:all_requests, filtered_requests)
          |> assign(:status_counts, status_counts)
          |> assign(:monthly_revenue, monthly_revenue)
-         |> put_flash(:info, "Request approved successfully")}
+         |> put_flash(:info, "Request approved successfully and email sent")}
 
       {:error, reason} ->
         {:noreply,
@@ -310,8 +294,26 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   def handle_event("reject_request", %{}, socket) do
+    IO.puts("DEBUG: reject_request event triggered")
     case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
-      {:ok, _request} ->
+      {:ok, request} ->
+
+        complete_request = Requests.get_request_with_items!(request.id)
+
+        try do
+          IO.puts("DEBUG: Attempting to send rejection email")
+          RequestEmail.rejection_email(complete_request, socket.assigns.rejection_reason)
+          |> Mailer.deliver()
+          IO.puts("DEBUG: Email sent successfully")
+        rescue
+          error ->
+            IO.inspect(error, label: "Email delivery failed")
+            # Continue even if email fails
+        end
+
+        IO.inspect(complete_request.user.email, label: "Sending email to")
+        IO.inspect(socket.assigns.rejection_reason, label: "Rejection reason")
+
         # Refresh the requests list
         all_requests = Requests.list_all_requests()
         filtered_requests = apply_filters(all_requests, socket.assigns.status_filter, socket.assigns.from_date, socket.assigns.to_date)
@@ -330,7 +332,7 @@ defmodule MyKemudahanWeb.RequestList do
          |> assign(:show_reject_modal, false)
          |> assign(:rejecting_request, nil)
          |> assign(:rejection_reason, "")
-         |> put_flash(:info, "Request rejected successfully")}
+         |> put_flash(:info, "Request rejected successfully and email sent")}
 
       {:error, reason} ->
         {:noreply,

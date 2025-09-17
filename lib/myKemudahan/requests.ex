@@ -171,4 +171,11 @@ end
     |> Repo.all()
   end
 
+  def get_request_with_items!(id) do
+    Request
+    |> where(id: ^id)
+    |> preload([:user, request_items: [:asset]])
+    |> Repo.one!()
+  end
+
 end
