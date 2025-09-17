@@ -229,6 +229,28 @@ defmodule MyKemudahanWeb.Reqstatus do
     end
   end
 
+  def handle_event("submit_return_request", %{"id" => request_id}, socket) do
+    case Requests.submit_return_request(request_id) do
+      {:ok, _return_request} ->
+        # Refresh the requests list
+        user = socket.assigns.current_user
+        all_requests = Requests.list_user_requests(user.id)
+
+        paginated_requests = paginate_requests(all_requests, socket.assigns.page, socket.assigns.per_page)
+
+        {:noreply,
+         socket
+         |> assign(:requests, paginated_requests)
+         |> assign(:all_requests, all_requests)
+         |> put_flash(:info, "Return request submitted successfully. Waiting for admin approval.")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to submit return request: #{reason}")}
+    end
+  end
+
   # Helper function to find an item by ID
   defp find_item_by_id(items, item_id) when is_binary(item_id) do
     item_id = String.to_integer(item_id)

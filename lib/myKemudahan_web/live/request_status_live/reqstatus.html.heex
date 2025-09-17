@@ -110,6 +110,30 @@
             class="bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-900 transition-colors text-sm font-medium">
             View Details
           </button>
+
+          <%= if request.status in ["approved"] do %>
+            <%= case Requests.get_return_request_by_request_id(request.id) do %>
+              <% nil -> %>
+                <button 
+                  phx-click="submit_return_request"
+                  phx-value-id={request.id}
+                  class="bg-white text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium">
+                  Return Asset
+                </button>
+
+              <% return_request -> %>
+                <% status_class = 
+                  cond do
+                    return_request.status == "pending" -> "bg-amber-100 text-amber-800"
+                    return_request.status == "approved" -> "bg-green-100 text-green-800"
+                    true -> "bg-red-100 text-red-800"
+                  end %>
+
+                <div class={"inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium #{status_class}"}>
+                  Return <%= String.capitalize(return_request.status) %>
+                </div>
+            <% end %>
+          <% end %>
         </div>
       </div>
 

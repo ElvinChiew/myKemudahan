@@ -1,4 +1,5 @@
 defmodule MyKemudahanWeb.Router do
+  alias MyKemudahan.Requests.ReturnRequest
   #alias MyKemudahanWeb.Userrequest
 
   use MyKemudahanWeb, :router
@@ -40,6 +41,9 @@ defmodule MyKemudahanWeb.Router do
 
     #request list admin
     live "/request_list", RequestList
+
+    #admin return request
+    live "/return-requests", ReturnRequests.ReturnRequests
 
     #report view for admin
     live "/reports", ReportLive.ReportView

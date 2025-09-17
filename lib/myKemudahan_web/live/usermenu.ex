@@ -42,4 +42,5 @@ defmodule MyKemudahanWeb.Usermenu do
   def handle_event("to_request_status", _params, socket) do
     {:noreply, push_navigate(socket, to: "/reqstatus")}
   end
+
 end
