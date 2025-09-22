@@ -195,6 +195,12 @@ defmodule MyKemudahan.Assets do
     |> Repo.update()
   end
 
+  def create_asset_tag(attrs \\ %{}) do
+    %AssetTag{}
+    |> AssetTag.changeset(attrs)
+    |> Repo.insert()
+  end
+
   def update_asset_tag(%AssetTag{} = asset_tag, attrs) do
     asset_tag
     |> AssetTag.changeset(attrs)
@@ -411,5 +417,85 @@ defmodule MyKemudahan.Assets do
     Category
     |> where([c], ilike(c.name, ^"%#{search_term}%"))
     |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Creates a bulk asset with multiple asset tags.
+
+  ## Examples
+
+      iex> create_bulk_asset(%{name: "Laptop", description: "Dell Laptop"}, %{number_of_assets: 5, tag_prefix: "LAPTOP", initial_serial: 1})
+      {:ok, %{asset: %Asset{}, asset_tags: [%AssetTag{}, ...]}}
+
+      iex> create_bulk_asset(%{name: "Laptop"}, %{number_of_assets: 0})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_bulk_asset(asset_params, bulk_params) do
+    number_of_assets = String.to_integer(bulk_params["number_of_assets"] || "0")
+    tag_prefix = bulk_params["tag_prefix"] || ""
+    initial_serial_str = bulk_params["initial_serial"] || "1"
+    initial_serial = String.to_integer(initial_serial_str)
+
+    # Validate bulk parameters
+    if number_of_assets <= 0 or number_of_assets > 100 do
+      {:error, %Ecto.Changeset{errors: [number_of_assets: {"must be between 1 and 100", []}], valid?: false}}
+    else
+      # Use a transaction to ensure all-or-nothing creation
+      Repo.transaction(fn ->
+        # Create the asset first
+        asset_changeset = Asset.changeset(%Asset{}, asset_params)
+
+        case Repo.insert(asset_changeset) do
+          {:ok, asset} ->
+            # Generate asset tags
+            asset_tags = generate_asset_tags(asset.id, number_of_assets, tag_prefix, initial_serial, initial_serial_str, asset_params["status"] || "available")
+
+            # Insert all asset tags
+            case Repo.insert_all(AssetTag, asset_tags) do
+              {count, _} when count == number_of_assets ->
+                # Reload the asset with its tags
+                asset_with_tags = Repo.get!(Asset, asset.id) |> Repo.preload(:asset_tags)
+                %{asset: asset_with_tags, asset_tags: asset_with_tags.asset_tags}
+
+              {count, _} ->
+                Repo.rollback("Failed to create all asset tags. Expected #{number_of_assets}, created #{count}")
+            end
+
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      end)
+    end
+  end
+
+  defp generate_asset_tags(asset_id, number_of_assets, tag_prefix, initial_serial, initial_serial_str, status) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    for i <- 0..(number_of_assets - 1) do
+      # Calculate the serial number preserving leading zeros
+      current_serial = initial_serial + i
+
+      # If the original input had leading zeros, preserve them
+      serial_display = if String.starts_with?(initial_serial_str, "0") do
+        # Preserve the original format with leading zeros
+        original_length = String.length(initial_serial_str)
+        String.pad_leading(to_string(current_serial), original_length, "0")
+      else
+        to_string(current_serial)
+      end
+
+      # Use just the tag prefix (no serial number in tag)
+      tag = tag_prefix
+
+      %{
+        asset_id: asset_id,
+        tag: tag,
+        serial: serial_display,
+        status: status,
+        inserted_at: now,
+        updated_at: now
+      }
+    end
   end
 end

@@ -68,6 +68,12 @@ defmodule MyKemudahanWeb.AssetLive.Index do
     |> assign(:asset, %Asset{})
   end
 
+  defp apply_action(socket, :bulk, _params) do
+    socket
+    |> assign(:page_title, "Add Bulk Asset")
+    |> assign(:asset, nil)
+  end
+
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "Listing Assets")
@@ -77,6 +83,26 @@ defmodule MyKemudahanWeb.AssetLive.Index do
   @impl true
   def handle_info({MyKemudahanWeb.AssetLive.FormComponent, {:saved, asset}}, socket) do
     # Refresh the list after saving
+    params = %{
+      "page" => to_string(socket.assigns.page),
+      "per_page" => to_string(socket.assigns.per_page),
+      "search" => socket.assigns.search,
+      "category_id" => socket.assigns.category_id
+    }
+
+    paginated_data = Assets.list_assets_paginated(params)
+
+    {:noreply,
+     socket
+     |> assign(:assets, paginated_data.assets)
+     |> assign(:total_count, paginated_data.total_count)
+     |> assign(:total_pages, paginated_data.total_pages)
+     |> stream(:assets, paginated_data.assets, reset: true)}
+  end
+
+  @impl true
+  def handle_info({MyKemudahanWeb.AssetLive.BulkFormComponent, {:bulk_saved, :success}}, socket) do
+    # Refresh the list after bulk saving
     params = %{
       "page" => to_string(socket.assigns.page),
       "per_page" => to_string(socket.assigns.per_page),

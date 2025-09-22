@@ -9,6 +9,9 @@
         <.link patch={~p"/assets/new"}>
           <.button class="mb-5">New Asset</.button>
         </.link>
+        <.link patch={~p"/assets/bulk"}>
+          <.button class="mb-5 bg-green-600 hover:bg-green-700">Add Bulk Asset</.button>
+        </.link>
       </:actions>
     </.header>
 
@@ -150,6 +153,16 @@
         title={@page_title}
         action={@live_action}
         asset={@asset}
+        patch={~p"/assets"}
+      />
+    </.modal>
+
+    <.modal :if={@live_action == :bulk} id="bulk-asset-modal" show on_cancel={JS.patch(~p"/assets")}>
+      <.live_component
+        module={MyKemudahanWeb.AssetLive.BulkFormComponent}
+        id={:bulk}
+        title={@page_title}
+        action={@live_action}
         patch={~p"/assets"}
       />
     </.modal>
