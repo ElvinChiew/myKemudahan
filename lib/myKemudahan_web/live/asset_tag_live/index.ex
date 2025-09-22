@@ -14,7 +14,8 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
       "page" => "1",
       "per_page" => "10",
       "search" => "",
-      "category_id" => ""
+      "category_id" => "",
+      "status" => ""
     }
 
     paginated_data = Assets.list_asset_tags_paginated(params)
@@ -29,6 +30,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
      |> assign(:total_pages, paginated_data.total_pages)
      |> assign(:search, "")
      |> assign(:category_id, "")
+     |> assign(:status, "")
      |> assign(:categories, categories)
      |> stream(:asset_tags, paginated_data.asset_tags)}
   end
@@ -40,7 +42,8 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
       "page" => to_string(socket.assigns.page || 1),
       "per_page" => to_string(socket.assigns.per_page || 10),
       "search" => socket.assigns.search || "",
-      "category_id" => socket.assigns.category_id || ""
+      "category_id" => socket.assigns.category_id || "",
+      "status" => socket.assigns.status || ""
     }
 
     merged_params = Map.merge(current_params, Map.new(params))
@@ -55,6 +58,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
     |> assign(:total_pages, paginated_data.total_pages)
     |> assign(:search, merged_params["search"])
     |> assign(:category_id, merged_params["category_id"])
+    |> assign(:status, merged_params["status"])
     |> stream(:asset_tags, paginated_data.asset_tags, reset: true)
 
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
@@ -97,7 +101,8 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
       "page" => "1",
       "per_page" => to_string(socket.assigns.per_page),
       "search" => search,
-      "category_id" => socket.assigns.category_id
+      "category_id" => socket.assigns.category_id,
+      "status" => socket.assigns.status
     }
 
     {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}
@@ -105,12 +110,41 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
 
   @impl true
   def handle_event("filter", %{"category_id" => category_id}, socket) do
-    # Reset to page 1 when filtering
+    # Reset to page 1 when filtering by category
     params = %{
       "page" => "1",
       "per_page" => to_string(socket.assigns.per_page),
       "search" => socket.assigns.search,
-      "category_id" => category_id
+      "category_id" => category_id,
+      "status" => socket.assigns.status
+    }
+
+    {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}
+  end
+
+  @impl true
+  def handle_event("filter", %{"status" => status}, socket) do
+    # Reset to page 1 when filtering by status
+    params = %{
+      "page" => "1",
+      "per_page" => to_string(socket.assigns.per_page),
+      "search" => socket.assigns.search,
+      "category_id" => socket.assigns.category_id,
+      "status" => status
+    }
+
+    {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}
+  end
+
+  @impl true
+  def handle_event("filter", %{"category_id" => category_id, "status" => status}, socket) do
+    # Reset to page 1 when filtering by both category and status
+    params = %{
+      "page" => "1",
+      "per_page" => to_string(socket.assigns.per_page),
+      "search" => socket.assigns.search,
+      "category_id" => category_id,
+      "status" => status
     }
 
     {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}
@@ -123,7 +157,8 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
       "page" => "1",
       "per_page" => to_string(socket.assigns.per_page),
       "search" => "",
-      "category_id" => ""
+      "category_id" => "",
+      "status" => ""
     }
 
     {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}
@@ -135,7 +170,8 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
       "page" => page,
       "per_page" => to_string(socket.assigns.per_page),
       "search" => socket.assigns.search,
-      "category_id" => socket.assigns.category_id
+      "category_id" => socket.assigns.category_id,
+      "status" => socket.assigns.status
     }
 
     {:noreply, push_patch(socket, to: ~p"/asset_tags?#{params}")}

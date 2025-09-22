@@ -271,6 +271,7 @@ defmodule MyKemudahan.Assets do
     per_page = String.to_integer(params["per_page"] || "10")
     search = params["search"]
     category_id = params["category_id"]
+    status = params["status"]
 
     offset = (page - 1) * per_page
 
@@ -292,6 +293,14 @@ defmodule MyKemudahan.Assets do
     query = if category_id && category_id != "" do
       from [at, a, c] in query,
       where: a.category_id == ^category_id
+    else
+      query
+    end
+
+    # Apply status filter if provided
+    query = if status && status != "" do
+      from [at, a, c] in query,
+      where: at.status == ^status
     else
       query
     end
