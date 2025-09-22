@@ -176,4 +176,133 @@ defmodule MyKemudahan.AssetsTest do
       assert %Ecto.Changeset{} = Assets.change_asset_tag(asset_tag)
     end
   end
+
+  describe "bulk assets" do
+    import MyKemudahan.AssetsFixtures
+
+    test "create_bulk_asset/2 with valid data creates an asset and multiple asset tags" do
+      category = category_fixture()
+
+      asset_params = %{
+        "name" => "Test Laptop",
+        "description" => "Dell Laptop for testing",
+        "cost_per_unit" => "1200.00",
+        "status" => "available",
+        "image" => "/uploads/test-image.jpg",
+        "category_id" => category.id
+      }
+
+      bulk_params = %{
+        "number_of_assets" => "3",
+        "tag_prefix" => "LAPTOP",
+        "initial_serial" => "1"
+      }
+
+      assert {:ok, %{asset: asset, asset_tags: asset_tags}} = Assets.create_bulk_asset(asset_params, bulk_params)
+
+      # Verify asset was created
+      assert asset.name == "Test Laptop"
+      assert asset.description == "Dell Laptop for testing"
+      assert asset.cost_per_unit == Decimal.new("1200.00")
+      assert asset.status == "available"
+      assert asset.category_id == category.id
+
+      # Verify asset tags were created
+      assert length(asset_tags) == 3
+
+      # Verify tag names and serial numbers
+      expected_tags = [
+        %{tag: "LAPTOP", serial: "1"},
+        %{tag: "LAPTOP", serial: "2"},
+        %{tag: "LAPTOP", serial: "3"}
+      ]
+
+      for {expected, actual} <- Enum.zip(expected_tags, asset_tags) do
+        assert actual.tag == expected.tag
+        assert actual.serial == expected.serial
+        assert actual.status == "available"
+        assert actual.asset_id == asset.id
+      end
+    end
+
+    test "create_bulk_asset/2 with invalid number of assets returns error" do
+      category = category_fixture()
+
+      asset_params = %{
+        "name" => "Test Laptop",
+        "description" => "Dell Laptop for testing",
+        "cost_per_unit" => "1200.00",
+        "status" => "available",
+        "image" => "/uploads/test-image.jpg",
+        "category_id" => category.id
+      }
+
+      bulk_params = %{
+        "number_of_assets" => "0",
+        "tag_prefix" => "LAPTOP",
+        "initial_serial" => "1"
+      }
+
+      assert {:error, %Ecto.Changeset{}} = Assets.create_bulk_asset(asset_params, bulk_params)
+    end
+
+    test "create_bulk_asset/2 with too many assets returns error" do
+      category = category_fixture()
+
+      asset_params = %{
+        "name" => "Test Laptop",
+        "description" => "Dell Laptop for testing",
+        "cost_per_unit" => "1200.00",
+        "status" => "available",
+        "image" => "/uploads/test-image.jpg",
+        "category_id" => category.id
+      }
+
+      bulk_params = %{
+        "number_of_assets" => "101",
+        "tag_prefix" => "LAPTOP",
+        "initial_serial" => "1"
+      }
+
+      assert {:error, %Ecto.Changeset{}} = Assets.create_bulk_asset(asset_params, bulk_params)
+    end
+
+    test "create_bulk_asset/2 preserves leading zeros in serial numbers" do
+      category = category_fixture()
+
+      asset_params = %{
+        "name" => "Test Laptop",
+        "description" => "Dell Laptop for testing",
+        "cost_per_unit" => "1200.00",
+        "status" => "available",
+        "image" => "/uploads/test-image.jpg",
+        "category_id" => category.id
+      }
+
+      bulk_params = %{
+        "number_of_assets" => "3",
+        "tag_prefix" => "LAPTOP",
+        "initial_serial" => "001"  # Starting with leading zeros
+      }
+
+      assert {:ok, %{asset: asset, asset_tags: asset_tags}} = Assets.create_bulk_asset(asset_params, bulk_params)
+
+      # Verify asset tags were created
+      assert length(asset_tags) == 3
+
+      # Verify tag names and serial numbers with leading zeros preserved
+      expected_tags = [
+        %{tag: "LAPTOP", serial: "001"},
+        %{tag: "LAPTOP", serial: "002"},
+        %{tag: "LAPTOP", serial: "003"}
+      ]
+
+      for {expected, actual} <- Enum.zip(expected_tags, asset_tags) do
+        assert actual.tag == expected.tag
+        assert actual.serial == expected.serial
+        assert actual.status == "available"
+        assert actual.asset_id == asset.id
+      end
+    end
+  end
 end

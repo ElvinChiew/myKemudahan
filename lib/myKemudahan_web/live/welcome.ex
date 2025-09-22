@@ -41,6 +41,9 @@ defmodule MyKemudahanWeb.Welcome do
           </div>
         </div>
       </section>
+      <div class="hidden">
+      <p>https://www.canva.com/design/DAGzSbeq8N0/38_cgTK-gAyhcLJOaqHlWg/edit?utm_content=DAGzSbeq8N0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton</p>
+      </div>
     </div>
     """
   end

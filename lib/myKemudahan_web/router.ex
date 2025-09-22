@@ -62,6 +62,7 @@ defmodule MyKemudahanWeb.Router do
     #Asset CRUD section
     live "/assets", AssetLive.Index, :index
     live "/assets/new", AssetLive.Index, :new
+    live "/assets/bulk", AssetLive.Index, :bulk
     live "/assets/:id/edit", AssetLive.Index, :edit
     live "/assets/:id", AssetLive.Show, :show
     live "/assets/:id/show/edit", AssetLive.Show, :edit

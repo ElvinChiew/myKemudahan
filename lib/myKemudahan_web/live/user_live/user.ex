@@ -43,6 +43,16 @@ defmodule MyKemudahanWeb.UserLive.User do
     )}
   end
 
+  def handle_event("reset_filters", _params, socket) do
+    {:noreply, assign(socket,
+      search: "",
+      role_filter: "all",
+      filtered_users: socket.assigns.users,
+      page: 1,
+      total_pages: calc_total_pages(socket.assigns.users, socket.assigns.per_page)
+    )}
+  end
+
   def handle_event("view_user_requests", %{"user_id" => user_id}, socket) do
     {:noreply, push_navigate(socket, to: "/admin/user-requests/#{user_id}")}
   end
