@@ -2,6 +2,7 @@ defmodule MyKemudahan.Mailer.RequestEmail do
   import Swoosh.Email
 
   alias MyKemudahan.Requests
+  alias MyKemudahan.Requests.Request
 
   def approval_email(request) do
     request_with_items = Requests.get_request_with_items!(request.id)
@@ -112,6 +113,56 @@ defmodule MyKemudahan.Mailer.RequestEmail do
       end) |> Enum.join("")}
 
     Terima kasih.
+    """
+  end
+
+  def due_soon_email(%Request{} = request) do
+    request_with_items = Requests.get_request_with_items!(request.id)
+
+    new()
+    |> to({request_with_items.user.full_name, request_with_items.user.email})
+    |> from({"MyKemudahan", "mykemudahan@gmail.com"})
+    |> subject("Peringatan: Tarikh Pemulangan Esok")
+    |> html_body(render_due_html(request_with_items))
+    |> text_body(render_due_text(request_with_items))
+  end
+
+  defp render_due_html(request) do
+    """
+    <h2>Peringatan Pemulangan Asset</h2>
+    <p>Ini adalah peringatan bahawa tarikh pemulangan asset anda adalah esok (<strong>#{Calendar.strftime(request.borrow_to, "%d-%m-%Y")}</strong>).</p>
+
+    <h3>Butiran Permohonan:</h3>
+    <p><strong>Tarikh Pinjam:</strong> #{Calendar.strftime(request.borrow_from, "%d-%m-%Y")} hingga #{Calendar.strftime(request.borrow_to, "%d-%m-%Y")} </p>
+    <p><strong>Tujuan:</strong> #{request.purpose}</p>
+
+    <h3>Senarai Item:</h3>
+    <ul>
+    #{Enum.map(request.request_items, fn item ->
+        "<li>#{item.asset.name} - #{item.quantity} unit</li>"
+      end) |> Enum.join("")}
+    </ul>
+
+    <p>Sila pastikan pemulangan dibuat tepat pada masanya. Terima kasih.</p>
+    """
+  end
+
+  defp render_due_text(request) do
+    """
+    Peringatan Pemulangan Asset
+
+    Tarikh pemulangan asset anda adalah esok (#{Calendar.strftime(request.borrow_to, "%d-%m-%Y")} ).
+
+    Butiran Permohonan:
+    Tarikh Pinjam: #{Calendar.strftime(request.borrow_from, "%d-%m-%Y")} hingga #{Calendar.strftime(request.borrow_to, "%d-%m-%Y")}
+    Tujuan: #{request.purpose}
+
+    Senarai Item:
+    #{Enum.map(request.request_items, fn item ->
+        "- #{item.asset.name} - #{item.quantity} unit\n"
+      end) |> Enum.join("")}
+
+    Sila pastikan pemulangan dibuat tepat pada masanya. Terima kasih.
     """
   end
 end

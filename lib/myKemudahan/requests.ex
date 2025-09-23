@@ -36,6 +36,17 @@ defmodule MyKemudahan.Requests do
     |> Repo.all()
   end
 
+  # Fetch requests that are due tomorrow (borrow_to is tomorrow) and are active/approved
+  def list_requests_due_tomorrow do
+    tomorrow = Date.utc_today() |> Date.add(1)
+
+    from(r in Request,
+      where: r.borrow_to == ^tomorrow and r.status in ["approved", "sent", "pending"],
+      preload: [:user, request_items: :asset]
+    )
+    |> Repo.all()
+  end
+
   def list_user_requests(user_id) do
     from(r in Request,
     where: r.user_id == ^user_id,
