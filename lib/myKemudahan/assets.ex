@@ -258,6 +258,56 @@ defmodule MyKemudahan.Assets do
     AssetTag.changeset(asset_tag, attrs)
   end
 
+  @doc """
+  Updates asset tag status to "loaned" and increments borrow count.
+  If borrow count reaches 10, sets status to "maintenance".
+  """
+  def update_asset_tag_for_approval(asset_id, quantity) do
+    # Get available asset tags for this asset
+    available_tags = from(at in AssetTag,
+      where: at.asset_id == ^asset_id and at.status == ^"available",
+      limit: ^quantity
+    ) |> Repo.all()
+
+    if length(available_tags) < quantity do
+      {:error, "Not enough available asset tags for asset #{asset_id}"}
+    else
+      # Update each tag
+      Enum.reduce_while(available_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->
+        new_borrow_count = tag.borrow_count + 1
+        new_status = if new_borrow_count >= 10, do: "maintenance", else: "loaned"
+
+        case update_asset_tag(tag, %{status: new_status, borrow_count: new_borrow_count}) do
+          {:ok, updated_tag} -> {:cont, {:ok, [updated_tag | updated_tags]}}
+          {:error, changeset} -> {:halt, {:error, changeset}}
+        end
+      end)
+    end
+  end
+
+  @doc """
+  Updates asset tag status back to "available" when request is returned.
+  """
+  def update_asset_tag_for_return(asset_id, quantity) do
+    # Get loaned asset tags for this asset
+    loaned_tags = from(at in AssetTag,
+      where: at.asset_id == ^asset_id and at.status == ^"loaned",
+      limit: ^quantity
+    ) |> Repo.all()
+
+    if length(loaned_tags) < quantity do
+      {:error, "Not enough loaned asset tags for asset #{asset_id}"}
+    else
+      # Update each tag back to available
+      Enum.reduce_while(loaned_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->
+        case update_asset_tag(tag, %{status: "available"}) do
+          {:ok, updated_tag} -> {:cont, {:ok, [updated_tag | updated_tags]}}
+          {:error, changeset} -> {:halt, {:error, changeset}}
+        end
+      end)
+    end
+  end
+
   # Count available tags for a given asset (status == "available")
   def count_available_tags(asset_id) when is_integer(asset_id) do
     from(at in AssetTag,

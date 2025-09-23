@@ -8,6 +8,7 @@ defmodule MyKemudahan.Assets.AssetTag do
     field :serial, :string
     field :status, :string
     field :tag, :string
+    field :borrow_count, :integer, default: 0
     #field :asset_id, :id
 
     belongs_to :asset, Asset
@@ -18,7 +19,7 @@ defmodule MyKemudahan.Assets.AssetTag do
   @doc false
   def changeset(asset_tag, attrs) do
     asset_tag
-    |> cast(attrs, [:tag, :serial, :status])
+    |> cast(attrs, [:tag, :serial, :status, :borrow_count])
     |> validate_required([:tag, :serial])
     #|> put_change(:status, attrs["status"] || "active")
   end

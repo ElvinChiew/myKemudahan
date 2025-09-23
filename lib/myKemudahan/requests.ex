@@ -2,6 +2,7 @@ defmodule MyKemudahan.Requests do
   alias Ecto.Multi
   alias MyKemudahan.Repo
   alias MyKemudahan.Requests.{Request, RequestItem, ReturnRequest}
+  alias MyKemudahan.Assets
 
   import Ecto.Query
   def create_request_with_items(attrs, items) do
@@ -71,7 +72,7 @@ end
   end
 
   def list_request_items(request_id) do
-    from(i in RequestItem, where: i.request_id == ^request_id, preload: :item)
+    from(i in RequestItem, where: i.request_id == ^request_id, preload: :asset)
     |> Repo.all()
   end
 
@@ -144,9 +145,28 @@ end
       request ->
         # Only allow approval if status is sent or pending
         if request.status in ["sent", "pending"] do
-          request
-          |> Ecto.Changeset.change(%{status: "approved"})
-          |> Repo.update()
+          # Update asset tags for each request item
+          request_items = list_request_items(request_id)
+
+          # Update asset tags for each item
+          asset_update_results = Enum.map(request_items, fn item ->
+            Assets.update_asset_tag_for_approval(item.asset_id, item.quantity)
+          end)
+
+          # Check if any asset updates failed
+          failed_updates = Enum.filter(asset_update_results, fn
+            {:error, _} -> true
+            _ -> false
+          end)
+
+          if length(failed_updates) > 0 do
+            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+          else
+            # Update request status to approved
+            request
+            |> Ecto.Changeset.change(%{status: "approved"})
+            |> Repo.update()
+          end
         else
           {:error, "Cannot approve request with status: #{request.status}"}
         end
@@ -218,13 +238,45 @@ end
         {:error, :not_found}
 
       return_request ->
-        return_request
-        |> ReturnRequest.changeset(%{
-          status: new_status,
-          processed_at: NaiveDateTime.utc_now(),
-          admin_remarks: admin_remarks
-        })
-        |> Repo.update()
+        # If approving the return, update asset tags back to available
+        if new_status == "approved" do
+          # Get the original request and its items
+          original_request = get_request!(return_request.request_id)
+          request_items = list_request_items(original_request.id)
+
+          # Update asset tags for each item back to available
+          asset_update_results = Enum.map(request_items, fn item ->
+            Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
+          end)
+
+          # Check if any asset updates failed
+          failed_updates = Enum.filter(asset_update_results, fn
+            {:error, _} -> true
+            _ -> false
+          end)
+
+          if length(failed_updates) > 0 do
+            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+          else
+            # Update return request status
+            return_request
+            |> ReturnRequest.changeset(%{
+              status: new_status,
+              processed_at: NaiveDateTime.utc_now(),
+              admin_remarks: admin_remarks
+            })
+            |> Repo.update()
+          end
+        else
+          # For rejected returns, just update the status
+          return_request
+          |> ReturnRequest.changeset(%{
+            status: new_status,
+            processed_at: NaiveDateTime.utc_now(),
+            admin_remarks: admin_remarks
+          })
+          |> Repo.update()
+        end
     end
   end
 
