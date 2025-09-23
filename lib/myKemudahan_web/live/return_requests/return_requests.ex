@@ -23,13 +23,14 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   end
 
   defp list_return_requests_with_associations(status) do
-    query = from rr in ReturnRequest,
-      preload: [request: ^from(r in MyKemudahan.Requests.Request, preload: [:user, request_items: :asset])]
+    base_query = from rr in ReturnRequest,
+      preload: [request: ^from(r in MyKemudahan.Requests.Request, preload: [:user, request_items: :asset])],
+      order_by: [desc: rr.inserted_at]
 
     case status do
-      "all" -> Repo.all(query)
-      "pending" -> Repo.all(from rr in query, where: rr.status == "pending")
-      status -> Repo.all(from rr in query, where: rr.status == ^status)
+      "all" -> Repo.all(base_query)
+      "pending" -> Repo.all(from rr in base_query, where: rr.status == "pending")
+      status -> Repo.all(from rr in base_query, where: rr.status == ^status)
     end
   end
 
