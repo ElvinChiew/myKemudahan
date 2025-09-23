@@ -259,8 +259,30 @@ defmodule MyKemudahan.Assets do
   end
 
   @doc """
+  Returns counts of asset tags grouped by status along with total.
+  Keys: :available, :loaned, :maintenance, :damaged, :total
+  """
+  def count_asset_tags_by_status do
+    grouped =
+      from(at in AssetTag,
+        group_by: at.status,
+        select: {at.status, count(at.id)}
+      )
+      |> Repo.all()
+      |> Enum.into(%{}, fn {status, count} -> {status, count} end)
+
+    %{
+      available: Map.get(grouped, "available", 0),
+      loaned: Map.get(grouped, "loaned", 0),
+      maintenance: Map.get(grouped, "maintenance", 0),
+      damaged: Map.get(grouped, "damaged", 0),
+      total: Enum.reduce(grouped, 0, fn {_k, v}, acc -> acc + v end)
+    }
+  end
+
+  @doc """
   Updates asset tag status to "loaned" and increments borrow count.
-  If borrow count reaches 10, sets status to "maintenance".
+  Maintenance status decision is deferred until return processing.
   """
   def update_asset_tag_for_approval(asset_id, quantity) do
     # Get available asset tags for this asset
@@ -275,7 +297,8 @@ defmodule MyKemudahan.Assets do
       # Update each tag
       Enum.reduce_while(available_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->
         new_borrow_count = tag.borrow_count + 1
-        new_status = if new_borrow_count >= 10, do: "maintenance", else: "loaned"
+        # Always mark as loaned on approval; maintenance will be applied on return if needed
+        new_status = "loaned"
 
         case update_asset_tag(tag, %{status: new_status, borrow_count: new_borrow_count}) do
           {:ok, updated_tag} -> {:cont, {:ok, [updated_tag | updated_tags]}}
@@ -286,7 +309,9 @@ defmodule MyKemudahan.Assets do
   end
 
   @doc """
-  Updates asset tag status back to "available" when request is returned.
+  Updates asset tag status when a request is returned.
+  - Normally sets status back to "available".
+  - If the tag's borrow_count is a multiple of 10, sets status to "maintenance" instead.
   """
   def update_asset_tag_for_return(asset_id, quantity) do
     # Get loaned asset tags for this asset
@@ -298,9 +323,10 @@ defmodule MyKemudahan.Assets do
     if length(loaned_tags) < quantity do
       {:error, "Not enough loaned asset tags for asset #{asset_id}"}
     else
-      # Update each tag back to available
+      # Update each tag back to available, or maintenance if at 10-use interval
       Enum.reduce_while(loaned_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->
-        case update_asset_tag(tag, %{status: "available"}) do
+        new_status = if rem(tag.borrow_count, 4) == 0, do: "maintenance", else: "available"
+        case update_asset_tag(tag, %{status: new_status}) do
           {:ok, updated_tag} -> {:cont, {:ok, [updated_tag | updated_tags]}}
           {:error, changeset} -> {:halt, {:error, changeset}}
         end

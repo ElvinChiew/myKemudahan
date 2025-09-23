@@ -19,6 +19,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
     }
 
     paginated_data = Assets.list_asset_tags_paginated(params)
+    status_counts = Assets.count_asset_tags_by_status()
     categories = Assets.list_categories_for_filter()
 
     {:ok,
@@ -32,6 +33,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
      |> assign(:category_id, "")
      |> assign(:status, "")
      |> assign(:categories, categories)
+     |> assign(:status_counts, status_counts)
      |> stream(:asset_tags, paginated_data.asset_tags)}
   end
 
@@ -49,6 +51,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
     merged_params = Map.merge(current_params, Map.new(params))
 
     paginated_data = Assets.list_asset_tags_paginated(merged_params)
+    status_counts = Assets.count_asset_tags_by_status()
 
     socket = socket
     |> assign(:asset_tags, paginated_data.asset_tags)
@@ -59,6 +62,7 @@ defmodule MyKemudahanWeb.AssetTagLive.Index do
     |> assign(:search, merged_params["search"])
     |> assign(:category_id, merged_params["category_id"])
     |> assign(:status, merged_params["status"])
+    |> assign(:status_counts, status_counts)
     |> stream(:asset_tags, paginated_data.asset_tags, reset: true)
 
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
