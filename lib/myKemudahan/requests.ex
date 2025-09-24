@@ -2,6 +2,7 @@ defmodule MyKemudahan.Requests do
   alias Ecto.Multi
   alias MyKemudahan.Repo
   alias MyKemudahan.Requests.{Request, RequestItem, ReturnRequest}
+  alias MyKemudahan.Assets
 
   import Ecto.Query
   def create_request_with_items(attrs, items) do
@@ -32,6 +33,17 @@ defmodule MyKemudahan.Requests do
     Request
     |> preload(:user)
     |> order_by(desc: :inserted_at)
+    |> Repo.all()
+  end
+
+  # Fetch requests that are due tomorrow (borrow_to is tomorrow) and are active/approved
+  def list_requests_due_tomorrow do
+    tomorrow = Date.utc_today() |> Date.add(1)
+
+    from(r in Request,
+      where: r.borrow_to == ^tomorrow and r.status in ["approved", "sent", "pending"],
+      preload: [:user, request_items: :asset]
+    )
     |> Repo.all()
   end
 
@@ -71,7 +83,7 @@ end
   end
 
   def list_request_items(request_id) do
-    from(i in RequestItem, where: i.request_id == ^request_id, preload: :item)
+    from(i in RequestItem, where: i.request_id == ^request_id, preload: :asset)
     |> Repo.all()
   end
 
@@ -144,9 +156,28 @@ end
       request ->
         # Only allow approval if status is sent or pending
         if request.status in ["sent", "pending"] do
-          request
-          |> Ecto.Changeset.change(%{status: "approved"})
-          |> Repo.update()
+          # Update asset tags for each request item
+          request_items = list_request_items(request_id)
+
+          # Update asset tags for each item
+          asset_update_results = Enum.map(request_items, fn item ->
+            Assets.update_asset_tag_for_approval(item.asset_id, item.quantity)
+          end)
+
+          # Check if any asset updates failed
+          failed_updates = Enum.filter(asset_update_results, fn
+            {:error, _} -> true
+            _ -> false
+          end)
+
+          if length(failed_updates) > 0 do
+            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+          else
+            # Update request status to approved
+            request
+            |> Ecto.Changeset.change(%{status: "approved"})
+            |> Repo.update()
+          end
         else
           {:error, "Cannot approve request with status: #{request.status}"}
         end
@@ -218,13 +249,45 @@ end
         {:error, :not_found}
 
       return_request ->
-        return_request
-        |> ReturnRequest.changeset(%{
-          status: new_status,
-          processed_at: NaiveDateTime.utc_now(),
-          admin_remarks: admin_remarks
-        })
-        |> Repo.update()
+        # If approving the return, update asset tags back to available
+        if new_status == "approved" do
+          # Get the original request and its items
+          original_request = get_request!(return_request.request_id)
+          request_items = list_request_items(original_request.id)
+
+          # Update asset tags for each item back to available
+          asset_update_results = Enum.map(request_items, fn item ->
+            Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
+          end)
+
+          # Check if any asset updates failed
+          failed_updates = Enum.filter(asset_update_results, fn
+            {:error, _} -> true
+            _ -> false
+          end)
+
+          if length(failed_updates) > 0 do
+            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+          else
+            # Update return request status
+            return_request
+            |> ReturnRequest.changeset(%{
+              status: new_status,
+              processed_at: NaiveDateTime.utc_now(),
+              admin_remarks: admin_remarks
+            })
+            |> Repo.update()
+          end
+        else
+          # For rejected returns, just update the status
+          return_request
+          |> ReturnRequest.changeset(%{
+            status: new_status,
+            processed_at: NaiveDateTime.utc_now(),
+            admin_remarks: admin_remarks
+          })
+          |> Repo.update()
+        end
     end
   end
 
@@ -263,5 +326,94 @@ end
     %ReturnRequest{}
     |> ReturnRequest.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def resubmit_return_request(request_id, notes \\ nil) do
+    case get_return_request_by_request_id(request_id) do
+      nil ->
+        {:error, "Return request not found"}
+
+      return_request ->
+        if return_request.status != "rejected" do
+          {:error, "Only rejected return requests can be resubmitted"}
+        else
+          # Update the return request to pending status with new notes
+          return_request
+          |> ReturnRequest.changeset(%{
+            status: "pending",
+            submitted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+            notes: notes,
+            processed_at: nil,
+            admin_remarks: nil
+          })
+          |> Repo.update()
+        end
+    end
+  end
+
+  # Calculate late fee for a request based on due date
+  def calculate_late_fee(request) do
+    today = Date.utc_today()
+
+    if Date.compare(today, request.borrow_to) == :gt do
+      days_late = Date.diff(today, request.borrow_to)
+      late_fee_per_day = Decimal.new("10")
+      Decimal.mult(late_fee_per_day, Decimal.new(days_late))
+    else
+      Decimal.new("0")
+    end
+  end
+
+  # Update late fee for a specific request
+  def update_late_fee(request_id) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        new_late_fee = calculate_late_fee(request)
+
+        request
+        |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+        |> Repo.update()
+    end
+  end
+
+  # Update late fees for all overdue requests
+  def update_all_late_fees do
+    today = Date.utc_today()
+
+    # Get all approved requests that are overdue
+    overdue_requests = from(r in Request,
+      where: r.status == "approved" and r.borrow_to < ^today,
+      preload: [:user]
+    )
+    |> Repo.all()
+
+    # Update late fees for each overdue request
+    Enum.map(overdue_requests, fn request ->
+      new_late_fee = calculate_late_fee(request)
+
+      request
+      |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+      |> Repo.update()
+    end)
+  end
+
+  # Check if a request is overdue
+  def is_overdue?(request) do
+    today = Date.utc_today()
+    Date.compare(today, request.borrow_to) == :gt
+  end
+
+  # Get days overdue for a request
+  def days_overdue(request) do
+    today = Date.utc_today()
+
+    if Date.compare(today, request.borrow_to) == :gt do
+      Date.diff(today, request.borrow_to)
+    else
+      0
+    end
   end
 end

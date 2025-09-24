@@ -14,6 +14,8 @@ defmodule MyKemudahan.Application do
       {Phoenix.PubSub, name: MyKemudahan.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: MyKemudahan.Finch},
+      # Daily reminder scheduler
+      MyKemudahan.Scheduler.DueReminder,
       # Start a worker by calling: MyKemudahan.Worker.start_link(arg)
       # {MyKemudahan.Worker, arg},
       # Start to serve requests, typically the last entry

@@ -12,6 +12,9 @@ defmodule MyKemudahanWeb.RequestList do
   @month_names ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
 
   def mount(_params, _session, socket) do
+    # Update late fees for all overdue requests
+    Requests.update_all_late_fees()
+
     all_requests = Requests.list_all_requests()
 
     filtered_requests = apply_filters(all_requests, "all", nil, nil)
@@ -218,6 +221,7 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   defp apply_status_filter(requests, "all"), do: requests
+  defp apply_status_filter(requests, "overdue"), do: Enum.filter(requests, &(Requests.is_overdue?(&1) && &1.status == "approved"))
   defp apply_status_filter(requests, status), do: Enum.filter(requests, &(&1.status == status))
 
   def handle_event("close_details", _params, socket) do
@@ -342,6 +346,7 @@ defmodule MyKemudahanWeb.RequestList do
       sent: Enum.count(requests, &(&1.status == "sent")),
       pending: Enum.count(requests, &(&1.status == "pending")),
       approved: Enum.count(requests, &(&1.status == "approved")),
+      overdue: Enum.count(requests, &(Requests.is_overdue?(&1) && &1.status == "approved")),
       rejected: Enum.count(requests, &(&1.status == "rejected")),
       cancelled: Enum.count(requests, &(&1.status == "cancelled"))
     }

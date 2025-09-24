@@ -3,8 +3,41 @@
 
   <div class="flex-1 mt-5 md:ml-5 h-full flex flex-col px-4 md:px-0">
     <.header>
-      <p class="font-bold text-3xl mt-3 text-slate-900 mb-5">Listing Asset tags</p>
+      <p class="font-bold text-3xl mt-3 text-slate-900 mb-5">Listing Asset Units</p>
     </.header>
+
+    <!-- Status Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow border p-3 cursor-pointer hover:shadow-md"
+           phx-click="filter" phx-value-status="">
+        <div class="text-xs text-gray-500">Total Asset Units</div>
+        <div class="text-2xl font-bold text-gray-800"><%= @status_counts.total %></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow border p-3 cursor-pointer hover:shadow-md"
+           phx-click="filter" phx-value-status="available">
+        <div class="text-xs text-green-600">Available</div>
+        <div class="text-2xl font-bold text-green-800"><%= @status_counts.available %></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow border p-3 cursor-pointer hover:shadow-md"
+           phx-click="filter" phx-value-status="loaned">
+        <div class="text-xs text-blue-600">Loaned</div>
+        <div class="text-2xl font-bold text-blue-800"><%= @status_counts.loaned %></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow border p-3 cursor-pointer hover:shadow-md"
+           phx-click="filter" phx-value-status="maintenance">
+        <div class="text-xs text-amber-600">Maintenance</div>
+        <div class="text-2xl font-bold text-amber-800"><%= @status_counts.maintenance %></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow border p-3 cursor-pointer hover:shadow-md"
+           phx-click="filter" phx-value-status="damaged">
+        <div class="text-xs text-red-600">Damaged</div>
+        <div class="text-2xl font-bold text-red-800"><%= @status_counts.damaged %></div>
+      </div>
+    </div>
 
     <!-- Search and Filter Section -->
     <div class="bg-slate-200 p-4 rounded-lg shadow-lg mb-4">
@@ -75,14 +108,25 @@
   <.table
     id="asset_tags"
     rows={@streams.asset_tags}
-    row_click={fn {_id, asset_tag} -> JS.navigate(~p"/asset_tags/#{asset_tag}") end}
-    class="w-full md:w-[80%]"
-  >
+    row_click={fn {_id, asset_tag} -> JS.navigate(~p"/asset_tags/#{asset_tag}") end}>
     <:col :let={{_id, asset_tag}} label="Tag">{asset_tag.tag}</:col>
     <:col :let={{_id, asset_tag}} label="Serial">{asset_tag.serial}</:col>
     <:col :let={{_id, asset_tag}} label="Asset">{asset_tag.asset.name}</:col>
     <:col :let={{_id, asset_tag}} label="Category">{asset_tag.asset.category.name}</:col>
-    <:col :let={{_id, asset_tag}} label="Status">{asset_tag.status}</:col>
+    <:col :let={{_id, asset_tag}} label="Status">
+    <%= case asset_tag.status do %>
+      <% "available" -> %>
+        <span class="bg-green-500 text-white font-semibold px-2 rounded-full">Available</span>
+      <% "loaned" -> %>
+        <span class="bg-blue-500 text-white font-semibold px-2 rounded-full">Loaned</span>
+      <% "damaged" -> %>
+        <span class="bg-red-500 text-white font-semibold px-2 rounded-full">Damaged</span>
+      <% "maintenance" -> %>
+        <span class="bg-amber-500 text-white font-semibold px-2 rounded-full">Maintenance</span>
+      <% _ -> %>
+        <span class="bg-gray-500 text-white font-semibold px-2 rounded-full"><%= asset_tag.status %></span>
+    <% end %>
+  </:col>
     <:action :let={{_id, asset_tag}}>
       <div class="sr-only">
         <.link navigate={~p"/asset_tags/#{asset_tag}"}>Show</.link>

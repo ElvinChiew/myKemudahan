@@ -73,19 +73,26 @@
                     <%= Calendar.strftime(return_request.submitted_at, "%d/%m/%Y %H:%M") %>
                   </div>
                   <div class="flex justify-between items-center mt-1">
-                    <span class={
-                      [
-                        "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
-                        case return_request.status do
-                          "pending" -> "bg-amber-100 text-amber-800"
-                          "approved" -> "bg-green-100 text-green-800"
-                          "rejected" -> "bg-red-100 text-red-800"
-                          _ -> "bg-gray-100 text-gray-800"
-                        end
-                      ]
-                    }>
-                      <%= String.capitalize(return_request.status) %>
-                    </span>
+                    <div class="flex flex-wrap gap-1">
+                      <span class={
+                        [
+                          "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
+                          case return_request.status do
+                            "pending" -> "bg-amber-100 text-amber-800"
+                            "approved" -> "bg-green-100 text-green-800"
+                            "rejected" -> "bg-red-100 text-red-800"
+                            _ -> "bg-gray-100 text-gray-800"
+                          end
+                        ]
+                      }>
+                        <%= String.capitalize(return_request.status) %>
+                      </span>
+                      <%= if Requests.is_overdue?(return_request.request) do %>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          Overdue (<%= Requests.days_overdue(return_request.request) %> days)
+                        </span>
+                      <% end %>
+                    </div>
                     <div class="space-x-1">
                       <button 
                         phx-click="show_details" 
@@ -126,19 +133,26 @@
                   <%= Calendar.strftime(return_request.submitted_at, "%d/%m/%Y %H:%M") %>
                 </td>
                 <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
-                  <span class={
-                    [
-                      "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
-                      case return_request.status do
-                        "pending" -> "bg-amber-100 text-amber-800"
-                        "approved" -> "bg-green-100 text-green-800"
-                        "rejected" -> "bg-red-100 text-red-800"
-                        _ -> "bg-gray-100 text-gray-800"
-                      end
-                    ]
-                  }>
-                    <%= String.capitalize(return_request.status) %>
-                  </span>
+                  <div class="flex flex-wrap gap-1">
+                    <span class={
+                      [
+                        "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
+                        case return_request.status do
+                          "pending" -> "bg-amber-100 text-amber-800"
+                          "approved" -> "bg-green-100 text-green-800"
+                          "rejected" -> "bg-red-100 text-red-800"
+                          _ -> "bg-gray-100 text-gray-800"
+                        end
+                      ]
+                    }>
+                      <%= String.capitalize(return_request.status) %>
+                    </span>
+                    <%= if Requests.is_overdue?(return_request.request) do %>
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        Overdue (<%= Requests.days_overdue(return_request.request) %> days)
+                      </span>
+                    <% end %>
+                  </div>
                 </td>
                 <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border text-center space-x-1 md:space-x-2">
                   <button 
@@ -264,6 +278,31 @@
               </p>
             </div>
           </div>
+
+          <!-- Overdue Information -->
+          <%= if Requests.is_overdue?(@selected_request.request) do %>
+            <div class="mb-3 p-3 bg-red-50 rounded-lg border border-red-200">
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <h4 class="text-sm font-semibold text-red-800">Overdue Information</h4>
+              </div>
+              <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <h4 class="text-xs font-medium text-red-600">Days Overdue</h4>
+                  <p class="text-sm font-semibold text-red-800"><%= Requests.days_overdue(@selected_request.request) %> days</p>
+                </div>
+                <div>
+                  <h4 class="text-xs font-medium text-red-600">Late Fee</h4>
+                  <p class="text-sm font-semibold text-red-800">RM<%= Decimal.to_string(@selected_request.request.late_fee, :normal) %></p>
+                </div>
+              </div>
+              <div class="mt-2 text-xs text-red-700">
+                <p><strong>Note:</strong> Late fee is calculated at RM10 per day for every day past the due date.</p>
+              </div>
+            </div>
+          <% end %>
 
           <!-- Requested Items -->
           <h4 class="text-sm font-medium text-gray-500 mb-2">Requested Items</h4>

@@ -28,6 +28,9 @@ defmodule MyKemudahanWeb.Requser do
       page_size: 10,
       user_id: user.id,
       status: "sent",
+      show_modal: false,
+      terms_accepted: false,
+      is_form_valid: false,
       form_data: %{
         borrow_from: "",
         borrow_to: "",
@@ -51,7 +54,9 @@ defmodule MyKemudahanWeb.Requser do
     form_data = socket.assigns.form_data
 
     with {:ok, parsed_borrow_from} <- Date.from_iso8601(form_data.borrow_from),
-         {:ok, parsed_borrow_to} <- Date.from_iso8601(form_data.borrow_to) do
+         {:ok, parsed_borrow_to} <- Date.from_iso8601(form_data.borrow_to),
+         true <- Date.compare(parsed_borrow_to, parsed_borrow_from) == :gt,
+         true <- Date.diff(parsed_borrow_to, parsed_borrow_from) <= 7 do
 
       attrs = %{
         borrow_from: parsed_borrow_from,
@@ -61,7 +66,8 @@ defmodule MyKemudahanWeb.Requser do
         user_id: socket.assigns.user_id,
         status: "sent",
         discount_amount: Decimal.new("0"),
-        final_cost: socket.assigns.total_cost
+        final_cost: socket.assigns.total_cost,
+        late_fee: Decimal.new("0")
       }
 
       case MyKemudahan.Requests.create_request_with_items(attrs, socket.assigns.requested_items) do
@@ -72,6 +78,9 @@ defmodule MyKemudahanWeb.Requser do
             |> assign(
               requested_items: [],
               total_cost: Decimal.new("0"),
+              show_modal: false,
+              terms_accepted: false,
+              is_form_valid: false,
               form_data: %{borrow_from: "", borrow_to: "", purpose: ""} # Reset form
             )
 
@@ -83,7 +92,7 @@ defmodule MyKemudahanWeb.Requser do
       end
     else
       _ ->
-        socket = put_flash(socket, :error, "Invalid date format. Please check your dates.")
+        socket = put_flash(socket, :error, "Invalid date format or duration. Borrowing period must be between 1 day and 1 week (7 days maximum).")
         {:noreply, socket}
     end
   end
@@ -174,27 +183,57 @@ defmodule MyKemudahanWeb.Requser do
       borrow_to: borrow_to,
       purpose: purpose
     }
-    {:noreply, assign(socket, form_data: form_data)}
+    is_valid = is_form_valid?(form_data)
+    {:noreply, assign(socket, form_data: form_data, is_form_valid: is_valid)}
   end
 
   # Handle individual field changes too
   def handle_event("form_change", %{"borrow_from" => borrow_from}, socket) do
-    form_data = Map.put(socket.assigns.form_data, :borrow_from, borrow_from)
-    {:noreply, assign(socket, form_data: form_data)}
+    form_data = %{
+      borrow_from: borrow_from,
+      borrow_to: socket.assigns.form_data.borrow_to,
+      purpose: socket.assigns.form_data.purpose
+    }
+    is_valid = is_form_valid?(form_data)
+    {:noreply, assign(socket, form_data: form_data, is_form_valid: is_valid)}
   end
 
   def handle_event("form_change", %{"borrow_to" => borrow_to}, socket) do
-    form_data = Map.put(socket.assigns.form_data, :borrow_to, borrow_to)
-    {:noreply, assign(socket, form_data: form_data)}
+    form_data = %{
+      borrow_from: socket.assigns.form_data.borrow_from,
+      borrow_to: borrow_to,
+      purpose: socket.assigns.form_data.purpose
+    }
+    is_valid = is_form_valid?(form_data)
+    {:noreply, assign(socket, form_data: form_data, is_form_valid: is_valid)}
   end
+
 
   def handle_event("form_change", %{"purpose" => purpose}, socket) do
     form_data = Map.put(socket.assigns.form_data, :purpose, purpose)
-    {:noreply, assign(socket, form_data: form_data)}
+    is_valid = is_form_valid?(form_data)
+    {:noreply, assign(socket, form_data: form_data, is_form_valid: is_valid)}
   end
 
   def handle_event("go_to_menu", _params, socket) do
     {:noreply, push_navigate(socket, to: "/usermenu")}
+  end
+
+  def handle_event("show_confirmation_modal", _params, socket) do
+    {:noreply, assign(socket, show_modal: true, terms_accepted: false)}
+  end
+
+  def handle_event("close_modal", _params, socket) do
+    {:noreply, assign(socket, show_modal: false, terms_accepted: false)}
+  end
+
+  def handle_event("toggle_terms_accepted", _params, socket) do
+    {:noreply, assign(socket, terms_accepted: !socket.assigns.terms_accepted)}
+  end
+
+  def handle_event("confirm_submit", _params, socket) do
+    # Call the original submit_form logic
+    handle_event("submit_form", %{}, socket)
   end
 
   def handle_event("change_page", %{"page" => page_str}, socket) do
@@ -217,6 +256,13 @@ defmodule MyKemudahanWeb.Requser do
     filtered_assets
     |> Enum.chunk_every(page_size)
     |> Enum.at(current_page - 1, [])
+  end
+
+  defp is_form_valid?(form_data) do
+    form_data.borrow_from != "" and
+    form_data.borrow_to != "" and
+    form_data.purpose != "" and
+    String.trim(form_data.purpose) != ""
   end
 
 end
