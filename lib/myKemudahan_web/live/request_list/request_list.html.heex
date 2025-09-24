@@ -8,7 +8,7 @@
       </div>
 
       <!-- Status Summary Cards - Modified for mobile -->
-      <div class="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div class="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         <!-- Total Card -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
              phx-click="filter_status" phx-value-status="all">
@@ -113,6 +113,33 @@
               </div>
               <div class="mt-1 text-xs text-green-600">
                 <%= percentage(@status_counts.approved, @status_counts.total) %>%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overdue Card -->
+        <div class="bg-white rounded-xl shadow-md border border-red-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+             phx-click="filter_status" phx-value-status="overdue">
+          <div class="p-3 sm:p-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs font-medium text-red-600 mb-1 sm:text-sm">Overdue</div>
+                <div class="text-xl font-bold text-red-800 sm:text-2xl lg:text-3xl"><%= @status_counts.overdue %></div>
+              </div>
+              <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center sm:w-10 sm:h-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-red-100 rounded-full h-1.5 sm:h-2">
+                <div class="bg-red-500 h-1.5 rounded-full sm:h-2" style={"width: #{percentage(@status_counts.overdue, @status_counts.total)}%"}>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-red-600">
+                <%= percentage(@status_counts.overdue, @status_counts.total) %>%
               </div>
             </div>
           </div>
@@ -264,6 +291,12 @@
             Approved
           </button>
           <button 
+            class={"py-2 px-3 font-medium border-b-2 text-xs sm:text-sm sm:px-4 #{if @status_filter == "overdue", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+            phx-click="filter_status" 
+            phx-value-status="overdue">
+            Overdue
+          </button>
+          <button 
             class={"py-2 px-3 font-medium border-b-2 text-xs sm:text-sm sm:px-4 #{if @status_filter == "rejected", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
             phx-click="filter_status" 
             phx-value-status="rejected">
@@ -310,9 +343,15 @@
                           Sent
                         </span>
                       <% "approved" -> %>
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">
-                          Approved
-                        </span>
+                        <%= if Requests.is_overdue?(request) do %>
+                          <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
+                            Overdue (<%= Requests.days_overdue(request) %> days)
+                          </span>
+                        <% else %>
+                          <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">
+                            Approved
+                          </span>
+                        <% end %>
                       <% "pending" -> %>
                         <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-amber-800 bg-amber-100 rounded-full">
                           Pending
@@ -541,6 +580,31 @@
             <p class="text-md font-semibold text-green-600 sm:text-lg">RM<%= @selected_request.final_cost || "0.00" %></p>
           </div>
         </div>
+
+        <!-- Late Fee Information -->
+        <%= if @selected_request.late_fee && Decimal.compare(@selected_request.late_fee, Decimal.new("0")) == :gt do %>
+          <div class="mb-4 p-3 bg-red-50 rounded-lg sm:mb-6 sm:p-4">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <h4 class="text-md font-semibold text-red-800 sm:text-lg">Overdue Information</h4>
+            </div>
+            <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              <div>
+                <h4 class="text-xs font-medium text-red-600 sm:text-sm">Days Overdue</h4>
+                <p class="text-md font-semibold text-red-800 sm:text-lg"><%= Requests.days_overdue(@selected_request) %> days</p>
+              </div>
+              <div>
+                <h4 class="text-xs font-medium text-red-600 sm:text-sm">Late Fee</h4>
+                <p class="text-md font-semibold text-red-800 sm:text-lg">RM<%= Decimal.to_string(@selected_request.late_fee, :normal) %></p>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-red-700 sm:text-sm">
+              <p><strong>Note:</strong> Late fee is calculated at RM10 per day for every day past the due date.</p>
+            </div>
+          </div>
+        <% end %>
 
         <!-- Discount Management -->
         <div class="mb-4 p-3 bg-blue-50 rounded-lg sm:mb-6 sm:p-4">

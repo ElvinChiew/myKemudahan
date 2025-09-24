@@ -327,4 +327,70 @@ end
     |> ReturnRequest.changeset(attrs)
     |> Repo.insert()
   end
+
+  # Calculate late fee for a request based on due date
+  def calculate_late_fee(request) do
+    today = Date.utc_today()
+
+    if Date.compare(today, request.borrow_to) == :gt do
+      days_late = Date.diff(today, request.borrow_to)
+      late_fee_per_day = Decimal.new("10")
+      Decimal.mult(late_fee_per_day, Decimal.new(days_late))
+    else
+      Decimal.new("0")
+    end
+  end
+
+  # Update late fee for a specific request
+  def update_late_fee(request_id) do
+    case get_request!(request_id) do
+      nil ->
+        {:error, "Request not found"}
+
+      request ->
+        new_late_fee = calculate_late_fee(request)
+
+        request
+        |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+        |> Repo.update()
+    end
+  end
+
+  # Update late fees for all overdue requests
+  def update_all_late_fees do
+    today = Date.utc_today()
+
+    # Get all approved requests that are overdue
+    overdue_requests = from(r in Request,
+      where: r.status == "approved" and r.borrow_to < ^today,
+      preload: [:user]
+    )
+    |> Repo.all()
+
+    # Update late fees for each overdue request
+    Enum.map(overdue_requests, fn request ->
+      new_late_fee = calculate_late_fee(request)
+
+      request
+      |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+      |> Repo.update()
+    end)
+  end
+
+  # Check if a request is overdue
+  def is_overdue?(request) do
+    today = Date.utc_today()
+    Date.compare(today, request.borrow_to) == :gt
+  end
+
+  # Get days overdue for a request
+  def days_overdue(request) do
+    today = Date.utc_today()
+
+    if Date.compare(today, request.borrow_to) == :gt do
+      Date.diff(today, request.borrow_to)
+    else
+      0
+    end
+  end
 end

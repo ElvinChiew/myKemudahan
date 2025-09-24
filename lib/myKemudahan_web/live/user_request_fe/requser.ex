@@ -65,7 +65,8 @@ defmodule MyKemudahanWeb.Requser do
         user_id: socket.assigns.user_id,
         status: "sent",
         discount_amount: Decimal.new("0"),
-        final_cost: socket.assigns.total_cost
+        final_cost: socket.assigns.total_cost,
+        late_fee: Decimal.new("0")
       }
 
       case MyKemudahan.Requests.create_request_with_items(attrs, socket.assigns.requested_items) do

@@ -49,12 +49,21 @@
                 </span>
               </div>
             <% "approved" -> %>
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                <span class="inline-block px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                  Approved • Ready for use
-                </span>
-              </div>
+              <%= if Requests.is_overdue?(request) do %>
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                  <span class="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                    Overdue • <%= Requests.days_overdue(request) %> days late
+                  </span>
+                </div>
+              <% else %>
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                  <span class="inline-block px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                    Approved • Ready for use
+                  </span>
+                </div>
+              <% end %>
             <% "pending" -> %>
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>

@@ -8,6 +8,9 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   import MyKemudahanWeb.AdminSidebar
 
   def mount(_params, _session, socket) do
+    # Update late fees for all overdue requests
+    Requests.update_all_late_fees()
+
     return_requests = list_return_requests_with_associations("pending")
 
     {:ok, assign(socket,

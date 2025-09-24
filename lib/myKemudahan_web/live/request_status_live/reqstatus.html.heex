@@ -55,12 +55,21 @@
                 </span>
               </div>
             <% "approved" -> %>
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                <span class="inline-block px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                  Approved • Ready for use
-                </span>
-              </div>
+              <%= if Requests.is_overdue?(request) do %>
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                  <span class="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                    Overdue • <%= Requests.days_overdue(request) %> days late
+                  </span>
+                </div>
+              <% else %>
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                  <span class="inline-block px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                    Approved • Ready for use
+                  </span>
+                </div>
+              <% end %>
             <% "pending" -> %>
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
@@ -170,14 +179,37 @@
             Final Cost: RM<%= request.final_cost %>
           </div>
         <% end %>
+
+        <%= if request.late_fee && Decimal.compare(request.late_fee, Decimal.new("0")) == :gt do %>
+          <div class="flex items-center text-sm font-medium text-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            Late Fee: RM<%= Decimal.to_string(request.late_fee, :normal) %>
+          </div>
+        <% end %>
       </div>
       
       <!-- Progress indicator for multi-step processes -->
       <div class="mt-4">
         <%= if request.status == "approved" do %>
-          <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
-            Please proceed to counter to complete the payment.
-          </div>
+          <%= if Requests.is_overdue?(request) do %>
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <div class="font-semibold">Overdue by <%= Requests.days_overdue(request) %> days</div>
+                  <div>Late fee: RM<%= Decimal.to_string(request.late_fee, :normal) %> (RM10 per day)</div>
+                </div>
+              </div>
+            </div>
+          <% else %>
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
+              Please proceed to counter to complete the payment.
+            </div>
+          <% end %>
         <% end %>
         <%= if request.status == "rejected" do %>
           <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg text-sm font-medium mt-4">
@@ -522,6 +554,20 @@
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
       <h2 class="text-lg font-semibold mb-4 text-gray-900">Return Asset</h2>
 
+      <%= if @return_request && Requests.is_overdue?(@return_request) do %>
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span class="text-sm font-medium text-red-800">Overdue Request</span>
+          </div>
+          <p class="mt-2 text-sm text-red-700">
+            Please pay the overdue amount to account: <strong>1234-56-7890</strong> and write the receipt number in the notes below.
+          </p>
+        </div>
+      <% end %>
+
       <form phx-submit="submit_return_request">
         <input type="hidden" name="request_id" value={@return_request_id} />
 
@@ -532,7 +578,7 @@
             id="notes"
             rows="4"
             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            placeholder="Add any notes regarding the return..."
+            placeholder={if @return_request && Requests.is_overdue?(@return_request), do: "Add any notes regarding the return and include the receipt number for the overdue payment...", else: "Add any notes regarding the return..."}
             required
           ><%= @return_notes %></textarea>
         </div>

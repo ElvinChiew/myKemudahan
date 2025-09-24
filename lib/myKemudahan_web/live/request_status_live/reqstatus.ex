@@ -6,6 +6,10 @@ defmodule MyKemudahanWeb.Reqstatus do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
+
+    # Update late fees for all overdue requests
+    Requests.update_all_late_fees()
+
     requests = Requests.list_user_requests(user.id)
 
     # Pagination settings
@@ -31,6 +35,7 @@ defmodule MyKemudahanWeb.Reqstatus do
       |> assign(:show_return_modal, false)
       |> assign(:return_request_id, nil)
       |> assign(:return_notes, "")
+      |> assign(:return_request, nil)
 
     {:ok, socket}
   end
@@ -241,7 +246,7 @@ defmodule MyKemudahanWeb.Reqstatus do
         socket =
           socket
           |> put_flash(:info, "Return request submitted successfully.")
-          |> assign(show_return_modal: false, return_request_id: nil, return_notes: "")
+          |> assign(show_return_modal: false, return_request_id: nil, return_notes: "", return_request: nil)
 
         # Refresh the requests to show the updated return status
         user = socket.assigns.current_user
@@ -260,7 +265,10 @@ defmodule MyKemudahanWeb.Reqstatus do
 
 
   def handle_event("show_return_modal", %{"id" => id}, socket) do
-    {:noreply, assign(socket, show_return_modal: true, return_request_id: id, return_notes: "")}
+    # Get the full request with preloaded items to check if it's overdue
+    request = Requests.get_request!(id)
+
+    {:noreply, assign(socket, show_return_modal: true, return_request_id: id, return_notes: "", return_request: request)}
   end
 
   def handle_event("cancel_return_modal", _params, socket) do
@@ -268,7 +276,8 @@ defmodule MyKemudahanWeb.Reqstatus do
      socket
      |> assign(:show_return_modal, false)
      |> assign(:return_request_id, nil)
-     |> assign(:return_notes, "")}
+     |> assign(:return_notes, "")
+     |> assign(:return_request, nil)}
   end
 
 

@@ -7,6 +7,9 @@ defmodule MyKemudahanWeb.UserLive.AdminViewUser do
 
   # Update mount to accept params
   def mount(%{"user_id" => user_id}, _session, socket) do
+    # Update late fees for all overdue requests
+    Requests.update_all_late_fees()
+
     # Get the target user (the one whose requests we're viewing)
     target_user = Accounts.get_user!(user_id)
 
