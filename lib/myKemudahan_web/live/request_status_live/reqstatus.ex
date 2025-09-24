@@ -36,6 +36,10 @@ defmodule MyKemudahanWeb.Reqstatus do
       |> assign(:return_request_id, nil)
       |> assign(:return_notes, "")
       |> assign(:return_request, nil)
+      |> assign(:show_resubmit_modal, false)
+      |> assign(:resubmit_request_id, nil)
+      |> assign(:resubmit_notes, "")
+      |> assign(:resubmit_request, nil)
 
     {:ok, socket}
   end
@@ -278,6 +282,48 @@ defmodule MyKemudahanWeb.Reqstatus do
      |> assign(:return_request_id, nil)
      |> assign(:return_notes, "")
      |> assign(:return_request, nil)}
+  end
+
+  def handle_event("show_resubmit_modal", %{"id" => id}, socket) do
+    # Get the full request with preloaded items to check if it's overdue
+    request = Requests.get_request!(id)
+
+    {:noreply, assign(socket, show_resubmit_modal: true, resubmit_request_id: id, resubmit_notes: "", resubmit_request: request)}
+  end
+
+  def handle_event("cancel_resubmit_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resubmit_modal, false)
+     |> assign(:resubmit_request_id, nil)
+     |> assign(:resubmit_notes, "")
+     |> assign(:resubmit_request, nil)}
+  end
+
+  def handle_event("resubmit_return_request", %{"request_id" => request_id, "notes" => notes}, socket) do
+    # Convert string to integer
+    request_id = String.to_integer(request_id)
+
+    case Requests.resubmit_return_request(request_id, notes) do
+      {:ok, _return_request} ->
+        socket =
+          socket
+          |> put_flash(:info, "Return request resubmitted successfully.")
+          |> assign(show_resubmit_modal: false, resubmit_request_id: nil, resubmit_notes: "", resubmit_request: nil)
+
+        # Refresh the requests to show the updated return status
+        user = socket.assigns.current_user
+        all_requests = Requests.list_user_requests(user.id)
+        paginated_requests = paginate_requests(all_requests, socket.assigns.page, socket.assigns.per_page)
+
+        {:noreply, assign(socket, requests: paginated_requests, all_requests: all_requests)}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to resubmit return request: #{reason}")
+         |> assign(show_resubmit_modal: false)}
+    end
   end
 
 

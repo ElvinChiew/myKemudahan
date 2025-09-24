@@ -328,6 +328,29 @@ end
     |> Repo.insert()
   end
 
+  def resubmit_return_request(request_id, notes \\ nil) do
+    case get_return_request_by_request_id(request_id) do
+      nil ->
+        {:error, "Return request not found"}
+
+      return_request ->
+        if return_request.status != "rejected" do
+          {:error, "Only rejected return requests can be resubmitted"}
+        else
+          # Update the return request to pending status with new notes
+          return_request
+          |> ReturnRequest.changeset(%{
+            status: "pending",
+            submitted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+            notes: notes,
+            processed_at: nil,
+            admin_remarks: nil
+          })
+          |> Repo.update()
+        end
+    end
+  end
+
   # Calculate late fee for a request based on due date
   def calculate_late_fee(request) do
     today = Date.utc_today()

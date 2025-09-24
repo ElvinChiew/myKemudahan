@@ -138,8 +138,21 @@
                     true -> "bg-red-100 text-red-800"
                   end %>
 
-                <div class={"inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium #{status_class}"}>
-                  Return <%= String.capitalize(return_request.status) %>
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <div class={"inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium #{status_class}"}>
+                      Return <%= String.capitalize(return_request.status) %>
+                    </div>
+                    
+                    <%= if return_request.status == "rejected" do %>
+                      <button 
+                        phx-click="show_resubmit_modal"
+                        phx-value-id={request.id}
+                        class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                        Resubmit
+                      </button>
+                    <% end %>
+                  </div>
                 </div>
             <% end %>
           <% end %>
@@ -187,6 +200,19 @@
             </svg>
             Late Fee: RM<%= Decimal.to_string(request.late_fee, :normal) %>
           </div>
+        <% end %>
+      </div>
+
+      <div>             
+        <!-- Show return request rejection reason if applicable -->
+        <%= if request.status == "approved" do %>
+          <%= case Requests.get_return_request_by_request_id(request.id) do %>
+            <% %{status: "rejected", admin_remarks: admin_remarks} when not is_nil(admin_remarks) -> %>
+              <div class="mt-3 text-xs text-red-600 bg-red-50 p-2 rounded">
+                <strong>Return rejection reason:</strong> <%= admin_remarks %>
+              </div>
+            <% _ -> %>
+          <% end %>
         <% end %>
       </div>
       
@@ -594,6 +620,59 @@
             type="submit"
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
             Submit Return
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% end %>
+
+<!-- Resubmit Return Request Modal -->
+<%= if @show_resubmit_modal do %>
+  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex justify-center items-center">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+      <h2 class="text-lg font-semibold mb-4 text-gray-900">Resubmit Return Request</h2>
+
+      <%= if @resubmit_request && Requests.is_overdue?(@resubmit_request) do %>
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span class="text-sm font-medium text-red-800">Overdue Request</span>
+          </div>
+          <p class="mt-2 text-sm text-red-700">
+            Please pay the overdue amount to account: <strong>1234-56-7890</strong> and write the receipt number in the notes below.
+          </p>
+        </div>
+      <% end %>
+
+      <form phx-submit="resubmit_return_request">
+        <input type="hidden" name="request_id" value={@resubmit_request_id} />
+
+        <div class="mb-4">
+          <label for="resubmit_notes" class="block text-sm font-medium text-gray-700">Notes</label>
+          <textarea 
+            name="notes"
+            id="resubmit_notes"
+            rows="4"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder={if @resubmit_request && Requests.is_overdue?(@resubmit_request), do: "Add any notes regarding the return and include the receipt number for the overdue payment...", else: "Add any notes regarding the return..."}
+            required
+          ><%= @resubmit_notes %></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+          <button 
+            type="button"
+            phx-click="cancel_resubmit_modal"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition">
+            Cancel
+          </button>
+          <button 
+            type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+            Resubmit Return
           </button>
         </div>
       </form>
