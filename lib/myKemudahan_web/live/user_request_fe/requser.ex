@@ -55,7 +55,8 @@ defmodule MyKemudahanWeb.Requser do
 
     with {:ok, parsed_borrow_from} <- Date.from_iso8601(form_data.borrow_from),
          {:ok, parsed_borrow_to} <- Date.from_iso8601(form_data.borrow_to),
-         true <- Date.diff(parsed_borrow_to, parsed_borrow_from) == 7 do
+         true <- Date.compare(parsed_borrow_to, parsed_borrow_from) == :gt,
+         true <- Date.diff(parsed_borrow_to, parsed_borrow_from) <= 7 do
 
       attrs = %{
         borrow_from: parsed_borrow_from,
@@ -91,7 +92,7 @@ defmodule MyKemudahanWeb.Requser do
       end
     else
       _ ->
-        socket = put_flash(socket, :error, "Invalid date format or duration. Borrow period must be exactly 1 week.")
+        socket = put_flash(socket, :error, "Invalid date format or duration. Borrowing period must be between 1 day and 1 week (7 days maximum).")
         {:noreply, socket}
     end
   end
@@ -176,15 +177,7 @@ defmodule MyKemudahanWeb.Requser do
     end
   end
 
-  def handle_event("form_change", %{"borrow_from" => borrow_from, "purpose" => purpose}, socket) do
-    # Calculate borrow_to as one week from borrow_from
-    borrow_to = case Date.from_iso8601(borrow_from) do
-      {:ok, date} ->
-        Date.add(date, 7) |> Date.to_iso8601()
-      {:error, _} ->
-        ""  # Keep empty if invalid date
-    end
-
+  def handle_event("form_change", %{"borrow_from" => borrow_from, "borrow_to" => borrow_to, "purpose" => purpose}, socket) do
     form_data = %{
       borrow_from: borrow_from,
       borrow_to: borrow_to,
@@ -196,16 +189,18 @@ defmodule MyKemudahanWeb.Requser do
 
   # Handle individual field changes too
   def handle_event("form_change", %{"borrow_from" => borrow_from}, socket) do
-    # Calculate borrow_to as one week from borrow_from
-    borrow_to = case Date.from_iso8601(borrow_from) do
-      {:ok, date} ->
-        Date.add(date, 7) |> Date.to_iso8601()
-      {:error, _} ->
-        ""  # Keep empty if invalid date
-    end
-
     form_data = %{
       borrow_from: borrow_from,
+      borrow_to: socket.assigns.form_data.borrow_to,
+      purpose: socket.assigns.form_data.purpose
+    }
+    is_valid = is_form_valid?(form_data)
+    {:noreply, assign(socket, form_data: form_data, is_form_valid: is_valid)}
+  end
+
+  def handle_event("form_change", %{"borrow_to" => borrow_to}, socket) do
+    form_data = %{
+      borrow_from: socket.assigns.form_data.borrow_from,
       borrow_to: borrow_to,
       purpose: socket.assigns.form_data.purpose
     }
@@ -264,7 +259,10 @@ defmodule MyKemudahanWeb.Requser do
   end
 
   defp is_form_valid?(form_data) do
-    form_data.borrow_from != "" and form_data.purpose != "" and String.trim(form_data.purpose) != ""
+    form_data.borrow_from != "" and
+    form_data.borrow_to != "" and
+    form_data.purpose != "" and
+    String.trim(form_data.purpose) != ""
   end
 
 end
