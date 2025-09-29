@@ -216,9 +216,9 @@ end
         {:error, "Request not found"}
 
       request ->
-        # Check if request is approved and doesn't already have a return request
-        if request.status != "approved" do
-          {:error, "Only approved requests can be returned"}
+        # Check if request is approved or overdue and doesn't already have a return request
+        if request.status not in ["approved", "overdue"] do
+          {:error, "Only approved or overdue requests can be returned"}
         else
           case get_return_request_by_request_id(request_id) do
             nil ->
@@ -249,7 +249,7 @@ end
         {:error, :not_found}
 
       return_request ->
-        # If approving the return, update asset tags back to available
+        # If approving the return, update asset tags back to available and change request status
         if new_status == "approved" do
           # Get the original request and its items
           original_request = get_request!(return_request.request_id)
@@ -277,6 +277,18 @@ end
               admin_remarks: admin_remarks
             })
             |> Repo.update()
+            |> case do
+              {:ok, updated_return_request} ->
+                # Update the original request status to "returned"
+                original_request
+                |> Ecto.Changeset.change(%{status: "returned"})
+                |> Repo.update()
+                |> case do
+                  {:ok, _} -> {:ok, updated_return_request}
+                  {:error, changeset} -> {:error, changeset}
+                end
+              error -> error
+            end
           end
         else
           # For rejected returns, just update the status
@@ -379,7 +391,7 @@ end
     end
   end
 
-  # Update late fees for all overdue requests
+  # Update late fees for all overdue requests and update status
   def update_all_late_fees do
     today = Date.utc_today()
 
@@ -390,12 +402,15 @@ end
     )
     |> Repo.all()
 
-    # Update late fees for each overdue request
+    # Update late fees and status for each overdue request
     Enum.map(overdue_requests, fn request ->
       new_late_fee = calculate_late_fee(request)
 
       request
-      |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+      |> Ecto.Changeset.change(%{
+        late_fee: new_late_fee,
+        status: "overdue"
+      })
       |> Repo.update()
     end)
   end
@@ -403,14 +418,15 @@ end
   # Check if a request is overdue
   def is_overdue?(request) do
     today = Date.utc_today()
-    Date.compare(today, request.borrow_to) == :gt
+    # A request is overdue if it's past the due date and not yet returned
+    Date.compare(today, request.borrow_to) == :gt and request.status != "returned"
   end
 
   # Get days overdue for a request
   def days_overdue(request) do
     today = Date.utc_today()
 
-    if Date.compare(today, request.borrow_to) == :gt do
+    if Date.compare(today, request.borrow_to) == :gt and request.status != "returned" do
       Date.diff(today, request.borrow_to)
     else
       0

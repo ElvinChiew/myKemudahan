@@ -221,7 +221,6 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   defp apply_status_filter(requests, "all"), do: requests
-  defp apply_status_filter(requests, "overdue"), do: Enum.filter(requests, &(Requests.is_overdue?(&1) && &1.status == "approved"))
   defp apply_status_filter(requests, status), do: Enum.filter(requests, &(&1.status == status))
 
   def handle_event("close_details", _params, socket) do
@@ -346,7 +345,8 @@ defmodule MyKemudahanWeb.RequestList do
       sent: Enum.count(requests, &(&1.status == "sent")),
       pending: Enum.count(requests, &(&1.status == "pending")),
       approved: Enum.count(requests, &(&1.status == "approved")),
-      overdue: Enum.count(requests, &(Requests.is_overdue?(&1) && &1.status == "approved")),
+      overdue: Enum.count(requests, &(&1.status == "overdue")),
+      returned: Enum.count(requests, &(&1.status == "returned")),
       rejected: Enum.count(requests, &(&1.status == "rejected")),
       cancelled: Enum.count(requests, &(&1.status == "cancelled"))
     }
@@ -455,7 +455,7 @@ defmodule MyKemudahanWeb.RequestList do
      |> assign(:monthly_revenue, monthly_revenue)}
   end
 
-  # Calculate 12-month revenue for approved requests based on borrow_from month
+  # Calculate 12-month revenue for approved and overdue requests based on borrow_from month
   defp calculate_monthly_revenue_for_year(requests, year) do
     month_keys = for m <- 1..12, do: {year, m}
 
@@ -467,7 +467,7 @@ defmodule MyKemudahanWeb.RequestList do
     totals =
       Enum.reduce(requests, initial_totals, fn request, acc ->
         cond do
-          request.status != "approved" ->
+          request.status not in ["approved", "overdue"] ->
             acc
 
           true ->

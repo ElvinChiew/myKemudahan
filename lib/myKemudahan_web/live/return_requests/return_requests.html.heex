@@ -87,11 +87,11 @@
                       }>
                         <%= String.capitalize(return_request.status) %>
                       </span>
-                      <%= if Requests.is_overdue?(return_request.request) do %>
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                          Overdue (<%= Requests.days_overdue(return_request.request) %> days)
-                        </span>
-                      <% end %>
+                    <%= if return_request.request.status == "overdue" do %>
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        Overdue (<%= Requests.days_overdue(return_request.request) %> days)
+                      </span>
+                    <% end %>
                     </div>
                     <div class="space-x-1">
                       <button 
@@ -147,7 +147,7 @@
                     }>
                       <%= String.capitalize(return_request.status) %>
                     </span>
-                    <%= if Requests.is_overdue?(return_request.request) do %>
+                    <%= if return_request.request.status == "overdue" do %>
                       <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                         Overdue (<%= Requests.days_overdue(return_request.request) %> days)
                       </span>
@@ -280,7 +280,7 @@
           </div>
 
           <!-- Overdue Information -->
-          <%= if Requests.is_overdue?(@selected_request.request) do %>
+          <%= if @selected_request.request.status == "overdue" do %>
             <div class="mb-3 p-3 bg-red-50 rounded-lg border border-red-200">
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

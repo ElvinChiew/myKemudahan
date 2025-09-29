@@ -11,13 +11,13 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
     # Update late fees for all overdue requests
     Requests.update_all_late_fees()
 
-    return_requests = list_return_requests_with_associations("pending")
+    return_requests = list_return_requests_with_associations("all")
 
     {:ok, assign(socket,
       return_requests: return_requests,
       selected_request: nil,
       show_details: false,
-      status_filter: "pending",
+      status_filter: "all",
       show_remark_modal: false,
       remark_action: nil,
       remark_text: "",
@@ -134,5 +134,14 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to update status")}
     end
+  end
+
+  def handle_event("reset_filters", _params, socket) do
+    return_requests = list_return_requests_with_associations("all")
+
+    {:noreply, assign(socket,
+      return_requests: return_requests,
+      status_filter: "all"
+    )}
   end
 end
