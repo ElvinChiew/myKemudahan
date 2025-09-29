@@ -221,7 +221,6 @@ defmodule MyKemudahanWeb.RequestList do
   end
 
   defp apply_status_filter(requests, "all"), do: requests
-  defp apply_status_filter(requests, "overdue"), do: Enum.filter(requests, &(Requests.is_overdue?(&1) && &1.status == "approved"))
   defp apply_status_filter(requests, status), do: Enum.filter(requests, &(&1.status == status))
 
   def handle_event("close_details", _params, socket) do
@@ -264,6 +263,20 @@ defmodule MyKemudahanWeb.RequestList do
     case Requests.approve_request(request_id) do
       {:ok, request} ->
 
+        # Log admin action for transparency
+        try do
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            "approve_request",
+            "Request",
+            request.id,
+            "Request approved by admin"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
+
         #send email approval to user
         try do
           RequestEmail.approval_email(request)
@@ -300,6 +313,20 @@ defmodule MyKemudahanWeb.RequestList do
   def handle_event("reject_request", %{}, socket) do
     case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
       {:ok, request} ->
+
+        # Log admin action for transparency
+        try do
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            "reject_request",
+            "Request",
+            request.id,
+            "Request rejected by admin. Reason: #{socket.assigns.rejection_reason}"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
 
         complete_request = Requests.get_request_with_items!(request.id)
 
@@ -346,7 +373,8 @@ defmodule MyKemudahanWeb.RequestList do
       sent: Enum.count(requests, &(&1.status == "sent")),
       pending: Enum.count(requests, &(&1.status == "pending")),
       approved: Enum.count(requests, &(&1.status == "approved")),
-      overdue: Enum.count(requests, &(Requests.is_overdue?(&1) && &1.status == "approved")),
+      overdue: Enum.count(requests, &(&1.status == "overdue")),
+      returned: Enum.count(requests, &(&1.status == "returned")),
       rejected: Enum.count(requests, &(&1.status == "rejected")),
       cancelled: Enum.count(requests, &(&1.status == "cancelled"))
     }
@@ -455,7 +483,7 @@ defmodule MyKemudahanWeb.RequestList do
      |> assign(:monthly_revenue, monthly_revenue)}
   end
 
-  # Calculate 12-month revenue for approved requests based on borrow_from month
+  # Calculate 12-month revenue for approved and overdue requests based on borrow_from month
   defp calculate_monthly_revenue_for_year(requests, year) do
     month_keys = for m <- 1..12, do: {year, m}
 
@@ -467,7 +495,7 @@ defmodule MyKemudahanWeb.RequestList do
     totals =
       Enum.reduce(requests, initial_totals, fn request, acc ->
         cond do
-          request.status != "approved" ->
+          request.status not in ["approved", "overdue"] ->
             acc
 
           true ->

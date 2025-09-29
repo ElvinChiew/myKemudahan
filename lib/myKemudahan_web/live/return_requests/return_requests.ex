@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   use MyKemudahanWeb, :live_view
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
   alias MyKemudahan.Requests
   alias MyKemudahan.Requests.ReturnRequest
@@ -7,21 +8,27 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   import Ecto.Query
   import MyKemudahanWeb.AdminSidebar
 
+  @per_page 10  # Return requests per page
+
   def mount(_params, _session, socket) do
     # Update late fees for all overdue requests
     Requests.update_all_late_fees()
 
-    return_requests = list_return_requests_with_associations("pending")
+    return_requests = list_return_requests_with_associations("all")
 
     {:ok, assign(socket,
       return_requests: return_requests,
+      filtered_return_requests: return_requests,
       selected_request: nil,
       show_details: false,
-      status_filter: "pending",
+      status_filter: "all",
       show_remark_modal: false,
       remark_action: nil,
       remark_text: "",
-      selected_request_id: nil
+      selected_request_id: nil,
+      page: 1,
+      per_page: @per_page,
+      total_pages: calc_total_pages(return_requests, @per_page)
     )}
   end
 
@@ -39,10 +46,14 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
 
   def handle_event("filter_status", %{"status" => status}, socket) do
     return_requests = list_return_requests_with_associations(status)
+    total_pages = calc_total_pages(return_requests, socket.assigns.per_page)
 
     {:noreply, assign(socket,
       return_requests: return_requests,
-      status_filter: status
+      filtered_return_requests: return_requests,
+      status_filter: status,
+      page: 1,
+      total_pages: total_pages
     )}
   end
 
@@ -95,10 +106,30 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
       remark
     ) do
       {:ok, _} ->
+        # Log admin action for transparency
+        try do
+          action = if socket.assigns.remark_action == "approved", do: "approve_return", else: "reject_return"
+          IO.inspect({socket.assigns.current_user.id, action, "ReturnRequest", socket.assigns.selected_request_id}, label: "Logging return action")
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            action,
+            "ReturnRequest",
+            socket.assigns.selected_request_id,
+            "Return request #{socket.assigns.remark_action} by admin. Remark: #{remark}"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
+
         return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
+        total_pages = calc_total_pages(return_requests, socket.assigns.per_page)
         {:noreply,
          assign(socket,
            return_requests: return_requests,
+           filtered_return_requests: return_requests,
+           total_pages: total_pages,
+           page: 1,
            show_remark_modal: false,
            remark_action: nil,
            remark_text: "",
@@ -108,8 +139,13 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
          )
          |> put_flash(:info, "Return request #{socket.assigns.remark_action} successfully")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update return request")}
+      {:error, reason} ->
+        error_message = case reason do
+          :not_found -> "Return request not found"
+          reason when is_binary(reason) -> reason
+          _ -> "Failed to update return request"
+        end
+        {:noreply, put_flash(socket, :error, error_message)}
     end
   end
 
@@ -127,12 +163,49 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
     case Requests.update_return_request_status(id, new_status, "Status changed by admin") do
       {:ok, _} ->
         return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
+        total_pages = calc_total_pages(return_requests, socket.assigns.per_page)
         {:noreply,
-         assign(socket, return_requests: return_requests)
+         assign(socket,
+           return_requests: return_requests,
+           filtered_return_requests: return_requests,
+           total_pages: total_pages,
+           page: 1
+         )
          |> put_flash(:info, "Status updated successfully")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update status")}
+      {:error, reason} ->
+        error_message = case reason do
+          :not_found -> "Return request not found"
+          reason when is_binary(reason) -> reason
+          _ -> "Failed to update status"
+        end
+        {:noreply, put_flash(socket, :error, error_message)}
     end
+  end
+
+  def handle_event("reset_filters", _params, socket) do
+    return_requests = list_return_requests_with_associations("all")
+    total_pages = calc_total_pages(return_requests, socket.assigns.per_page)
+
+    {:noreply, assign(socket,
+      return_requests: return_requests,
+      filtered_return_requests: return_requests,
+      status_filter: "all",
+      page: 1,
+      total_pages: total_pages
+    )}
+  end
+
+  def handle_event("paginate", %{"page" => page}, socket) do
+    {:noreply, assign(socket, page: String.to_integer(page))}
+  end
+
+  defp calc_total_pages(return_requests, per_page) do
+    (length(return_requests) / per_page) |> Float.ceil() |> round()
+  end
+
+  def paginate_return_requests(return_requests, page, per_page) do
+    return_requests
+    |> Enum.slice((page - 1) * per_page, per_page)
   end
 end

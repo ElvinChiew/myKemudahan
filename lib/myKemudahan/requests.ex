@@ -171,7 +171,9 @@ end
           end)
 
           if length(failed_updates) > 0 do
-            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+            # Extract error messages for better user experience
+            error_messages = Enum.map(failed_updates, fn {:error, message} -> message end)
+            {:error, "Asset availability issues: #{Enum.join(error_messages, "; ")}"}
           else
             # Update request status to approved
             request
@@ -216,9 +218,9 @@ end
         {:error, "Request not found"}
 
       request ->
-        # Check if request is approved and doesn't already have a return request
-        if request.status != "approved" do
-          {:error, "Only approved requests can be returned"}
+        # Check if request is approved or overdue and doesn't already have a return request
+        if request.status not in ["approved", "overdue"] do
+          {:error, "Only approved or overdue requests can be returned"}
         else
           case get_return_request_by_request_id(request_id) do
             nil ->
@@ -249,27 +251,64 @@ end
         {:error, :not_found}
 
       return_request ->
-        # If approving the return, update asset tags back to available
-        if new_status == "approved" do
-          # Get the original request and its items
-          original_request = get_request!(return_request.request_id)
-          request_items = list_request_items(original_request.id)
+        # Validate status transition
+        valid_transitions = %{
+          "pending" => ["approved", "rejected"],
+          "rejected" => ["approved"],
+          "approved" => ["rejected"]
+        }
 
-          # Update asset tags for each item back to available
-          asset_update_results = Enum.map(request_items, fn item ->
-            Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
-          end)
+        current_status = return_request.status
+        allowed_statuses = Map.get(valid_transitions, current_status, [])
 
-          # Check if any asset updates failed
-          failed_updates = Enum.filter(asset_update_results, fn
-            {:error, _} -> true
-            _ -> false
-          end)
+        if new_status not in allowed_statuses do
+          {:error, "Invalid status transition from #{current_status} to #{new_status}"}
+        else
+          # If approving the return, update asset tags back to available and change request status
+          if new_status == "approved" do
+            # Get the original request and its items
+            original_request = get_request!(return_request.request_id)
+            request_items = list_request_items(original_request.id)
 
-          if length(failed_updates) > 0 do
-            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+            # Update asset tags for each item back to available
+            asset_update_results = Enum.map(request_items, fn item ->
+              Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
+            end)
+
+            # Check if any asset updates failed
+            failed_updates = Enum.filter(asset_update_results, fn
+              {:error, _} -> true
+              _ -> false
+            end)
+
+            if length(failed_updates) > 0 do
+              # Extract error messages for better user experience
+              error_messages = Enum.map(failed_updates, fn {:error, message} -> message end)
+              {:error, "Asset update issues: #{Enum.join(error_messages, "; ")}"}
+            else
+              # Update return request status
+              return_request
+              |> ReturnRequest.changeset(%{
+                status: new_status,
+                processed_at: NaiveDateTime.utc_now(),
+                admin_remarks: admin_remarks
+              })
+              |> Repo.update()
+              |> case do
+                {:ok, updated_return_request} ->
+                  # Update the original request status to "returned"
+                  original_request
+                  |> Ecto.Changeset.change(%{status: "returned"})
+                  |> Repo.update()
+                  |> case do
+                    {:ok, _} -> {:ok, updated_return_request}
+                    {:error, changeset} -> {:error, changeset}
+                  end
+                error -> error
+              end
+            end
           else
-            # Update return request status
+            # For rejected returns, just update the status
             return_request
             |> ReturnRequest.changeset(%{
               status: new_status,
@@ -278,15 +317,6 @@ end
             })
             |> Repo.update()
           end
-        else
-          # For rejected returns, just update the status
-          return_request
-          |> ReturnRequest.changeset(%{
-            status: new_status,
-            processed_at: NaiveDateTime.utc_now(),
-            admin_remarks: admin_remarks
-          })
-          |> Repo.update()
         end
     end
   end
@@ -379,7 +409,7 @@ end
     end
   end
 
-  # Update late fees for all overdue requests
+  # Update late fees for all overdue requests and update status
   def update_all_late_fees do
     today = Date.utc_today()
 
@@ -390,12 +420,15 @@ end
     )
     |> Repo.all()
 
-    # Update late fees for each overdue request
+    # Update late fees and status for each overdue request
     Enum.map(overdue_requests, fn request ->
       new_late_fee = calculate_late_fee(request)
 
       request
-      |> Ecto.Changeset.change(%{late_fee: new_late_fee})
+      |> Ecto.Changeset.change(%{
+        late_fee: new_late_fee,
+        status: "overdue"
+      })
       |> Repo.update()
     end)
   end
@@ -403,14 +436,15 @@ end
   # Check if a request is overdue
   def is_overdue?(request) do
     today = Date.utc_today()
-    Date.compare(today, request.borrow_to) == :gt
+    # A request is overdue if it's past the due date and not yet returned
+    Date.compare(today, request.borrow_to) == :gt and request.status != "returned"
   end
 
   # Get days overdue for a request
   def days_overdue(request) do
     today = Date.utc_today()
 
-    if Date.compare(today, request.borrow_to) == :gt do
+    if Date.compare(today, request.borrow_to) == :gt and request.status != "returned" do
       Date.diff(today, request.borrow_to)
     else
       0

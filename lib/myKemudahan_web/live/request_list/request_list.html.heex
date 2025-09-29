@@ -8,7 +8,7 @@
       </div>
 
       <!-- Status Summary Cards - Modified for mobile -->
-      <div class="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+      <div class="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
         <!-- Total Card -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
              phx-click="filter_status" phx-value-status="all">
@@ -33,7 +33,6 @@
           </div>
         </div>
 
-        <!-- Repeat similar structure for other cards with adjusted sizes -->
         <!-- Sent Card -->
         <div class="bg-white rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
              phx-click="filter_status" phx-value-status="sent">
@@ -172,6 +171,33 @@
           </div>
         </div>
 
+        <!-- Returned Card -->
+        <div class="bg-white rounded-xl shadow-md border border-emerald-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            phx-click="filter_status" phx-value-status="returned">
+          <div class="p-3 sm:p-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs font-medium text-emerald-600 mb-1 sm:text-sm">Returned</div>
+                <div class="text-xl font-bold text-emerald-800 sm:text-2xl lg:text-3xl"><%= @status_counts.returned %></div>
+              </div>
+              <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center sm:w-10 sm:h-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-emerald-100 rounded-full h-1.5 sm:h-2">
+                <div class="bg-emerald-500 h-1.5 rounded-full sm:h-2" style={"width: #{percentage(@status_counts.returned, @status_counts.total)}%"}>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-emerald-600">
+                <%= percentage(@status_counts.returned, @status_counts.total) %>%
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Cancelled Card -->
         <div class="bg-white rounded-xl shadow-md border border-slate-100 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
             phx-click="filter_status" phx-value-status="cancelled">
@@ -203,7 +229,7 @@
       <!-- Monthly Approved Revenue by Year - Modified for mobile -->
       <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 mb-6 sm:p-5">
         <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-4">
-          <h3 class="text-md font-semibold text-gray-800 sm:text-lg">Approved Revenue (<%= @revenue_year %>)</h3>
+          <h3 class="text-md font-semibold text-gray-800 sm:text-lg">Revenue Generated(<%= @revenue_year %>)</h3>
           <div class="flex items-center space-x-2 mt-2 sm:mt-0">
             <span class="text-xs text-gray-500">based on start month</span>
             <form phx-change="set_revenue_year" class="ml-2">
@@ -297,6 +323,12 @@
             Overdue
           </button>
           <button 
+            class={"py-2 px-3 font-medium border-b-2 text-xs sm:text-sm sm:px-4 #{if @status_filter == "returned", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+            phx-click="filter_status" 
+            phx-value-status="returned">
+            Returned
+          </button>
+          <button 
             class={"py-2 px-3 font-medium border-b-2 text-xs sm:text-sm sm:px-4 #{if @status_filter == "rejected", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
             phx-click="filter_status" 
             phx-value-status="rejected">
@@ -317,6 +349,7 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">ID</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">User</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden sm:table-cell">Purpose</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">Status</th>
@@ -328,6 +361,7 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <%= for request <- @requests do %>
                 <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 sm:px-6"><%= request.id %></td>  
                   <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 sm:px-6">
                       <%= if request.user do %>
                           <%= request.user.full_name %>
@@ -343,15 +377,17 @@
                           Sent
                         </span>
                       <% "approved" -> %>
-                        <%= if Requests.is_overdue?(request) do %>
-                          <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
-                            Overdue (<%= Requests.days_overdue(request) %> days)
-                          </span>
-                        <% else %>
-                          <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">
-                            Approved
-                          </span>
-                        <% end %>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">
+                          Approved
+                        </span>
+                      <% "overdue" -> %>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
+                          Overdue (<%= Requests.days_overdue(request) %> days)
+                        </span>
+                      <% "returned" -> %>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-emerald-800 bg-emerald-100 rounded-full">
+                          Returned
+                        </span>
                       <% "pending" -> %>
                         <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-amber-800 bg-amber-100 rounded-full">
                           Pending

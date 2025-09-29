@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.ReportLive.ReportView do
   use MyKemudahanWeb, :live_view
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
   alias MyKemudahan.Reports
   alias MyKemudahan.Requests
@@ -73,6 +74,26 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
 
     case Reports.update_report(report, %{status: new_status}) do
       {:ok, updated_report} ->
+        # Log admin action for transparency
+        try do
+          action = case new_status do
+            "pending" -> "mark_pending"
+            "in_progress" -> "start_progress"
+            _ -> "update_status"
+          end
+          IO.inspect({socket.assigns.current_user.id, action, "Report", id}, label: "Logging report status change")
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            action,
+            "Report",
+            id,
+            "Report status changed to #{new_status} by admin"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
+
         updated_all =
           Enum.map(socket.assigns.all_reports, fn r ->
             if r.id == updated_report.id, do: updated_report, else: r
@@ -243,6 +264,21 @@ defmodule MyKemudahanWeb.ReportLive.ReportView do
         resolution_remark: remark
       }) do
         {:ok, updated_report} ->
+          # Log admin action for transparency
+          try do
+            IO.inspect({socket.assigns.current_user.id, "resolve_report", "Report", report_id}, label: "Logging report resolution")
+            MyKemudahan.SystemLogs.log_admin_action(
+              socket.assigns.current_user.id,
+              "resolve_report",
+              "Report",
+              report_id,
+              "Report resolved by admin. Resolution: #{remark}"
+            )
+          rescue
+            error ->
+              IO.inspect(error, label: "System logging failed")
+          end
+
           # Update the reports list as before
           updated_all =
             Enum.map(socket.assigns.all_reports, fn r ->

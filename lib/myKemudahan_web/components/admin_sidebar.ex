@@ -71,6 +71,15 @@ defmodule MyKemudahanWeb.AdminSidebar do
               </a>
             </div>
 
+            <!-- Section: System Logs -->
+            <div>
+              <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">System</h2>
+              <a href="/system-logs" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-slate-600 transition" title="View System Logs">
+                <i class="fa fa-history" aria-hidden="true"></i>
+                <span class="sidebar-label">System Logs</span>
+              </a>
+            </div>
+
             <!-- Section: Users -->
             <div>
               <h2 class="px-3 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400 sidebar-heading">System Users</h2>

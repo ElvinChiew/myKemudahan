@@ -44,6 +44,7 @@
       <table class="w-full table-auto text-xs md:text-sm text-left border border-gray-200">
         <thead class="bg-sky-100 text-gray-700 uppercase tracking-wider hidden md:table-header-group">
           <tr>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">ID</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">User</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">Submitted</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">Status</th>
@@ -51,17 +52,20 @@
           </tr>
         </thead>
         <tbody>
-          <%= if Enum.empty?(@return_requests) do %>
+          <%= if Enum.empty?(@filtered_return_requests) do %>
             <tr>
               <td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">
                 No return requests found
               </td>
             </tr>
           <% else %>
-            <%= for return_request <- @return_requests do %>
+            <%= for return_request <- paginate_return_requests(@filtered_return_requests, @page, @per_page) do %>
               <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50 block md:table-row mb-2 md:mb-0">
                 <!-- Mobile Card View -->
                 <td class="block md:hidden px-3 py-2 border-b">
+                  <div class="font-semibold text-sky-800">
+                    <%= return_request.id %>
+                  </div>
                   <div class="font-semibold text-sky-800">
                     <%= if return_request.request.user do %>
                       <%= return_request.request.user.full_name %>
@@ -87,11 +91,11 @@
                       }>
                         <%= String.capitalize(return_request.status) %>
                       </span>
-                      <%= if Requests.is_overdue?(return_request.request) do %>
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                          Overdue (<%= Requests.days_overdue(return_request.request) %> days)
-                        </span>
-                      <% end %>
+                    <%= if return_request.request.status == "overdue" do %>
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        Overdue (<%= Requests.days_overdue(return_request.request) %> days)
+                      </span>
+                    <% end %>
                     </div>
                     <div class="space-x-1">
                       <button 
@@ -123,6 +127,9 @@
                 
                 <!-- Desktop Table View -->
                 <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
+                  <%= return_request.id %>
+                </td>
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
                   <%= if return_request.request.user do %>
                     <%= return_request.request.user.full_name %>
                   <% else %>
@@ -147,7 +154,7 @@
                     }>
                       <%= String.capitalize(return_request.status) %>
                     </span>
-                    <%= if Requests.is_overdue?(return_request.request) do %>
+                    <%= if return_request.request.status == "overdue" do %>
                       <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                         Overdue (<%= Requests.days_overdue(return_request.request) %> days)
                       </span>
@@ -186,9 +193,24 @@
       </table>
     </div>
 
+    <!-- Pagination -->
+    <%= if @total_pages > 1 do %>
+      <div class="flex justify-center mt-4 md:mt-6 space-x-1 flex-wrap">
+        <%= for page <- 1..@total_pages do %>
+          <button 
+            phx-click="paginate" 
+            phx-value-page={page}
+            class={"px-2 py-1 md:px-3 md:py-1 rounded-md border text-xs md:text-sm #{if page == @page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
+          >
+            <%= page %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
     <!-- Results Count -->
     <div class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600 text-center md:text-left">
-      Showing <%= length(@return_requests) %> return requests
+      Showing <%= min(length(@filtered_return_requests), @per_page) %> of <%= length(@filtered_return_requests) %> return requests
     </div>
   </div>
 </div>
@@ -280,7 +302,7 @@
           </div>
 
           <!-- Overdue Information -->
-          <%= if Requests.is_overdue?(@selected_request.request) do %>
+          <%= if @selected_request.request.status == "overdue" do %>
             <div class="mb-3 p-3 bg-red-50 rounded-lg border border-red-200">
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
