@@ -171,7 +171,9 @@ end
           end)
 
           if length(failed_updates) > 0 do
-            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+            # Extract error messages for better user experience
+            error_messages = Enum.map(failed_updates, fn {:error, message} -> message end)
+            {:error, "Asset availability issues: #{Enum.join(error_messages, "; ")}"}
           else
             # Update request status to approved
             request
@@ -249,27 +251,64 @@ end
         {:error, :not_found}
 
       return_request ->
-        # If approving the return, update asset tags back to available and change request status
-        if new_status == "approved" do
-          # Get the original request and its items
-          original_request = get_request!(return_request.request_id)
-          request_items = list_request_items(original_request.id)
+        # Validate status transition
+        valid_transitions = %{
+          "pending" => ["approved", "rejected"],
+          "rejected" => ["approved"],
+          "approved" => ["rejected"]
+        }
 
-          # Update asset tags for each item back to available
-          asset_update_results = Enum.map(request_items, fn item ->
-            Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
-          end)
+        current_status = return_request.status
+        allowed_statuses = Map.get(valid_transitions, current_status, [])
 
-          # Check if any asset updates failed
-          failed_updates = Enum.filter(asset_update_results, fn
-            {:error, _} -> true
-            _ -> false
-          end)
+        if new_status not in allowed_statuses do
+          {:error, "Invalid status transition from #{current_status} to #{new_status}"}
+        else
+          # If approving the return, update asset tags back to available and change request status
+          if new_status == "approved" do
+            # Get the original request and its items
+            original_request = get_request!(return_request.request_id)
+            request_items = list_request_items(original_request.id)
 
-          if length(failed_updates) > 0 do
-            {:error, "Failed to update asset tags: #{inspect(failed_updates)}"}
+            # Update asset tags for each item back to available
+            asset_update_results = Enum.map(request_items, fn item ->
+              Assets.update_asset_tag_for_return(item.asset_id, item.quantity)
+            end)
+
+            # Check if any asset updates failed
+            failed_updates = Enum.filter(asset_update_results, fn
+              {:error, _} -> true
+              _ -> false
+            end)
+
+            if length(failed_updates) > 0 do
+              # Extract error messages for better user experience
+              error_messages = Enum.map(failed_updates, fn {:error, message} -> message end)
+              {:error, "Asset update issues: #{Enum.join(error_messages, "; ")}"}
+            else
+              # Update return request status
+              return_request
+              |> ReturnRequest.changeset(%{
+                status: new_status,
+                processed_at: NaiveDateTime.utc_now(),
+                admin_remarks: admin_remarks
+              })
+              |> Repo.update()
+              |> case do
+                {:ok, updated_return_request} ->
+                  # Update the original request status to "returned"
+                  original_request
+                  |> Ecto.Changeset.change(%{status: "returned"})
+                  |> Repo.update()
+                  |> case do
+                    {:ok, _} -> {:ok, updated_return_request}
+                    {:error, changeset} -> {:error, changeset}
+                  end
+                error -> error
+              end
+            end
           else
-            # Update return request status
+            # For rejected returns, just update the status
             return_request
             |> ReturnRequest.changeset(%{
               status: new_status,
@@ -277,28 +316,7 @@ end
               admin_remarks: admin_remarks
             })
             |> Repo.update()
-            |> case do
-              {:ok, updated_return_request} ->
-                # Update the original request status to "returned"
-                original_request
-                |> Ecto.Changeset.change(%{status: "returned"})
-                |> Repo.update()
-                |> case do
-                  {:ok, _} -> {:ok, updated_return_request}
-                  {:error, changeset} -> {:error, changeset}
-                end
-              error -> error
-            end
           end
-        else
-          # For rejected returns, just update the status
-          return_request
-          |> ReturnRequest.changeset(%{
-            status: new_status,
-            processed_at: NaiveDateTime.utc_now(),
-            admin_remarks: admin_remarks
-          })
-          |> Repo.update()
         end
     end
   end

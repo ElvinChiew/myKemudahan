@@ -292,7 +292,10 @@ defmodule MyKemudahan.Assets do
     ) |> Repo.all()
 
     if length(available_tags) < quantity do
-      {:error, "Not enough available asset tags for asset #{asset_id}"}
+      # Fetch asset name for better error message
+      asset = Repo.get(Asset, asset_id)
+      asset_name = if asset, do: asset.name, else: "Unknown Asset"
+      {:error, "Not enough available asset tags for '#{asset_name}' (only #{length(available_tags)} available, #{quantity} requested)"}
     else
       # Update each tag
       Enum.reduce_while(available_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->
@@ -321,7 +324,10 @@ defmodule MyKemudahan.Assets do
     ) |> Repo.all()
 
     if length(loaned_tags) < quantity do
-      {:error, "Not enough loaned asset tags for asset #{asset_id}"}
+      # Fetch asset name for better error message
+      asset = Repo.get(Asset, asset_id)
+      asset_name = if asset, do: asset.name, else: "Unknown Asset"
+      {:error, "Not enough loaned asset tags for '#{asset_name}' (only #{length(loaned_tags)} available, #{quantity} requested)"}
     else
       # Update each tag back to available, or maintenance if at 10-use interval
       Enum.reduce_while(loaned_tags, {:ok, []}, fn tag, {:ok, updated_tags} ->

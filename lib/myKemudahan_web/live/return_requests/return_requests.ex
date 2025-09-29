@@ -125,8 +125,13 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
          )
          |> put_flash(:info, "Return request #{socket.assigns.remark_action} successfully")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update return request")}
+      {:error, reason} ->
+        error_message = case reason do
+          :not_found -> "Return request not found"
+          reason when is_binary(reason) -> reason
+          _ -> "Failed to update return request"
+        end
+        {:noreply, put_flash(socket, :error, error_message)}
     end
   end
 
@@ -148,8 +153,13 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
          assign(socket, return_requests: return_requests)
          |> put_flash(:info, "Status updated successfully")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update status")}
+      {:error, reason} ->
+        error_message = case reason do
+          :not_found -> "Return request not found"
+          reason when is_binary(reason) -> reason
+          _ -> "Failed to update status"
+        end
+        {:noreply, put_flash(socket, :error, error_message)}
     end
   end
 

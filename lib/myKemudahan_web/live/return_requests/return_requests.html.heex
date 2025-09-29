@@ -44,6 +44,7 @@
       <table class="w-full table-auto text-xs md:text-sm text-left border border-gray-200">
         <thead class="bg-sky-100 text-gray-700 uppercase tracking-wider hidden md:table-header-group">
           <tr>
+            <th class="px-2 md:px-4 py-2 md:py-3 border">ID</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">User</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">Submitted</th>
             <th class="px-2 md:px-4 py-2 md:py-3 border">Status</th>
@@ -62,6 +63,9 @@
               <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50 block md:table-row mb-2 md:mb-0">
                 <!-- Mobile Card View -->
                 <td class="block md:hidden px-3 py-2 border-b">
+                  <div class="font-semibold text-sky-800">
+                    <%= return_request.id %>
+                  </div>
                   <div class="font-semibold text-sky-800">
                     <%= if return_request.request.user do %>
                       <%= return_request.request.user.full_name %>
@@ -122,6 +126,9 @@
                 </td>
                 
                 <!-- Desktop Table View -->
+                <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
+                  <%= return_request.id %>
+                </td>
                 <td class="hidden md:table-cell px-2 md:px-4 py-2 md:py-3 border">
                   <%= if return_request.request.user do %>
                     <%= return_request.request.user.full_name %>

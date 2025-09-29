@@ -305,4 +305,56 @@ defmodule MyKemudahan.AssetsTest do
       end
     end
   end
+
+  describe "update_asset_tag_for_approval" do
+    import MyKemudahan.AssetsFixtures
+
+    test "returns error with asset name when not enough available tags" do
+      # Create a category and asset
+      category = category_fixture()
+      asset = asset_fixture(%{category_id: category.id, name: "Test Laptop"})
+
+      # Create only 2 asset tags (both available)
+      asset_tag_fixture(%{asset_id: asset.id, status: "available"})
+      asset_tag_fixture(%{asset_id: asset.id, status: "available"})
+
+      # Try to approve for 5 items (more than available)
+      result = Assets.update_asset_tag_for_approval(asset.id, 5)
+
+      assert {:error, error_message} = result
+      assert error_message =~ "Not enough available asset tags for 'Test Laptop'"
+      assert error_message =~ "only 2 available, 5 requested"
+    end
+
+    test "returns error with 'Unknown Asset' when asset not found" do
+      # Try to approve for non-existent asset
+      result = Assets.update_asset_tag_for_approval(99999, 1)
+
+      assert {:error, error_message} = result
+      assert error_message =~ "Not enough available asset tags for 'Unknown Asset'"
+    end
+
+    test "successfully updates asset tags when enough are available" do
+      # Create a category and asset
+      category = category_fixture()
+      asset = asset_fixture(%{category_id: category.id, name: "Test Laptop"})
+
+      # Create 3 asset tags (all available)
+      asset_tag_fixture(%{asset_id: asset.id, status: "available"})
+      asset_tag_fixture(%{asset_id: asset.id, status: "available"})
+      asset_tag_fixture(%{asset_id: asset.id, status: "available"})
+
+      # Try to approve for 2 items (less than available)
+      result = Assets.update_asset_tag_for_approval(asset.id, 2)
+
+      assert {:ok, updated_tags} = result
+      assert length(updated_tags) == 2
+
+      # Verify all returned tags have status "loaned"
+      for tag <- updated_tags do
+        assert tag.status == "loaned"
+        assert tag.borrow_count == 1
+      end
+    end
+  end
 end
