@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.SystemLogsLive do
   use MyKemudahanWeb, :live_view
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
   alias MyKemudahan.SystemLogs
   import MyKemudahanWeb.AdminSidebar
