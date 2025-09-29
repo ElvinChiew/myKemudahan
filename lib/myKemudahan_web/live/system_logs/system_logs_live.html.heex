@@ -96,7 +96,7 @@
               </div>
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-500">Total Logs</p>
-                <p class="text-2xl font-bold text-gray-900"><%= @total_count %></p>
+                <p class="text-2xl font-bold text-gray-900"><%= length(@system_logs) %></p>
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-500">Approvals</p>
                 <p class="text-2xl font-bold text-gray-900">
-                  <%= Enum.count(@all_system_logs, &(&1.action in ["approve_request", "approve_return"])) %>
+                  <%= Enum.count(@system_logs, &(&1.action in ["approve_request", "approve_return"])) %>
                 </p>
               </div>
             </div>
@@ -123,7 +123,7 @@
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-500">Rejections</p>
                 <p class="text-2xl font-bold text-gray-900">
-                  <%= Enum.count(@all_system_logs, &(&1.action in ["reject_request", "reject_return"])) %>
+                  <%= Enum.count(@system_logs, &(&1.action in ["reject_request", "reject_return"])) %>
                 </p>
               </div>
             </div>
@@ -137,7 +137,7 @@
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-500">Resolved</p>
                 <p class="text-2xl font-bold text-gray-900">
-                  <%= Enum.count(@all_system_logs, &(&1.action == "resolve_report")) %>
+                  <%= Enum.count(@system_logs, &(&1.action == "resolve_report")) %>
                 </p>
               </div>
             </div>
@@ -149,7 +149,7 @@
       <div class="bg-white border border-gray-200">
         <div class="px-4 py-3 border-b border-gray-200">
           <h3 class="text-lg font-medium text-gray-900">System Activity Log</h3>
-          <p class="text-sm text-gray-500">Showing <%= @total_count %> log entries</p>
+          <p class="text-sm text-gray-500">Showing <%= length(@filtered_system_logs) %> log entries</p>
         </div>
 
         <table class="w-full table-auto text-xs md:text-sm text-left border border-gray-200">
@@ -163,7 +163,7 @@
             </tr>
           </thead>
           <tbody>
-            <%= for log <- @system_logs do %>
+            <%= for log <- paginate_logs(@filtered_system_logs, @page, @per_page) do %>
               <tr class="hover:bg-sky-50 even:bg-white odd:bg-gray-50 block md:table-row mb-2 md:mb-0">
                 <!-- Mobile Card View -->
                 <td class="block md:hidden px-3 py-2 border-b">
@@ -250,11 +250,11 @@
       <!-- Pagination -->
       <%= if @total_pages > 1 do %>
         <div class="flex justify-center mt-4 md:mt-6 space-x-1 flex-wrap">
-          <%= for page <- @page_links do %>
+          <%= for page <- 1..@total_pages do %>
             <button 
               phx-click="paginate" 
               phx-value-page={page}
-              class={"px-2 py-1 md:px-3 md:py-1 rounded-md border text-xs md:text-sm #{if page == @current_page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
+              class={"px-2 py-1 md:px-3 md:py-1 rounded-md border text-xs md:text-sm #{if page == @page, do: "bg-sky-500 text-white", else: "bg-white text-gray-700 hover:bg-gray-100"}"}
             >
               <%= page %>
             </button>
@@ -264,7 +264,7 @@
 
       <!-- Results Count -->
       <div class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600 text-center md:text-left">
-        Showing <%= min(length(@system_logs), @page_size) %> of <%= @total_count %> log entries
+        Showing <%= min(length(@filtered_system_logs), @per_page) %> of <%= length(@filtered_system_logs) %> log entries
       </div>
     </div>
   </div>

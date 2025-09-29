@@ -73,7 +73,7 @@ defmodule MyKemudahanWeb.UserLive.User do
     (length(users) / per_page) |> Float.ceil() |> round()
   end
 
-  defp paginate_users(users, page, per_page) do
+  def paginate_users(users, page, per_page) do
     users
     |> Enum.slice((page - 1) * per_page, per_page)
   end
