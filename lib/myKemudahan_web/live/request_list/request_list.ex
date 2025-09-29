@@ -263,6 +263,20 @@ defmodule MyKemudahanWeb.RequestList do
     case Requests.approve_request(request_id) do
       {:ok, request} ->
 
+        # Log admin action for transparency
+        try do
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            "approve_request",
+            "Request",
+            request.id,
+            "Request approved by admin"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
+
         #send email approval to user
         try do
           RequestEmail.approval_email(request)
@@ -299,6 +313,20 @@ defmodule MyKemudahanWeb.RequestList do
   def handle_event("reject_request", %{}, socket) do
     case Requests.reject_request(socket.assigns.rejecting_request, socket.assigns.rejection_reason) do
       {:ok, request} ->
+
+        # Log admin action for transparency
+        try do
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            "reject_request",
+            "Request",
+            request.id,
+            "Request rejected by admin. Reason: #{socket.assigns.rejection_reason}"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
 
         complete_request = Requests.get_request_with_items!(request.id)
 

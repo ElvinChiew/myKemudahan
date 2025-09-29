@@ -72,6 +72,9 @@ defmodule MyKemudahanWeb.Router do
     live "/asset_tags/:id/edit", AssetTagLive.Index, :edit
     live "/asset_tags/:id", AssetTagLive.Show, :show
     live "/asset_tags/:id/show/edit", AssetTagLive.Show, :edit
+
+    #system logs
+    live "/system-logs", SystemLogsLive
   end
 
   # Other scopes may use custom stacks.

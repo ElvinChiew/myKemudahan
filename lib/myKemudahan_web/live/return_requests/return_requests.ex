@@ -1,5 +1,6 @@
 defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
   use MyKemudahanWeb, :live_view
+  on_mount {MyKemudahanWeb.UserAuth, :mount_current_user}
 
   alias MyKemudahan.Requests
   alias MyKemudahan.Requests.ReturnRequest
@@ -95,6 +96,22 @@ defmodule MyKemudahanWeb.ReturnRequests.ReturnRequests do
       remark
     ) do
       {:ok, _} ->
+        # Log admin action for transparency
+        try do
+          action = if socket.assigns.remark_action == "approved", do: "approve_return", else: "reject_return"
+          IO.inspect({socket.assigns.current_user.id, action, "ReturnRequest", socket.assigns.selected_request_id}, label: "Logging return action")
+          MyKemudahan.SystemLogs.log_admin_action(
+            socket.assigns.current_user.id,
+            action,
+            "ReturnRequest",
+            socket.assigns.selected_request_id,
+            "Return request #{socket.assigns.remark_action} by admin. Remark: #{remark}"
+          )
+        rescue
+          error ->
+            IO.inspect(error, label: "System logging failed")
+        end
+
         return_requests = list_return_requests_with_associations(socket.assigns.status_filter)
         {:noreply,
          assign(socket,
